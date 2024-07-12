@@ -90,6 +90,9 @@ int main(int argc, char** argv) {
                             void* /* pUserData */) {
     std::cout << "Queued work finished with status: " << status << std::endl;
   };
+  // TODO: Warning: Old OnSubmittedWorkDone APIs are deprecated. If using C
+  // please pass a CallbackInfo struct that has two userdatas. Otherwise, if
+  // using C++, please use templated helpers.
   wgpuQueueOnSubmittedWorkDone(queue, onQueueWorkDone, nullptr /* pUserData */);
   WGPUCommandEncoderDescriptor encoderDesc = {};
   encoderDesc.nextInChain = nullptr;
