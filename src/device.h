@@ -32,7 +32,7 @@ WGPUDevice requestDeviceSync(WGPUAdapter adapter,
   wgpuAdapterRequestDevice(adapter, descriptor, onDeviceRequestEnded,
                            (void*)&userData);
 
-  // to add emscripten support later, see requestAdapterSync()
+  // TODO: add emscripten support later, see requestAdapterSync()
 
   assert(userData.requestEnded && userData.device != nullptr);
   return userData.device;

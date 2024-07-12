@@ -45,7 +45,7 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance,
                              options, onAdapterRequestEnded, (void*)&userData);
 
   // We wait until userData.requestEnded gets true.
-  // Waiting only needed when using emscripten. See:
+  // TODO: Waiting only needed when using emscripten. See:
   // https://eliemichel.github.io/LearnWebGPU/getting-started/adapter-and-device/the-adapter.html
 
   assert(userData.requestEnded && userData.adapter != nullptr);
