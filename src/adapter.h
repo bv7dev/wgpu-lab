@@ -48,8 +48,7 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance,
   // Waiting only needed when using emscripten. See:
   // https://eliemichel.github.io/LearnWebGPU/getting-started/adapter-and-device/the-adapter.html
 
-  assert(userData.requestEnded);
-
+  assert(userData.requestEnded && userData.adapter != nullptr);
   return userData.adapter;
 }
 
