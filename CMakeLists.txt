@@ -13,3 +13,9 @@ set_target_properties(lab PROPERTIES
 	CXX_EXTENSIONS OFF
 	COMPILE_WARNING_AS_ERROR ON
 )
+
+if (MSVC)
+	target_compile_options(lab PRIVATE /W4)
+else()
+	target_compile_options(lab PRIVATE -Wall -Wextra -pedantic)
+endif()
