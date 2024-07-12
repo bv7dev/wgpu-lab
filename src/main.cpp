@@ -1,10 +1,10 @@
 #include <iostream>
 
 #include <GLFW/glfw3.h>
+#include <glfw3webgpu.h>
 #include <webgpu/webgpu.h>
 
-#include "adapter.h"
-#include "device.h"
+#include "webgpu-utils.h"
 
 int main(int argc, char** argv) {
   std::cout << "Hi!" << std::endl;
@@ -13,17 +13,14 @@ int main(int argc, char** argv) {
   std::cout << std::endl;
 
   if (!glfwInit()) return 1;
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
   GLFWwindow* window = glfwCreateWindow(640, 400, "Hi!", NULL, NULL);
   if (!window) {
     std::cerr << "Error: Could not initialize GLFW!" << std::endl;
     glfwTerminate();
     return 1;
   }
-
-  while (!glfwWindowShouldClose(window)) {
-    glfwPollEvents();
-  }
-  glfwTerminate();
 
   WGPUInstanceDescriptor desc = {};
   // Toggle used to make error callback immediate, so that breakpoint hits on
@@ -44,8 +41,11 @@ int main(int argc, char** argv) {
   }
   std::cout << "WGPU instance: " << instance << std::endl;
 
+  WGPUSurface surface = glfwGetWGPUSurface(instance, window);
+
   std::cout << "Requesting adapter..." << std::endl;
   WGPURequestAdapterOptions adapterOpts = {};
+  adapterOpts.compatibleSurface = surface;
   WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
   std::cout << "Got adapter: " << adapter << std::endl;
   wgpuInstanceRelease(instance);
@@ -120,8 +120,17 @@ int main(int argc, char** argv) {
     // TODO: emscripten
   }
 
+  // glfw main loop
+  while (!glfwWindowShouldClose(window)) {
+    glfwPollEvents();
+  }
+
+  // clean-up
   wgpuQueueRelease(queue);
   wgpuDeviceRelease(device);
+  wgpuSurfaceRelease(surface);
+
+  glfwTerminate();
 
   return 0;
 }
