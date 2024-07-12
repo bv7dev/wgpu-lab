@@ -59,14 +59,16 @@ int main(int argc, char** argv) {
   deviceDesc.requiredLimits = nullptr;
   deviceDesc.defaultQueue.nextInChain = nullptr;
   deviceDesc.defaultQueue.label = "The default queue";
-  deviceDesc.deviceLostCallback = [](WGPUDeviceLostReason reason,
-                                     char const* message,
-                                     void* /* pUserData */) {
-    std::cout << "Device lost: reason " << reason;
-    if (message) std::cout << " (" << message << ")";
-    std::cout << std::endl;
+  deviceDesc.deviceLostCallbackInfo = {
+      .mode = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous,
+      .callback =
+          [](const WGPUDevice* device, WGPUDeviceLostReason reason,
+             char const* message, void* /* pUserData */) {
+            std::cout << "Device " << device << " lost: reason " << reason;
+            if (message) std::cout << " (" << message << ")";
+            std::cout << std::endl;
+          },
   };
-  deviceDesc.deviceLostCallbackInfo = {}; // TODO: use this. above is deprecated
   WGPUDevice device = requestDeviceSync(adapter, &deviceDesc);
   std::cout << "Got device: " << device << std::endl;
   wgpuAdapterRelease(adapter);
