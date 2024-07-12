@@ -38,6 +38,9 @@ int main(int argc, char** argv) {
 
   std::cout << "Got adapter: " << adapter << std::endl;
 
+  inspectAdapter(adapter);
+
+  wgpuAdapterRelease(adapter);
   wgpuInstanceRelease(instance);
 
   return 0;
