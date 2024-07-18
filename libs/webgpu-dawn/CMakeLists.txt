@@ -19,7 +19,7 @@ if (EMSCRIPTEN)
 	)
 
 else (EMSCRIPTEN)
-
+  cmake_policy(SET CMP0169 OLD)
 	include(cmake/FetchDawn.cmake)
 
 	target_link_libraries(webgpu INTERFACE webgpu_dawn)
