@@ -15,6 +15,8 @@ int main(int argc, char** argv) {
     std::cout << argv[i] << ' ';
   std::cout << std::endl;
 
+  // GLFW Init ----------------------------------------------------------------
+
   if (!glfwInit()) return 1;
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -26,24 +28,9 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  WGPUInstanceDescriptor desc = {};
-  // Toggle used to make error callback immediate, so that breakpoint hits on
-  // same callstack. Set breakpoint into onDeviceError() callback for debugging.
-  // https://eliemichel.github.io/LearnWebGPU/getting-started/adapter-and-device/the-device.html#uncaptured-error-callback
-  // WGPUDawnTogglesDescriptor toggles;
-  // toggles.chain.next = nullptr;
-  // toggles.chain.sType = WGPUSType_DawnTogglesDescriptor;
-  // toggles.disabledToggleCount = 0;
-  // toggles.enabledToggleCount = 1;
-  // const char* toggleName = "enable_immediate_error_handling";
-  // toggles.enabledToggles = &toggleName;
-  // desc.nextInChain = &toggles.chain;
+  // WGPU Init ----------------------------------------------------------------
 
-  // Toggle seems to make no difference.
-  // Tested with error produced by commenting out line:
-  // renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
-
-  WGPUInstance instance = wgpuCreateInstance(&desc);
+  WGPUInstance instance = wgpuCreateInstance(nullptr);
   if (!instance) {
     std::cerr << "Error: Could not initialize WebGPU!" << std::endl;
     return 1;
@@ -51,16 +38,17 @@ int main(int argc, char** argv) {
   std::cout << "WGPU instance: " << instance << std::endl;
 
   std::cout << "Requesting adapter..." << std::endl;
-  WGPURequestAdapterOptions adapterOpts = {};
+  WGPURequestAdapterOptions adapterOpts{};
   WGPUSurface surface = glfwGetWGPUSurface(instance, window);
   adapterOpts.compatibleSurface = surface;
   WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
-  std::cout << "Got adapter: " << adapter << std::endl;
   wgpuInstanceRelease(instance);
+  std::cout << "Got adapter: " << adapter << std::endl;
+
   inspectAdapter(adapter);
 
   std::cout << "Requesting device..." << std::endl;
-  WGPUDeviceDescriptor deviceDesc = {};
+  WGPUDeviceDescriptor deviceDesc{};
   deviceDesc.nextInChain = nullptr;
   deviceDesc.label = "My Device";
   deviceDesc.requiredFeatureCount = 0;
@@ -71,7 +59,7 @@ int main(int argc, char** argv) {
       .mode = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous,
       .callback =
           [](const WGPUDevice* device, WGPUDeviceLostReason reason,
-             char const* message, void* /* pUserData */) {
+             char const* message, void*) {
             std::cout << "Device " << device << " lost: reason " << reason;
             if (message) std::cout << " (" << message << ")";
             std::cout << std::endl;
@@ -79,40 +67,18 @@ int main(int argc, char** argv) {
   };
   WGPUDevice device = requestDeviceSync(adapter, &deviceDesc);
   std::cout << "Got device: " << device << std::endl;
+
   inspectDevice(device);
 
   // Set breakpoint into onDeviceError() callback for debugging.
-  // Instance toggle ensures that it will break on the same callstack.
-  auto onDeviceError = [](WGPUErrorType type, char const* message,
-                          void* /* pUserData */) {
+  // How to add instance toggle to ensures break will be hit on same callstack:
+  // https://eliemichel.github.io/LearnWebGPU/getting-started/adapter-and-device/the-device.html#uncaptured-error-callback
+  auto onDeviceError = [](WGPUErrorType type, char const* message, void*) {
     std::cerr << "Error: Uncaptured device error: type " << type;
     if (message) std::cerr << " (" << message << ")";
     std::cerr << std::endl;
   };
-  wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError,
-                                       nullptr /* pUserData */);
-
-  WGPUQueue queue = wgpuDeviceGetQueue(device);
-
-  // auto onQueueWorkDone = [](WGPUQueueWorkDoneStatus status,
-  //                           void* /* pUserData */) {
-  //   std::cout << "Queued work finished with status: " << status << std::endl;
-  // };
-  // TODO: Warning: Old OnSubmittedWorkDone APIs are deprecated. If using C
-  // please pass a CallbackInfo struct that has two userdatas. Otherwise, if
-  // using C++, please use templated helpers.
-  // wgpuQueueOnSubmittedWorkDone(queue, onQueueWorkDone, nullptr /* pUserData
-  // */);
-
-  WGPUQueueWorkDoneCallbackInfo2 workSubmittedInfo{};
-  workSubmittedInfo.callback = [](WGPUQueueWorkDoneStatus status, void*,
-                                  void*) {
-    std::cout << "Queued work finished with status: " << status << std::endl;
-  };
-  workSubmittedInfo.mode =
-      WGPUCallbackMode::WGPUCallbackMode_AllowProcessEvents;
-  wgpuQueueOnSubmittedWorkDone2(queue, workSubmittedInfo);
-  // Don't know what above callback is supposed to do. Will remove it next.
+  wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr);
 
   WGPUSurfaceConfiguration surfaceConfig = {};
   surfaceConfig.width = WND_WIDTH;
@@ -128,7 +94,10 @@ int main(int argc, char** argv) {
 
   wgpuAdapterRelease(adapter);
 
-  // glfw main loop
+  WGPUQueue queue = wgpuDeviceGetQueue(device);
+
+  // Main Loop ----------------------------------------------------------------
+
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
 
@@ -137,6 +106,7 @@ int main(int argc, char** argv) {
 
     // Create a command encoder for the draw call
     WGPUCommandEncoderDescriptor encoderDesc{};
+    encoderDesc.nextInChain = nullptr;
     encoderDesc.label = "My command encoder";
     WGPUCommandEncoder encoder =
         wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
@@ -144,6 +114,7 @@ int main(int argc, char** argv) {
     // The attachment part of the render pass descriptor describes the target
     // texture of the pass
     WGPURenderPassColorAttachment renderPassColorAttachment{};
+    renderPassColorAttachment.nextInChain = nullptr;
     renderPassColorAttachment.view = targetView;
     renderPassColorAttachment.resolveTarget = nullptr;
     renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
@@ -153,6 +124,8 @@ int main(int argc, char** argv) {
 
     // Create the render pass that clears the screen with our color
     WGPURenderPassDescriptor renderPassDesc{};
+    renderPassDesc.nextInChain = nullptr;
+    renderPassDesc.label = "My render pass";
     renderPassDesc.colorAttachmentCount = 1;
     renderPassDesc.colorAttachments = &renderPassColorAttachment;
     renderPassDesc.depthStencilAttachment = nullptr;
@@ -166,16 +139,15 @@ int main(int argc, char** argv) {
     wgpuRenderPassEncoderRelease(renderPass);
 
     // Finally encode and submit the render pass
-    WGPUCommandBufferDescriptor cmdBufferDescriptor = {};
+    WGPUCommandBufferDescriptor cmdBufferDescriptor{};
+    cmdBufferDescriptor.nextInChain = nullptr;
     cmdBufferDescriptor.label = "Command buffer";
     WGPUCommandBuffer command =
         wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
     wgpuCommandEncoderRelease(encoder);
 
-    std::cout << "Submitting command..." << std::endl;
     wgpuQueueSubmit(queue, 1, &command);
     wgpuCommandBufferRelease(command);
-    std::cout << "Command submitted." << std::endl;
 
     wgpuTextureViewRelease(targetView);
     wgpuSurfacePresent(surface);
