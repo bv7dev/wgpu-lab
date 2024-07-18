@@ -35,13 +35,17 @@ int main(int argc, char** argv) {
   }
   std::cout << "WGPU instance: " << instance << std::endl;
 
-  std::cout << "Requesting adapter..." << std::endl;
-  WGPURequestAdapterOptions adapterOpts{};
   WGPUSurface surface = glfwGetWGPUSurface(instance, window);
-  adapterOpts.compatibleSurface = surface;
+
+  std::cout << "Requesting adapter..." << std::endl;
+  WGPURequestAdapterOptions adapterOpts{
+      .compatibleSurface = surface,
+      .powerPreference = WGPUPowerPreference_HighPerformance,
+  };
   WGPUAdapter adapter = requestAdapterSync(instance, &adapterOpts);
-  wgpuInstanceRelease(instance);
   std::cout << "Got adapter: " << adapter << std::endl;
+
+  wgpuInstanceRelease(instance);
 
   inspectAdapter(adapter);
 
