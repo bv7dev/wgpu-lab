@@ -33,4 +33,9 @@ void inspectAdapter(WGPUAdapter adapter);
  */
 void inspectDevice(WGPUDevice device);
 
+/**
+ *
+ */
+WGPUTextureView getNextSurfaceTextureView(WGPUSurface surface);
+
 #endif // WEBGPU_UTILS_H

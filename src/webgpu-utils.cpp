@@ -223,3 +223,22 @@ void inspectDevice(WGPUDevice device) {
               << limits.limits.maxComputeWorkgroupsPerDimension << std::endl;
   }
 }
+
+WGPUTextureView getNextSurfaceTextureView(WGPUSurface surface) {
+  WGPUSurfaceTexture surfaceTexture;
+  wgpuSurfaceGetCurrentTexture(surface, &surfaceTexture);
+  if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
+    return nullptr;
+  }
+  WGPUTextureViewDescriptor viewDescriptor{};
+  viewDescriptor.nextInChain = nullptr;
+  viewDescriptor.label = "Surface texture view";
+  viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
+  viewDescriptor.dimension = WGPUTextureViewDimension_2D;
+  viewDescriptor.baseMipLevel = 0;
+  viewDescriptor.mipLevelCount = 1;
+  viewDescriptor.baseArrayLayer = 0;
+  viewDescriptor.arrayLayerCount = 1;
+  viewDescriptor.aspect = WGPUTextureAspect_All;
+  return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+}
