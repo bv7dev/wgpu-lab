@@ -36,8 +36,7 @@ int main(int argc, char** argv) {
 
   WGPUSurface surface = glfwGetWGPUSurface(instance, window);
 
-  std::cout << "Requesting adapter..." << std::endl;
-  WGPURequestAdapterOptions adapterOpts{
+  WGPURequestAdapterOptions adapterOpts = {
       .compatibleSurface = surface,
       .powerPreference = WGPUPowerPreference_HighPerformance,
   };
@@ -48,21 +47,18 @@ int main(int argc, char** argv) {
 
   inspectAdapter(adapter);
 
-  std::cout << "Requesting device..." << std::endl;
-  WGPUDeviceDescriptor deviceDesc{};
-  deviceDesc.nextInChain = nullptr;
-  deviceDesc.label = "My device";
-  deviceDesc.requiredFeatureCount = 0;
-  deviceDesc.requiredLimits = nullptr;
-  deviceDesc.defaultQueue.nextInChain = nullptr;
-  deviceDesc.defaultQueue.label = "The default queue";
-  deviceDesc.deviceLostCallbackInfo = {
-      .mode = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous,
-      .callback =
-          [](const WGPUDevice* device, WGPUDeviceLostReason reason, char const* message, void*) {
-            std::cout << "Device " << device << " lost: reason " << reason;
-            if (message) std::cout << " (" << message << ")";
-            std::cout << std::endl;
+  WGPUDeviceDescriptor deviceDesc = {
+      .label = "My device",
+      .defaultQueue = {.label = "My default queue"},
+      .deviceLostCallbackInfo =
+          {
+              .mode = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous,
+              .callback =
+                  [](const WGPUDevice* device, WGPUDeviceLostReason reason, char const* message, void*) {
+                    std::cout << "Device " << device << " lost: reason " << reason;
+                    if (message) std::cout << " (" << message << ")";
+                    std::cout << std::endl;
+                  },
           },
   };
   WGPUDevice device = requestDeviceSync(adapter, &deviceDesc);
@@ -70,6 +66,7 @@ int main(int argc, char** argv) {
 
   inspectDevice(device);
 
+  // set device error callback
   auto onDeviceError = [](WGPUErrorType type, char const* message, void*) {
     std::cerr << "Error: Uncaptured device error: type " << type;
     if (message) std::cerr << " (" << message << ")";
@@ -77,19 +74,21 @@ int main(int argc, char** argv) {
   };
   wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, nullptr);
 
-  WGPUSurfaceConfiguration surfaceConfig = {};
-  surfaceConfig.width = WND_WIDTH;
-  surfaceConfig.height = WND_HEIGHT;
-  surfaceConfig.usage = WGPUTextureUsage_RenderAttachment;
   WGPUSurfaceCapabilities surfaceCapabilities = {};
   wgpuSurfaceGetCapabilities(surface, adapter, &surfaceCapabilities);
-  surfaceConfig.format = surfaceCapabilities.formats[0];
-  surfaceConfig.device = device;
-  surfaceConfig.presentMode = WGPUPresentMode_Fifo;
-  surfaceConfig.alphaMode = WGPUCompositeAlphaMode_Auto;
-  wgpuSurfaceConfigure(surface, &surfaceConfig);
 
   wgpuAdapterRelease(adapter);
+
+  WGPUSurfaceConfiguration surfaceConfig = {
+      .device = device,
+      .format = surfaceCapabilities.formats[0],
+      .usage = WGPUTextureUsage_RenderAttachment,
+      .alphaMode = WGPUCompositeAlphaMode_Auto,
+      .width = WND_WIDTH,
+      .height = WND_HEIGHT,
+      .presentMode = WGPUPresentMode_Fifo,
+  };
+  wgpuSurfaceConfigure(surface, &surfaceConfig);
 
   WGPUQueue queue = wgpuDeviceGetQueue(device);
 
@@ -98,33 +97,31 @@ int main(int argc, char** argv) {
     glfwPollEvents();
 
     WGPUTextureView targetView = getNextSurfaceTextureView(surface);
-    if (!targetView) return 1;
+    if (!targetView) {
+      std::cerr << "Error: Could not get next surface texture view" << std::endl;
+      return 1;
+    }
 
     // Create a command encoder for the draw call
-    WGPUCommandEncoderDescriptor encoderDesc{};
-    encoderDesc.nextInChain = nullptr;
-    encoderDesc.label = "My command encoder";
+    WGPUCommandEncoderDescriptor encoderDesc{.label = "My command encoder"};
     WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
 
     // The attachment part of the render pass descriptor describes the target
     // texture of the pass
-    WGPURenderPassColorAttachment renderPassColorAttachment{};
-    renderPassColorAttachment.nextInChain = nullptr;
-    renderPassColorAttachment.view = targetView;
-    renderPassColorAttachment.resolveTarget = nullptr;
-    renderPassColorAttachment.loadOp = WGPULoadOp_Clear;
-    renderPassColorAttachment.storeOp = WGPUStoreOp_Store;
-    renderPassColorAttachment.clearValue = WGPUColor{0.9, 0.1, 0.2, 1.0};
-    renderPassColorAttachment.depthSlice = WGPU_DEPTH_SLICE_UNDEFINED;
+    WGPURenderPassColorAttachment renderPassColorAttachment = {
+        .view = targetView,
+        .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED,
+        .loadOp = WGPULoadOp_Clear,
+        .storeOp = WGPUStoreOp_Store,
+        .clearValue = WGPUColor{0.9, 0.1, 0.2, 1.0},
+    };
 
     // Create the render pass that clears the screen with our color
-    WGPURenderPassDescriptor renderPassDesc{};
-    renderPassDesc.nextInChain = nullptr;
-    renderPassDesc.label = "My render pass";
-    renderPassDesc.colorAttachmentCount = 1;
-    renderPassDesc.colorAttachments = &renderPassColorAttachment;
-    renderPassDesc.depthStencilAttachment = nullptr;
-    renderPassDesc.timestampWrites = nullptr;
+    WGPURenderPassDescriptor renderPassDesc = {
+        .label = "My render pass",
+        .colorAttachmentCount = 1,
+        .colorAttachments = &renderPassColorAttachment,
+    };
 
     // Create the render pass and end it immediately (we only clear the screen
     // but do not draw anything)
@@ -133,9 +130,7 @@ int main(int argc, char** argv) {
     wgpuRenderPassEncoderRelease(renderPass);
 
     // Finally encode and submit the render pass
-    WGPUCommandBufferDescriptor cmdBufferDescriptor{};
-    cmdBufferDescriptor.nextInChain = nullptr;
-    cmdBufferDescriptor.label = "My command buffer";
+    WGPUCommandBufferDescriptor cmdBufferDescriptor{.label = "My command buffer"};
     WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
     wgpuCommandEncoderRelease(encoder);
 

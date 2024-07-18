@@ -8,15 +8,42 @@
 #include <iostream>
 #include <vector>
 
-WGPUAdapter requestAdapterSync(WGPUInstance instance,
-                               WGPURequestAdapterOptions const* options) {
+WGPUDevice requestDeviceSync(WGPUAdapter adapter, WGPUDeviceDescriptor const* descriptor) {
+  struct UserData {
+    WGPUDevice device = nullptr;
+    bool requestEnded = false;
+  } userData;
+
+  auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status, WGPUDevice device, char const* message, void* pUserData) {
+    UserData& userData = *reinterpret_cast<UserData*>(pUserData);
+    if (status == WGPURequestDeviceStatus_Success) {
+      userData.device = device;
+    } else {
+      std::cout << "Could not get WebGPU device: " << message << std::endl;
+    }
+    userData.requestEnded = true;
+  };
+
+  wgpuAdapterRequestDevice(adapter, descriptor, onDeviceRequestEnded, (void*)&userData);
+
+#ifdef __EMSCRIPTEN__
+  while (!userData.requestEnded) {
+    emscripten_sleep(100);
+  }
+#endif // __EMSCRIPTEN__
+
+  assert(userData.requestEnded);
+
+  return userData.device;
+}
+
+WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions const* options) {
   // A simple structure holding the local information shared with the
   // onAdapterRequestEnded callback.
   struct UserData {
     WGPUAdapter adapter = nullptr;
     bool requestEnded = false;
-  };
-  UserData userData;
+  } userData;
 
   // Callback called by wgpuInstanceRequestAdapter when the request returns
   // This is a C++ lambda function, but could be any function defined in the
@@ -26,9 +53,7 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance,
   // is to convey what we want to capture through the pUserData pointer,
   // provided as the last argument of wgpuInstanceRequestAdapter and received
   // by the callback as its last argument.
-  auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status,
-                                  WGPUAdapter adapter, char const* message,
-                                  void* pUserData) {
+  auto onAdapterRequestEnded = [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const* message, void* pUserData) {
     UserData& userData = *reinterpret_cast<UserData*>(pUserData);
     if (status == WGPURequestAdapterStatus_Success) {
       userData.adapter = adapter;
@@ -39,8 +64,7 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance,
   };
 
   // Call to the WebGPU request adapter procedure
-  wgpuInstanceRequestAdapter(instance /* equivalent of navigator.gpu */,
-                             options, onAdapterRequestEnded, (void*)&userData);
+  wgpuInstanceRequestAdapter(instance /* equivalent of navigator.gpu */, options, onAdapterRequestEnded, (void*)&userData);
 
   // We wait until userData.requestEnded gets true
 #ifdef __EMSCRIPTEN__
@@ -61,14 +85,10 @@ void inspectAdapter(WGPUAdapter adapter) {
   bool success = wgpuAdapterGetLimits(adapter, &supportedLimits);
   if (success) {
     std::cout << "Adapter limits:" << std::endl;
-    std::cout << " - maxTextureDimension1D: "
-              << supportedLimits.limits.maxTextureDimension1D << std::endl;
-    std::cout << " - maxTextureDimension2D: "
-              << supportedLimits.limits.maxTextureDimension2D << std::endl;
-    std::cout << " - maxTextureDimension3D: "
-              << supportedLimits.limits.maxTextureDimension3D << std::endl;
-    std::cout << " - maxTextureArrayLayers: "
-              << supportedLimits.limits.maxTextureArrayLayers << std::endl;
+    std::cout << " - maxTextureDimension1D: " << supportedLimits.limits.maxTextureDimension1D << std::endl;
+    std::cout << " - maxTextureDimension2D: " << supportedLimits.limits.maxTextureDimension2D << std::endl;
+    std::cout << " - maxTextureDimension3D: " << supportedLimits.limits.maxTextureDimension3D << std::endl;
+    std::cout << " - maxTextureArrayLayers: " << supportedLimits.limits.maxTextureArrayLayers << std::endl;
   }
 #endif // NOT __EMSCRIPTEN__
   std::vector<WGPUFeatureName> features;
@@ -91,7 +111,6 @@ void inspectAdapter(WGPUAdapter adapter) {
   }
   std::cout << std::dec; // Restore decimal numbers
   WGPUAdapterProperties properties = {};
-  properties.nextInChain = nullptr;
   wgpuAdapterGetProperties(adapter, &properties);
   std::cout << "Adapter properties:" << std::endl;
   std::cout << " - vendorID: " << properties.vendorID << std::endl;
@@ -106,47 +125,12 @@ void inspectAdapter(WGPUAdapter adapter) {
     std::cout << " - name: " << properties.name << std::endl;
   }
   if (properties.driverDescription) {
-    std::cout << " - driverDescription: " << properties.driverDescription
-              << std::endl;
+    std::cout << " - driverDescription: " << properties.driverDescription << std::endl;
   }
   std::cout << std::hex;
   std::cout << " - adapterType: 0x" << properties.adapterType << std::endl;
   std::cout << " - backendType: 0x" << properties.backendType << std::endl;
   std::cout << std::dec; // Restore decimal numbers
-}
-
-WGPUDevice requestDeviceSync(WGPUAdapter adapter,
-                             WGPUDeviceDescriptor const* descriptor) {
-  struct UserData {
-    WGPUDevice device = nullptr;
-    bool requestEnded = false;
-  };
-  UserData userData;
-
-  auto onDeviceRequestEnded = [](WGPURequestDeviceStatus status,
-                                 WGPUDevice device, char const* message,
-                                 void* pUserData) {
-    UserData& userData = *reinterpret_cast<UserData*>(pUserData);
-    if (status == WGPURequestDeviceStatus_Success) {
-      userData.device = device;
-    } else {
-      std::cout << "Could not get WebGPU device: " << message << std::endl;
-    }
-    userData.requestEnded = true;
-  };
-
-  wgpuAdapterRequestDevice(adapter, descriptor, onDeviceRequestEnded,
-                           (void*)&userData);
-
-#ifdef __EMSCRIPTEN__
-  while (!userData.requestEnded) {
-    emscripten_sleep(100);
-  }
-#endif // __EMSCRIPTEN__
-
-  assert(userData.requestEnded);
-
-  return userData.device;
 }
 
 void inspectDevice(WGPUDevice device) {
@@ -163,64 +147,35 @@ void inspectDevice(WGPUDevice device) {
   std::cout << std::dec;
 
   WGPUSupportedLimits limits = {};
-  limits.nextInChain = nullptr;
   bool success = wgpuDeviceGetLimits(device, &limits);
   if (success) {
     std::cout << "Device limits:" << std::endl;
-    std::cout << " - maxTextureDimension1D: "
-              << limits.limits.maxTextureDimension1D << std::endl;
-    std::cout << " - maxTextureDimension2D: "
-              << limits.limits.maxTextureDimension2D << std::endl;
-    std::cout << " - maxTextureDimension3D: "
-              << limits.limits.maxTextureDimension3D << std::endl;
-    std::cout << " - maxTextureArrayLayers: "
-              << limits.limits.maxTextureArrayLayers << std::endl;
-    std::cout << " - maxBindGroups: " << limits.limits.maxBindGroups
-              << std::endl;
-    std::cout << " - maxDynamicUniformBuffersPerPipelineLayout: "
-              << limits.limits.maxDynamicUniformBuffersPerPipelineLayout
-              << std::endl;
-    std::cout << " - maxDynamicStorageBuffersPerPipelineLayout: "
-              << limits.limits.maxDynamicStorageBuffersPerPipelineLayout
-              << std::endl;
-    std::cout << " - maxSampledTexturesPerShaderStage: "
-              << limits.limits.maxSampledTexturesPerShaderStage << std::endl;
-    std::cout << " - maxSamplersPerShaderStage: "
-              << limits.limits.maxSamplersPerShaderStage << std::endl;
-    std::cout << " - maxStorageBuffersPerShaderStage: "
-              << limits.limits.maxStorageBuffersPerShaderStage << std::endl;
-    std::cout << " - maxStorageTexturesPerShaderStage: "
-              << limits.limits.maxStorageTexturesPerShaderStage << std::endl;
-    std::cout << " - maxUniformBuffersPerShaderStage: "
-              << limits.limits.maxUniformBuffersPerShaderStage << std::endl;
-    std::cout << " - maxUniformBufferBindingSize: "
-              << limits.limits.maxUniformBufferBindingSize << std::endl;
-    std::cout << " - maxStorageBufferBindingSize: "
-              << limits.limits.maxStorageBufferBindingSize << std::endl;
-    std::cout << " - minUniformBufferOffsetAlignment: "
-              << limits.limits.minUniformBufferOffsetAlignment << std::endl;
-    std::cout << " - minStorageBufferOffsetAlignment: "
-              << limits.limits.minStorageBufferOffsetAlignment << std::endl;
-    std::cout << " - maxVertexBuffers: " << limits.limits.maxVertexBuffers
-              << std::endl;
-    std::cout << " - maxVertexAttributes: " << limits.limits.maxVertexAttributes
-              << std::endl;
-    std::cout << " - maxVertexBufferArrayStride: "
-              << limits.limits.maxVertexBufferArrayStride << std::endl;
-    std::cout << " - maxInterStageShaderComponents: "
-              << limits.limits.maxInterStageShaderComponents << std::endl;
-    std::cout << " - maxComputeWorkgroupStorageSize: "
-              << limits.limits.maxComputeWorkgroupStorageSize << std::endl;
-    std::cout << " - maxComputeInvocationsPerWorkgroup: "
-              << limits.limits.maxComputeInvocationsPerWorkgroup << std::endl;
-    std::cout << " - maxComputeWorkgroupSizeX: "
-              << limits.limits.maxComputeWorkgroupSizeX << std::endl;
-    std::cout << " - maxComputeWorkgroupSizeY: "
-              << limits.limits.maxComputeWorkgroupSizeY << std::endl;
-    std::cout << " - maxComputeWorkgroupSizeZ: "
-              << limits.limits.maxComputeWorkgroupSizeZ << std::endl;
-    std::cout << " - maxComputeWorkgroupsPerDimension: "
-              << limits.limits.maxComputeWorkgroupsPerDimension << std::endl;
+    std::cout << " - maxTextureDimension1D: " << limits.limits.maxTextureDimension1D << std::endl;
+    std::cout << " - maxTextureDimension2D: " << limits.limits.maxTextureDimension2D << std::endl;
+    std::cout << " - maxTextureDimension3D: " << limits.limits.maxTextureDimension3D << std::endl;
+    std::cout << " - maxTextureArrayLayers: " << limits.limits.maxTextureArrayLayers << std::endl;
+    std::cout << " - maxBindGroups: " << limits.limits.maxBindGroups << std::endl;
+    std::cout << " - maxDynamicUniformBuffersPerPipelineLayout: " << limits.limits.maxDynamicUniformBuffersPerPipelineLayout << std::endl;
+    std::cout << " - maxDynamicStorageBuffersPerPipelineLayout: " << limits.limits.maxDynamicStorageBuffersPerPipelineLayout << std::endl;
+    std::cout << " - maxSampledTexturesPerShaderStage: " << limits.limits.maxSampledTexturesPerShaderStage << std::endl;
+    std::cout << " - maxSamplersPerShaderStage: " << limits.limits.maxSamplersPerShaderStage << std::endl;
+    std::cout << " - maxStorageBuffersPerShaderStage: " << limits.limits.maxStorageBuffersPerShaderStage << std::endl;
+    std::cout << " - maxStorageTexturesPerShaderStage: " << limits.limits.maxStorageTexturesPerShaderStage << std::endl;
+    std::cout << " - maxUniformBuffersPerShaderStage: " << limits.limits.maxUniformBuffersPerShaderStage << std::endl;
+    std::cout << " - maxUniformBufferBindingSize: " << limits.limits.maxUniformBufferBindingSize << std::endl;
+    std::cout << " - maxStorageBufferBindingSize: " << limits.limits.maxStorageBufferBindingSize << std::endl;
+    std::cout << " - minUniformBufferOffsetAlignment: " << limits.limits.minUniformBufferOffsetAlignment << std::endl;
+    std::cout << " - minStorageBufferOffsetAlignment: " << limits.limits.minStorageBufferOffsetAlignment << std::endl;
+    std::cout << " - maxVertexBuffers: " << limits.limits.maxVertexBuffers << std::endl;
+    std::cout << " - maxVertexAttributes: " << limits.limits.maxVertexAttributes << std::endl;
+    std::cout << " - maxVertexBufferArrayStride: " << limits.limits.maxVertexBufferArrayStride << std::endl;
+    std::cout << " - maxInterStageShaderComponents: " << limits.limits.maxInterStageShaderComponents << std::endl;
+    std::cout << " - maxComputeWorkgroupStorageSize: " << limits.limits.maxComputeWorkgroupStorageSize << std::endl;
+    std::cout << " - maxComputeInvocationsPerWorkgroup: " << limits.limits.maxComputeInvocationsPerWorkgroup << std::endl;
+    std::cout << " - maxComputeWorkgroupSizeX: " << limits.limits.maxComputeWorkgroupSizeX << std::endl;
+    std::cout << " - maxComputeWorkgroupSizeY: " << limits.limits.maxComputeWorkgroupSizeY << std::endl;
+    std::cout << " - maxComputeWorkgroupSizeZ: " << limits.limits.maxComputeWorkgroupSizeZ << std::endl;
+    std::cout << " - maxComputeWorkgroupsPerDimension: " << limits.limits.maxComputeWorkgroupsPerDimension << std::endl;
   }
 }
 
@@ -230,15 +185,15 @@ WGPUTextureView getNextSurfaceTextureView(WGPUSurface surface) {
   if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
     return nullptr;
   }
-  WGPUTextureViewDescriptor viewDescriptor{};
-  viewDescriptor.nextInChain = nullptr;
-  viewDescriptor.label = "Surface texture view";
-  viewDescriptor.format = wgpuTextureGetFormat(surfaceTexture.texture);
-  viewDescriptor.dimension = WGPUTextureViewDimension_2D;
-  viewDescriptor.baseMipLevel = 0;
-  viewDescriptor.mipLevelCount = 1;
-  viewDescriptor.baseArrayLayer = 0;
-  viewDescriptor.arrayLayerCount = 1;
-  viewDescriptor.aspect = WGPUTextureAspect_All;
+  WGPUTextureViewDescriptor viewDescriptor{
+      .label = "Surface texture view",
+      .format = wgpuTextureGetFormat(surfaceTexture.texture),
+      .dimension = WGPUTextureViewDimension_2D,
+      .baseMipLevel = 0,
+      .mipLevelCount = 1,
+      .baseArrayLayer = 0,
+      .arrayLayerCount = 1,
+      .aspect = WGPUTextureAspect_All,
+  };
   return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
 }

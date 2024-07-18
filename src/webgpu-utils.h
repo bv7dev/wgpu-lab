@@ -9,8 +9,7 @@
  * is roughly equivalent to
  *     const adapter = await navigator.gpu.requestAdapter(options);
  */
-WGPUAdapter requestAdapterSync(WGPUInstance instance,
-                               WGPURequestAdapterOptions const* options);
+WGPUAdapter requestAdapterSync(WGPUInstance instance, WGPURequestAdapterOptions const* options);
 
 /**
  * Utility function to get a WebGPU device, so that
@@ -19,8 +18,7 @@ WGPUAdapter requestAdapterSync(WGPUInstance instance,
  *     const device = await adapter.requestDevice(descriptor);
  * It is very similar to requestAdapter
  */
-WGPUDevice requestDeviceSync(WGPUAdapter adapter,
-                             WGPUDeviceDescriptor const* descriptor);
+WGPUDevice requestDeviceSync(WGPUAdapter adapter, WGPUDeviceDescriptor const* descriptor);
 
 /**
  * An example of how we can inspect the capabilities of the hardware through
@@ -34,7 +32,7 @@ void inspectAdapter(WGPUAdapter adapter);
 void inspectDevice(WGPUDevice device);
 
 /**
- *
+ * Get next surface texture view to draw on
  */
 WGPUTextureView getNextSurfaceTextureView(WGPUSurface surface);
 
