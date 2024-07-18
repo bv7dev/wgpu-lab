@@ -15,8 +15,7 @@ int main(int argc, char** argv) {
     std::cout << argv[i] << ' ';
   std::cout << std::endl;
 
-  // GLFW Init ----------------------------------------------------------------
-
+  // GLFW Init -----------------------------------------------------------------
   if (!glfwInit()) return 1;
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -28,8 +27,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  // WGPU Init ----------------------------------------------------------------
-
+  // WGPU Init -----------------------------------------------------------------
   WGPUInstance instance = wgpuCreateInstance(nullptr);
   if (!instance) {
     std::cerr << "Error: Could not initialize WebGPU!" << std::endl;
@@ -50,7 +48,7 @@ int main(int argc, char** argv) {
   std::cout << "Requesting device..." << std::endl;
   WGPUDeviceDescriptor deviceDesc{};
   deviceDesc.nextInChain = nullptr;
-  deviceDesc.label = "My Device";
+  deviceDesc.label = "My device";
   deviceDesc.requiredFeatureCount = 0;
   deviceDesc.requiredLimits = nullptr;
   deviceDesc.defaultQueue.nextInChain = nullptr;
@@ -70,9 +68,6 @@ int main(int argc, char** argv) {
 
   inspectDevice(device);
 
-  // Set breakpoint into onDeviceError() callback for debugging.
-  // How to add instance toggle to ensures break will be hit on same callstack:
-  // https://eliemichel.github.io/LearnWebGPU/getting-started/adapter-and-device/the-device.html#uncaptured-error-callback
   auto onDeviceError = [](WGPUErrorType type, char const* message, void*) {
     std::cerr << "Error: Uncaptured device error: type " << type;
     if (message) std::cerr << " (" << message << ")";
@@ -96,8 +91,7 @@ int main(int argc, char** argv) {
 
   WGPUQueue queue = wgpuDeviceGetQueue(device);
 
-  // Main Loop ----------------------------------------------------------------
-
+  // Main Loop -----------------------------------------------------------------
   while (!glfwWindowShouldClose(window)) {
     glfwPollEvents();
 
@@ -141,7 +135,7 @@ int main(int argc, char** argv) {
     // Finally encode and submit the render pass
     WGPUCommandBufferDescriptor cmdBufferDescriptor{};
     cmdBufferDescriptor.nextInChain = nullptr;
-    cmdBufferDescriptor.label = "Command buffer";
+    cmdBufferDescriptor.label = "My command buffer";
     WGPUCommandBuffer command =
         wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
     wgpuCommandEncoderRelease(encoder);
@@ -154,7 +148,7 @@ int main(int argc, char** argv) {
     wgpuDeviceTick(device);
   }
 
-  // clean-up
+  // Cleanup -------------------------------------------------------------------
   wgpuSurfaceUnconfigure(surface);
   wgpuQueueRelease(queue);
   wgpuSurfaceRelease(surface);
