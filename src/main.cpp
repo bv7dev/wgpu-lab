@@ -19,8 +19,7 @@ int main(int argc, char** argv) {
   if (!glfwInit()) return 1;
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-  GLFWwindow* window =
-      glfwCreateWindow(WND_WIDTH, WND_HEIGHT, "Hi!", nullptr, nullptr);
+  GLFWwindow* window = glfwCreateWindow(WND_WIDTH, WND_HEIGHT, "Hi!", nullptr, nullptr);
   if (!window) {
     std::cerr << "Error: Could not initialize GLFW!" << std::endl;
     glfwTerminate();
@@ -60,8 +59,7 @@ int main(int argc, char** argv) {
   deviceDesc.deviceLostCallbackInfo = {
       .mode = WGPUCallbackMode::WGPUCallbackMode_AllowSpontaneous,
       .callback =
-          [](const WGPUDevice* device, WGPUDeviceLostReason reason,
-             char const* message, void*) {
+          [](const WGPUDevice* device, WGPUDeviceLostReason reason, char const* message, void*) {
             std::cout << "Device " << device << " lost: reason " << reason;
             if (message) std::cout << " (" << message << ")";
             std::cout << std::endl;
@@ -106,8 +104,7 @@ int main(int argc, char** argv) {
     WGPUCommandEncoderDescriptor encoderDesc{};
     encoderDesc.nextInChain = nullptr;
     encoderDesc.label = "My command encoder";
-    WGPUCommandEncoder encoder =
-        wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
+    WGPUCommandEncoder encoder = wgpuDeviceCreateCommandEncoder(device, &encoderDesc);
 
     // The attachment part of the render pass descriptor describes the target
     // texture of the pass
@@ -131,8 +128,7 @@ int main(int argc, char** argv) {
 
     // Create the render pass and end it immediately (we only clear the screen
     // but do not draw anything)
-    WGPURenderPassEncoder renderPass =
-        wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
+    WGPURenderPassEncoder renderPass = wgpuCommandEncoderBeginRenderPass(encoder, &renderPassDesc);
     wgpuRenderPassEncoderEnd(renderPass);
     wgpuRenderPassEncoderRelease(renderPass);
 
@@ -140,8 +136,7 @@ int main(int argc, char** argv) {
     WGPUCommandBufferDescriptor cmdBufferDescriptor{};
     cmdBufferDescriptor.nextInChain = nullptr;
     cmdBufferDescriptor.label = "My command buffer";
-    WGPUCommandBuffer command =
-        wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
+    WGPUCommandBuffer command = wgpuCommandEncoderFinish(encoder, &cmdBufferDescriptor);
     wgpuCommandEncoderRelease(encoder);
 
     wgpuQueueSubmit(queue, 1, &command);
