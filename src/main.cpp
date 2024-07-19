@@ -112,100 +112,61 @@ int main(int argc, char** argv) {
   }};
   surface.configure(surfaceConfig);
 
-  // Describe shader module ----------------------------------------------------
-  wgpu::ShaderModuleDescriptor shaderDesc;
+  // Describe and create shader module and render pipeline ---------------------
+  wgpu::ShaderModuleWGSLDescriptor shaderCodeDesc = {{
+      .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
+      .code = _SHADER_SOURCE,
+  }};
 
-  wgpu::ShaderModuleWGSLDescriptor shaderCodeDesc;
-  // Set the chained struct's header
-  shaderCodeDesc.chain.next = nullptr;
-  shaderCodeDesc.chain.sType = wgpu::SType::ShaderModuleWGSLDescriptor;
-  shaderCodeDesc.code = _SHADER_SOURCE;
-  // Connect the chain
-  shaderDesc.nextInChain = &shaderCodeDesc.chain;
+  wgpu::ShaderModuleDescriptor shaderDesc;
+  shaderDesc.nextInChain = &shaderCodeDesc.chain; // connect the chain
+  shaderDesc.label = "My shader module";
 
   wgpu::ShaderModule shaderModule = device.createShaderModule(shaderDesc);
 
-  // Describe render pipeline --------------------------------------------------
-  wgpu::RenderPipelineDescriptor pipelineDesc;
+  wgpu::BlendComponent blendColor = {{
+      .operation = wgpu::BlendOperation::Add,
+      .srcFactor = wgpu::BlendFactor::SrcAlpha,
+      .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
+  }};
 
-  // describe memory layout of buffers
-  // first example not using this
-  pipelineDesc.layout = nullptr;
+  wgpu::BlendComponent blendAlpha = {{
+      .operation = wgpu::BlendOperation::Add,
+      .srcFactor = wgpu::BlendFactor::Zero,
+      .dstFactor = wgpu::BlendFactor::One,
+  }};
 
-  // We do not use any vertex buffer for this first simplistic example
-  pipelineDesc.vertex.bufferCount = 0;
-  pipelineDesc.vertex.buffers = nullptr;
+  wgpu::BlendState blendState = {{
+      .color = blendColor,
+      .alpha = blendAlpha,
+  }};
 
-  // Here we tell that the programmable vertex shader stage is described
-  // by the function called 'vs_main' in that module.
-  pipelineDesc.vertex.module = shaderModule;
-  pipelineDesc.vertex.entryPoint = "vs_main";
-  pipelineDesc.vertex.constantCount = 0;
-  pipelineDesc.vertex.constants = nullptr;
+  wgpu::ColorTargetState colorTarget = {{
+      .format = surfaceCapabilities.formats[0],
+      .blend = &blendState,
+      .writeMask = wgpu::ColorWriteMask::All,
+  }};
 
-  // Each sequence of 3 vertices is considered as a triangle
-  pipelineDesc.primitive.topology = wgpu::PrimitiveTopology::TriangleList;
+  wgpu::FragmentState fragmentState = {{
+      .module = shaderModule,
+      .entryPoint = "fs_main",
+      .constantCount = 0,
+      .constants = nullptr,
+      .targetCount = 1,
+      .targets = &colorTarget,
+  }};
 
-  // We'll see later how to specify the order in which vertices should be
-  // connected. When not specified, vertices are considered sequentially.
-  pipelineDesc.primitive.stripIndexFormat = wgpu::IndexFormat::Undefined;
-
-  // The face orientation is defined by assuming that when looking
-  // from the front of the face, its corner vertices are enumerated
-  // in the counter-clockwise (CCW) order.
-  pipelineDesc.primitive.frontFace = wgpu::FrontFace::CCW;
-
-  // But the face orientation does not matter much because we do not
-  // cull (i.e. "hide") the faces pointing away from us (which is often
-  // used for optimization).
-  pipelineDesc.primitive.cullMode = wgpu::CullMode::None;
-
-  // We tell that the programmable fragment shader stage is described
-  // by the function called 'fs_main' in the shader module.
-  wgpu::FragmentState fragmentState;
-  fragmentState.module = shaderModule;
-  fragmentState.entryPoint = "fs_main";
-  fragmentState.constantCount = 0;
-  fragmentState.constants = nullptr;
-
-  // Fragment blending
-  wgpu::BlendState blendState;
-
-  // Configure color blending equation
-  blendState.color.srcFactor = wgpu::BlendFactor::SrcAlpha;
-  blendState.color.dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha;
-  blendState.color.operation = wgpu::BlendOperation::Add;
-
-  // Configure alpha blending equation
-  blendState.alpha.srcFactor = wgpu::BlendFactor::Zero;
-  blendState.alpha.dstFactor = wgpu::BlendFactor::One;
-  blendState.alpha.operation = wgpu::BlendOperation::Add;
-
-  wgpu::ColorTargetState colorTarget;
-  colorTarget.format = surfaceCapabilities.formats[0];
-  colorTarget.blend = &blendState;
-  colorTarget.writeMask = wgpu::ColorWriteMask::All; // We could write to only some of the color channels.
-
-  // We have only one target because our render pass has only one output color
-  // attachment.
-  fragmentState.targetCount = 1;
-  fragmentState.targets = &colorTarget;
-
-  pipelineDesc.fragment = &fragmentState;
-
-  // Samples per pixel
-  pipelineDesc.multisample.count = 1;
-  // Default value for the mask, meaning "all bits on"
-  pipelineDesc.multisample.mask = ~0u;
-  // Default value as well (irrelevant for count = 1 anyways)
-  pipelineDesc.multisample.alphaToCoverageEnabled = false;
-
-  // We do not use stencil/depth testing for now
-  pipelineDesc.depthStencil = nullptr;
-
+  wgpu::RenderPipelineDescriptor pipelineDesc = {{
+      .label = "My render pipeline",
+      .vertex = {.module = shaderModule, .entryPoint = "vs_main"},
+      .primitive = {.topology = wgpu::PrimitiveTopology::TriangleList,
+                    .stripIndexFormat = wgpu::IndexFormat::Undefined,
+                    .frontFace = wgpu::FrontFace::CCW,
+                    .cullMode = wgpu::CullMode::None},
+      .multisample = {.count = 1, .mask = ~0u},
+      .fragment = &fragmentState,
+  }};
   wgpu::RenderPipeline pipeline = device.createRenderPipeline(pipelineDesc);
-
-  // shader module can be released after pipeline creation
   shaderModule.release();
 
   wgpu::Queue queue = device.getQueue();
@@ -267,6 +228,7 @@ int main(int argc, char** argv) {
   }
 
   // Cleanup -------------------------------------------------------------------
+  pipeline.release();
   surface.unconfigure();
   queue.release();
   surface.release();
