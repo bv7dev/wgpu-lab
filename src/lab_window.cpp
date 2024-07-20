@@ -56,7 +56,8 @@ Window::Window(int width, int height, const char* title) {
     std::cerr << "Error: GLFW: Failed to create Window!" << std::endl;
     return;
   }
-  std::cout << "Info: GLFW: Window(" << _handle << ") created!" << std::endl;
+  std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(_handle)) << " - " << _handle << ") created!"
+            << std::endl;
   _state.glfw_windows[_handle] = this;
 }
 
@@ -76,9 +77,10 @@ bool Window::is_open() { return _handle != nullptr; }
 
 Window::~Window() {
   if (_handle) {
-    glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(_handle));
+    std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(_handle)) << " - " << _handle << ") destroyed!"
+              << std::endl;
     _state.glfw_windows.erase(_handle);
-    std::cout << "Info: GLFW: Window(" << _handle << ") destroyed!" << std::endl;
+    glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(_handle));
     _handle = nullptr;
   }
 }

@@ -3,7 +3,7 @@
 #include "lab_window.h"
 
 int main() {
-  lab::Window first_window{640, 400, "My window"};
+  lab::Window first_window{640, 400, "My Window"};
   lab::Window second_window{300, 200, "Test"};
 
   second_window.set_key_callback([&](int key, int scancode, int action, int mod) {
