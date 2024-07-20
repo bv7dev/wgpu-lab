@@ -35,7 +35,7 @@ endif()
 add_executable(test-window
   src/lab_window.h
   src/lab_window.cpp
-  src/tests/test_window.cpp
+  tests/test_window.cpp
 )
 
 target_include_directories(test-window PRIVATE src)
