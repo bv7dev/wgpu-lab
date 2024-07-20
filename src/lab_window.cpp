@@ -51,35 +51,35 @@ Window::Window(int width, int height, const char* title) {
   }
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-  _window = glfwCreateWindow(width, height, title, nullptr, nullptr);
-  if (!_window) {
+  _handle = glfwCreateWindow(width, height, title, nullptr, nullptr);
+  if (!_handle) {
     std::cerr << "Error: GLFW: Failed to create Window!" << std::endl;
     return;
   }
-  std::cout << "Info: GLFW: Window(" << _window << ") created!" << std::endl;
-  _state.glfw_windows[_window] = this;
+  std::cout << "Info: GLFW: Window(" << _handle << ") created!" << std::endl;
+  _state.glfw_windows[_handle] = this;
 }
 
-void Window::set_callback(KeyCallback cb) {
+void Window::set_key_callback(KeyCallback cb) {
   _key_callback = cb;
-  glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(_window), [](GLFWwindow* wnd, int key, int scancode, int action, int mod) {
+  glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(_handle), [](GLFWwindow* wnd, int key, int scancode, int action, int mod) {
     _state.glfw_windows[wnd]->_key_callback(key, scancode, action, mod);
   });
 }
 
-void Window::clear_callback() {
-  _state.glfw_windows[_window] = nullptr;
-  glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(_window), nullptr);
+void Window::clear_key_callback() {
+  _state.glfw_windows[_handle] = nullptr;
+  glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(_handle), nullptr);
 }
 
-bool Window::is_open() { return _window != nullptr; }
+bool Window::is_open() { return _handle != nullptr; }
 
 Window::~Window() {
-  if (_window) {
-    glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(_window));
-    _state.glfw_windows.erase(_window);
-    std::cout << "Info: GLFW: Window(" << _window << ") destroyed!" << std::endl;
-    _window = nullptr;
+  if (_handle) {
+    glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(_handle));
+    _state.glfw_windows.erase(_handle);
+    std::cout << "Info: GLFW: Window(" << _handle << ") destroyed!" << std::endl;
+    _handle = nullptr;
   }
 }
 
