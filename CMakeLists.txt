@@ -35,11 +35,13 @@ endif()
 add_executable(test-window
   src/lab_window.h
   src/lab_window.cpp
+  src/lab_webgpu.h
+  src/lab_webgpu.cpp
   tests/test_window.cpp
 )
 
 target_include_directories(test-window PRIVATE src)
-target_link_libraries(test-window glfw)
+target_link_libraries(test-window glfw webgpu glfw3webgpu)
 
 set_target_properties(test-window PROPERTIES
 	CXX_STANDARD 20

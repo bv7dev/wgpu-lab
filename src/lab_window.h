@@ -5,10 +5,15 @@
 
 namespace lab {
 
-using KeyCallback = std::function<void(int key, int scancode, int action, int mod)>;
 using WindowHandle = void*;
 
 class Window {
+  using KeyCallback = std::function<void(int key, int scancode, int action, int mod)>;
+  struct Dimensions {
+    int width;
+    int height;
+  };
+
   WindowHandle _handle;
   KeyCallback _key_callback;
 
@@ -21,7 +26,10 @@ public:
   void set_key_callback(KeyCallback cb);
   void clear_key_callback();
 
-  bool is_open();
+  Dimensions get_dimensions() const;
+  WindowHandle get_handle() const;
+
+  bool is_open() const;
 
   ~Window();
 };
