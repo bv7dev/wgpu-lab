@@ -1,30 +1,25 @@
 #include "lab_webgpu.h"
 
-#define WEBGPU_CPP_IMPLEMENTATION
-#include <webgpu/webgpu.hpp>
-
 #include <glfw3webgpu.h>
 
 namespace lab {
 
-bool create_webgpu_instance(const Window& wnd) {
-  wgpu::Instance instance = wgpu::createInstance({});
-  if (!instance) {
-    std::cerr << "Error: Could not initialize WebGPU!" << std::endl;
-    return false;
-  }
-  std::cout << "WGPU instance: " << instance << std::endl;
+Webgpu::Webgpu() {}
 
-  wgpu::Surface surface = glfwGetWGPUSurface(instance, reinterpret_cast<GLFWwindow*>(wnd.get_handle()));
+void Webgpu::init() {
+  instance = wgpu::createInstance({});
+  if (!instance) {
+    std::cerr << "Error: WGPU: Could not create Instance!" << std::endl;
+    return;
+  }
+  std::cout << "Info: WGPU: Create: " << instance << std::endl;
 
   wgpu::RequestAdapterOptions adapterOpts = {{
       .compatibleSurface = surface,
       .powerPreference = wgpu::PowerPreference::HighPerformance,
   }};
   wgpu::Adapter adapter = instance.requestAdapter(adapterOpts);
-  std::cout << "Got adapter: " << adapter << std::endl;
-
-  instance.release();
+  std::cout << "Info: WGPU: Request: " << adapter << std::endl;
 
   wgpu::DeviceDescriptor deviceDesc = {{
       .label = "My device",
@@ -34,61 +29,60 @@ bool create_webgpu_instance(const Window& wnd) {
               .mode = wgpu::CallbackMode::AllowSpontaneous,
               .callback =
                   [](const WGPUDevice* device, WGPUDeviceLostReason reason, char const* message, void*) {
-                    std::cout << "Device " << device << " lost: reason " << reason;
+                    std::cout << "Warning: WGPU: Device " << device << " lost: reason " << reason;
                     if (message) std::cout << " (" << message << ")";
                     std::cout << std::endl;
                   },
           },
   }};
-  wgpu::Device device = adapter.requestDevice(deviceDesc);
-  std::cout << "Got device: " << device << std::endl;
+  device = adapter.requestDevice(deviceDesc);
+  std::cout << "Info: WGPU: Request: " << device << std::endl;
 
   // set device error callback
   auto onDeviceError = [](wgpu::ErrorType type, char const* message) {
-    std::cerr << "Error: Uncaptured device error: type " << type;
+    std::cerr << "Error: WGPU: " << type;
     if (message) std::cerr << " (" << message << ")";
     std::cerr << std::endl;
   };
   auto cb = device.setUncapturedErrorCallback(onDeviceError);
 
-  wgpu::SurfaceCapabilities surfaceCapabilities;
-  surface.getCapabilities(adapter, &surfaceCapabilities);
-
+  surface.getCapabilities(adapter, &capabilities);
   adapter.release();
+}
 
-  auto dims = wnd.get_dimensions();
-
+void Webgpu::configure_surface(uint32_t width, uint32_t height) {
   wgpu::SurfaceConfiguration surfaceConfig = {{
       .device = device,
-      .format = surfaceCapabilities.formats[0],
+      .format = capabilities.formats[0],
       .usage = wgpu::TextureUsage::RenderAttachment,
       .alphaMode = wgpu::CompositeAlphaMode::Auto,
-      .width = static_cast<uint32_t>(dims.width),
-      .height = static_cast<uint32_t>(dims.height),
+      .width = width,
+      .height = height,
       .presentMode = wgpu::PresentMode::Fifo,
   }};
   surface.configure(surfaceConfig);
+}
 
-  // Describe and create shader module and render pipeline ---------------------
+void Webgpu::create_pipeline() {
   const char* _SHADER_SOURCE = R"(
-@vertex
-fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
-    var p = vec2f(0.0, 0.0);
-    if (in_vertex_index == 0u) {
-        p = vec2f(-0.5, -0.5);
-    } else if (in_vertex_index == 1u) {
-        p = vec2f(0.5, -0.5);
-    } else {
-        p = vec2f(0.0, 0.5);
-    }
-    return vec4f(p, 0.0, 1.0);
-}
+  @vertex
+  fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
+      var p = vec2f(0.0, 0.0);
+      if (in_vertex_index == 0u) {
+          p = vec2f(-0.5, -0.5);
+      } else if (in_vertex_index == 1u) {
+          p = vec2f(0.5, -0.5);
+      } else {
+          p = vec2f(0.0, 0.5);
+      }
+      return vec4f(p, 0.0, 1.0);
+  }
 
-@fragment
-fn fs_main() -> @location(0) vec4f {
-    return vec4f(0.0, 0.4, 1.0, 1.0);
-}
-)";
+  @fragment
+  fn fs_main() -> @location(0) vec4f {
+      return vec4f(0.0, 0.4, 1.0, 1.0);
+  }
+  )";
 
   wgpu::ShaderModuleWGSLDescriptor shaderCodeDesc = {{
       .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
@@ -96,7 +90,7 @@ fn fs_main() -> @location(0) vec4f {
   }};
 
   wgpu::ShaderModuleDescriptor shaderDesc;
-  shaderDesc.nextInChain = &shaderCodeDesc.chain; // connect the chain
+  shaderDesc.nextInChain = &shaderCodeDesc.chain;
   shaderDesc.label = "My shader module";
 
   wgpu::ShaderModule shaderModule = device.createShaderModule(shaderDesc);
@@ -119,7 +113,7 @@ fn fs_main() -> @location(0) vec4f {
   }};
 
   wgpu::ColorTargetState colorTarget = {{
-      .format = surfaceCapabilities.formats[0],
+      .format = capabilities.formats[0],
       .blend = &blendState,
       .writeMask = wgpu::ColorWriteMask::All,
   }};
@@ -127,8 +121,6 @@ fn fs_main() -> @location(0) vec4f {
   wgpu::FragmentState fragmentState = {{
       .module = shaderModule,
       .entryPoint = "fs_main",
-      .constantCount = 0,
-      .constants = nullptr,
       .targetCount = 1,
       .targets = &colorTarget,
   }};
@@ -143,10 +135,90 @@ fn fs_main() -> @location(0) vec4f {
       .multisample = {.count = 1, .mask = ~0u},
       .fragment = &fragmentState,
   }};
-  wgpu::RenderPipeline pipeline = device.createRenderPipeline(pipelineDesc);
+  pipeline = device.createRenderPipeline(pipelineDesc);
   shaderModule.release();
 
+  queue = device.getQueue();
+}
+
+bool Webgpu::render_frame() {
+  if (!instance) return false;
+
+  wgpu::SurfaceTexture surfaceTexture;
+  surface.getCurrentTexture(&surfaceTexture);
+  if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
+    std::cerr << "Error: WGPU: could not get current texture" << std::endl;
+    return false;
+  }
+  WGPUTextureViewDescriptor viewDescriptor{
+      .label = "My texture view",
+      .format = wgpuTextureGetFormat(surfaceTexture.texture),
+      .dimension = WGPUTextureViewDimension_2D,
+      .baseMipLevel = 0,
+      .mipLevelCount = 1,
+      .baseArrayLayer = 0,
+      .arrayLayerCount = 1,
+      .aspect = WGPUTextureAspect_All,
+  };
+  wgpu::TextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+  if (!targetView) {
+    std::cerr << "Error: WGPU: Could not create texture view" << std::endl;
+    return false;
+  }
+
+  wgpu::CommandEncoderDescriptor encoderDesc = {{.label = "My command encoder"}};
+  wgpu::CommandEncoder encoder = device.createCommandEncoder(encoderDesc);
+
+  wgpu::RenderPassColorAttachment renderPassColorAttachment = {{
+      .view = targetView,
+      .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED,
+      .loadOp = wgpu::LoadOp::Clear,
+      .storeOp = wgpu::StoreOp::Store,
+      .clearValue = WGPUColor{0.9, 0.1, 0.2, 1.0},
+  }};
+
+  wgpu::RenderPassDescriptor renderPassDesc = {{
+      .label = "My render pass",
+      .colorAttachmentCount = 1,
+      .colorAttachments = &renderPassColorAttachment,
+  }};
+
+  wgpu::RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
+  renderPass.setPipeline(pipeline);
+
+  renderPass.draw(3, 1, 0, 0);
+
+  renderPass.end();
+  renderPass.release();
+
+  // Finally encode and submit the render pass
+  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {{.label = "My command buffer"}};
+  wgpu::CommandBuffer commands = encoder.finish(cmdBufferDescriptor);
+  encoder.release();
+
+  queue.submit(commands);
+  commands.release();
+
+  targetView.release();
+  surface.present();
+  device.tick();
+
   return true;
+}
+
+Webgpu::~Webgpu() {
+  if (instance) {
+    std::cout << "Info: WGPU: Release: " << instance << std::endl;
+
+    pipeline.release();
+    surface.unconfigure();
+    queue.release();
+    surface.release();
+    device.release();
+    instance.release();
+
+    instance = nullptr;
+  }
 }
 
 } // namespace lab

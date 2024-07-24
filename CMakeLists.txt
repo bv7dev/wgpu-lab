@@ -37,6 +37,8 @@ add_executable(test-window
   src/lab_window.cpp
   src/lab_webgpu.h
   src/lab_webgpu.cpp
+  src/lab.h
+  src/lab.cpp
   tests/test_window.cpp
 )
 
