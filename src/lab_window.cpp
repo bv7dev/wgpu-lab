@@ -1,6 +1,7 @@
 #include "lab_window.h"
 
 #include <GLFW/glfw3.h>
+#include <glfw3webgpu.h>
 
 #include <iostream>
 #include <unordered_map>
@@ -30,6 +31,8 @@ Window::Window(int width, int height, const char* title) : state{get_state()} {
   std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(handle)) << " - " << handle << ") created!" << std::endl;
   state.window_map[handle] = this;
 }
+
+void Window::init_surface(Webgpu& wgpu) { surface = glfwGetWGPUSurface(wgpu.instance, reinterpret_cast<GLFWwindow*>(handle)); }
 
 void Window::set_key_callback(KeyCallback kcb) {
   keycb = kcb;

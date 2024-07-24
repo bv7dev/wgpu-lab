@@ -1,6 +1,3 @@
-#define WEBGPU_CPP_IMPLEMENTATION
-#include <webgpu/webgpu.hpp>
-
 #include <lab.h>
 
 #include <chrono>
@@ -12,11 +9,11 @@ int main() {
   lab::Window second_window{300, 200, "Test"};
 
   lab::Webgpu wgpu;
-  lab::link(first_window, wgpu);
-  lab::link(second_window, wgpu);
+
+  first_window.init_surface(wgpu);
+  second_window.init_surface(wgpu);
 
   wgpu.init(first_window.surface);
-  wgpu.configure_surface(first_window.surface, 640, 400);
   wgpu.create_pipeline();
 
   while (lab::tick()) {
@@ -24,12 +21,12 @@ int main() {
     std::this_thread::sleep_for(16ms);
 
     if (first_window.is_open()) {
-      lab::swt(first_window, wgpu);
+      wgpu.configure_surface(first_window.surface, 640, 400);
       wgpu.render_frame(first_window.surface);
     }
 
     if (second_window.is_open()) {
-      lab::swt(second_window, wgpu);
+      wgpu.configure_surface(second_window.surface, 200, 200);
       wgpu.render_frame(second_window.surface);
     }
   }

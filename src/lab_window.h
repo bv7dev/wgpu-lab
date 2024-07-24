@@ -3,7 +3,7 @@
 
 #include <functional>
 
-#include <webgpu/webgpu.hpp>
+#include "lab_webgpu.h"
 
 #include "lab_state.h"
 
@@ -21,6 +21,8 @@ struct Window {
 
   Window(const Window&) = delete;
   Window& operator=(const Window&) = delete;
+
+  void init_surface(Webgpu&);
 
   void set_key_callback(KeyCallback cb);
   void clear_key_callback();

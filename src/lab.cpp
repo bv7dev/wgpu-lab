@@ -1,3 +1,6 @@
+#define WEBGPU_CPP_IMPLEMENTATION
+#include <webgpu/webgpu.hpp>
+
 #include "lab.h"
 
 #include <GLFW/glfw3.h>
