@@ -9,7 +9,6 @@ using Handle = void*;
 
 struct State {
   std::unordered_map<Handle, Handle> window_map;
-  std::unordered_map<Handle, Handle> wgpu_map;
   bool init = false;
 };
 

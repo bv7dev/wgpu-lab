@@ -6,7 +6,7 @@ namespace lab {
 
 Webgpu::Webgpu() {}
 
-void Webgpu::init() {
+void Webgpu::init(wgpu::Surface surface) {
   instance = wgpu::createInstance({});
   if (!instance) {
     std::cerr << "Error: WGPU: Could not create Instance!" << std::endl;
@@ -50,9 +50,7 @@ void Webgpu::init() {
   adapter.release();
 }
 
-wgpu::Surface Webgpu::configure_surface(wgpu::Surface new_surface, uint32_t width, uint32_t height) {
-  wgpu::Surface old_surface = surface;
-  if (new_surface) surface = new_surface;
+void Webgpu::configure_surface(wgpu::Surface surface, uint32_t width, uint32_t height) {
   wgpu::SurfaceConfiguration surfaceConfig = {{
       .device = device,
       .format = capabilities.formats[0],
@@ -63,7 +61,6 @@ wgpu::Surface Webgpu::configure_surface(wgpu::Surface new_surface, uint32_t widt
       .presentMode = wgpu::PresentMode::Fifo,
   }};
   surface.configure(surfaceConfig);
-  return old_surface;
 }
 
 void Webgpu::create_pipeline() {
@@ -144,7 +141,7 @@ void Webgpu::create_pipeline() {
   queue = device.getQueue();
 }
 
-bool Webgpu::render_frame() {
+bool Webgpu::render_frame(wgpu::Surface surface) {
   if (!instance) return false;
 
   wgpu::SurfaceTexture surfaceTexture;
@@ -214,9 +211,9 @@ Webgpu::~Webgpu() {
     std::cout << "Info: WGPU: Release: " << instance << std::endl;
 
     pipeline.release();
-    surface.unconfigure();
+    // surface.unconfigure();
     queue.release();
-    surface.release();
+    // surface.release();
     device.release();
     instance.release();
 

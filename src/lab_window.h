@@ -3,6 +3,8 @@
 
 #include <functional>
 
+#include <webgpu/webgpu.hpp>
+
 #include "lab_state.h"
 
 namespace lab {
@@ -29,6 +31,8 @@ struct Window {
   bool is_open() const;
 
   ~Window();
+
+  wgpu::Surface surface = nullptr;
 
 private:
   KeyCallback keycb;

@@ -13,39 +13,25 @@ int main() {
 
   lab::Webgpu wgpu;
   lab::link(first_window, wgpu);
+  lab::link(second_window, wgpu);
 
-  // lab::Webgpu wgpu2;
-  // lab::link(second_window, wgpu2);
-
-  lab::prp(second_window, wgpu);
-
-  // bool wgpu2_render = false;
-
-  first_window.set_key_callback([&](int key, int, int action, int mod) {
-    if (key == 32 && action == 0 && mod == 0x0001) {
-      // wgpu2_render = !wgpu2_render;
-    }
-  });
-
-  second_window.set_key_callback([&](int key, int scancode, int action, int mod) {
-    if (key == 32 && action == 0 && mod == 0x0001) {
-      first_window.~Window();
-      std::cout << "test " << scancode << std::endl;
-    }
-  });
+  wgpu.init(first_window.surface);
+  wgpu.configure_surface(first_window.surface, 640, 400);
+  wgpu.create_pipeline();
 
   while (lab::tick()) {
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(16ms);
 
-    // if (wgpu2_render) wgpu2.render_frame();
-    wgpu.render_frame();
+    if (first_window.is_open()) {
+      lab::swt(first_window, wgpu);
+      wgpu.render_frame(first_window.surface);
+    }
 
-    lab::swt(second_window, wgpu);
-
-    wgpu.render_frame();
-
-    lab::bkk(first_window, wgpu);
+    if (second_window.is_open()) {
+      lab::swt(second_window, wgpu);
+      wgpu.render_frame(second_window.surface);
+    }
   }
 
   return 0;

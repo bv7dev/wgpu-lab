@@ -13,18 +13,18 @@ struct Webgpu {
   Webgpu(const Webgpu&) = delete;
   Webgpu& operator=(const Webgpu&) = delete;
 
-  void init();
-  wgpu::Surface configure_surface(wgpu::Surface surface, uint32_t width, uint32_t height);
+  void init(wgpu::Surface surface);
+  void configure_surface(wgpu::Surface surface, uint32_t width, uint32_t height);
   void create_pipeline();
 
-  bool render_frame();
+  bool render_frame(wgpu::Surface surface);
 
   ~Webgpu();
 
   wgpu::SurfaceCapabilities capabilities;
   wgpu::Instance instance;
   wgpu::Device device;
-  wgpu::Surface surface;
+  // wgpu::Surface surface;
   wgpu::Queue queue;
   wgpu::RenderPipeline pipeline;
 };

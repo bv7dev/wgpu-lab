@@ -55,9 +55,9 @@ bool Window::is_open() const { return handle != nullptr; }
 
 Window::~Window() {
   if (handle) {
-    if (state.wgpu_map.contains(handle)) {
-      reinterpret_cast<Webgpu*>(state.wgpu_map[handle])->~Webgpu();
-      state.wgpu_map.erase(handle);
+    if (surface) {
+      surface.unconfigure();
+      surface.release();
     }
     std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(handle)) << " - " << handle << ") destroyed!" << std::endl;
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(handle));
