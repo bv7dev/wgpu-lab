@@ -14,14 +14,16 @@ int main() {
   lab::Webgpu wgpu;
   lab::link(first_window, wgpu);
 
-  lab::Webgpu wgpu2;
-  lab::link(second_window, wgpu2);
+  // lab::Webgpu wgpu2;
+  // lab::link(second_window, wgpu2);
 
-  bool wgpu2_render = false;
+  lab::prp(second_window, wgpu);
+
+  // bool wgpu2_render = false;
 
   first_window.set_key_callback([&](int key, int, int action, int mod) {
     if (key == 32 && action == 0 && mod == 0x0001) {
-      wgpu2_render = !wgpu2_render;
+      // wgpu2_render = !wgpu2_render;
     }
   });
 
@@ -36,8 +38,14 @@ int main() {
     using namespace std::chrono_literals;
     std::this_thread::sleep_for(16ms);
 
-    if (wgpu2_render) wgpu2.render_frame();
+    // if (wgpu2_render) wgpu2.render_frame();
     wgpu.render_frame();
+
+    lab::swt(second_window, wgpu);
+
+    wgpu.render_frame();
+
+    lab::bkk(first_window, wgpu);
   }
 
   return 0;

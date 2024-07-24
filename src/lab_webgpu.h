@@ -14,19 +14,19 @@ struct Webgpu {
   Webgpu& operator=(const Webgpu&) = delete;
 
   void init();
-  void configure_surface(uint32_t width, uint32_t height);
+  wgpu::Surface configure_surface(wgpu::Surface surface, uint32_t width, uint32_t height);
   void create_pipeline();
 
   bool render_frame();
 
   ~Webgpu();
 
+  wgpu::SurfaceCapabilities capabilities;
   wgpu::Instance instance;
   wgpu::Device device;
   wgpu::Surface surface;
   wgpu::Queue queue;
   wgpu::RenderPipeline pipeline;
-  wgpu::SurfaceCapabilities capabilities;
 };
 
 } // namespace lab

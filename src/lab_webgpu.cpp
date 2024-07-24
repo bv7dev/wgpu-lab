@@ -50,7 +50,9 @@ void Webgpu::init() {
   adapter.release();
 }
 
-void Webgpu::configure_surface(uint32_t width, uint32_t height) {
+wgpu::Surface Webgpu::configure_surface(wgpu::Surface new_surface, uint32_t width, uint32_t height) {
+  wgpu::Surface old_surface = surface;
+  if (new_surface) surface = new_surface;
   wgpu::SurfaceConfiguration surfaceConfig = {{
       .device = device,
       .format = capabilities.formats[0],
@@ -61,6 +63,7 @@ void Webgpu::configure_surface(uint32_t width, uint32_t height) {
       .presentMode = wgpu::PresentMode::Fifo,
   }};
   surface.configure(surfaceConfig);
+  return old_surface;
 }
 
 void Webgpu::create_pipeline() {
