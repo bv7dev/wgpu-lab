@@ -49,19 +49,19 @@ int main() {
   lab::Webgpu webgpu{"My instance"};
 
   lab::Shader shader{webgpu.device};
-
   webgpu.create_pipeline(shader.module);
 
-  // lab::load(webgpu, shader); --> load to signal transfer data to gpu
+  // lab::load(webgpu, shader);
+  // lab::load(webgpu, buffer); ... overload for data transfers
 
   lab::Surface surface{window, webgpu};
 
-  // lab::create_surface(window, webgpu);
+  // lab::Surface surface = lab::create_surface(window, webgpu); --> requires move
 
   while (lab::tick()) {
     webgpu.render_frame(surface.wgpu_surface);
 
-    // lab::render(webgpu, surface);
+    // lab::render(surface);
 
     lab::sleep(16ms);
   }
