@@ -57,6 +57,9 @@ Webgpu::Webgpu(const char* lbl) : label{lbl} {
 }
 
 void Webgpu::create_pipeline(wgpu::ShaderModule shaderModule) {
+  if (pipeline) pipeline.release();
+  if (queue) queue.release();
+
   wgpu::BlendComponent blendColor = {{
       .operation = wgpu::BlendOperation::Add,
       .srcFactor = wgpu::BlendFactor::SrcAlpha,

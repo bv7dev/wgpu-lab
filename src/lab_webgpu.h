@@ -19,10 +19,10 @@ struct Webgpu {
 
   wgpu::SurfaceCapabilities capabilities;
 
-  wgpu::Instance instance;
-  wgpu::Device device;
-  wgpu::RenderPipeline pipeline;
-  wgpu::Queue queue;
+  wgpu::Instance instance = nullptr;
+  wgpu::Device device = nullptr;
+  wgpu::RenderPipeline pipeline = nullptr;
+  wgpu::Queue queue = nullptr;
 
   const char* label;
 };
