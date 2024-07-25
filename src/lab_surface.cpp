@@ -25,6 +25,7 @@ void Surface::configure() {
 Surface::~Surface() {
   wgpu_surface.unconfigure();
   wgpu_surface.release();
+  wgpu_surface = nullptr;
 }
 
 } // namespace lab
