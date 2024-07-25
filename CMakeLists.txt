@@ -34,6 +34,8 @@ endif()
 
 # Test -------------------------------------------------------------------------
 add_executable(test
+  src/lab_shader.h
+  src/lab_shader.cpp
   src/lab_state.h
   src/lab_surface.h
   src/lab_surface.cpp

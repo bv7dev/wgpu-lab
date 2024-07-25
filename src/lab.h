@@ -1,6 +1,7 @@
 #ifndef WGPU_LAB_MAIN_H
 #define WGPU_LAB_MAIN_H
 
+#include "lab_shader.h"
 #include "lab_surface.h"
 #include "lab_webgpu.h"
 #include "lab_window.h"
