@@ -10,7 +10,7 @@ using Handle = void*;
 struct Window {
   using KeyCallback = std::function<void(int key, int scancode, int action, int mod)>;
 
-  Window(int width, int height, const char* title);
+  Window(const char* title, int width, int height);
 
   Window(const Window&) = delete;
   Window& operator=(const Window&) = delete;

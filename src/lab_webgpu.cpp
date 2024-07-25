@@ -57,37 +57,6 @@ Webgpu::Webgpu(const char* lbl) : label{lbl} {
 }
 
 void Webgpu::create_pipeline(wgpu::ShaderModule shaderModule) {
-  // const char* _SHADER_SOURCE = R"(
-  // @vertex
-  // fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
-  //     var p = vec2f(0.0, 0.0);
-  //     if (in_vertex_index == 0u) {
-  //         p = vec2f(-0.5, -0.5);
-  //     } else if (in_vertex_index == 1u) {
-  //         p = vec2f(0.5, -0.5);
-  //     } else {
-  //         p = vec2f(0.0, 0.5);
-  //     }
-  //     return vec4f(p, 0.0, 1.0);
-  // }
-
-  // @fragment
-  // fn fs_main() -> @location(0) vec4f {
-  //     return vec4f(0.0, 0.4, 1.0, 1.0);
-  // }
-  // )";
-
-  // wgpu::ShaderModuleWGSLDescriptor shaderCodeDesc = {{
-  //     .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
-  //     .code = _SHADER_SOURCE,
-  // }};
-
-  // wgpu::ShaderModuleDescriptor shaderDesc;
-  // shaderDesc.nextInChain = &shaderCodeDesc.chain;
-  // shaderDesc.label = "My shader module";
-
-  // wgpu::ShaderModule shaderModule = device.createShaderModule(shaderDesc);
-
   wgpu::BlendComponent blendColor = {{
       .operation = wgpu::BlendOperation::Add,
       .srcFactor = wgpu::BlendFactor::SrcAlpha,
@@ -129,7 +98,7 @@ void Webgpu::create_pipeline(wgpu::ShaderModule shaderModule) {
       .fragment = &fragmentState,
   }};
   pipeline = device.createRenderPipeline(pipelineDesc);
-  // shaderModule.release();
+  shaderModule.release();
 
   queue = device.getQueue();
 }

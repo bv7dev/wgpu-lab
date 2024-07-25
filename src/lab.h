@@ -17,6 +17,9 @@ using Handle = void*;
 
 bool tick();
 
+void render_frame(const Surface&);
+void create_pipeline(Webgpu&, const Shader&);
+
 template <class _Rep, class _Period> inline void sleep(const std::chrono::duration<_Rep, _Period>& d) { std::this_thread::sleep_for(d); }
 
 } // namespace lab

@@ -1,16 +1,15 @@
 #include <lab>
 
 int main() {
-  lab::Window window{640, 400, "My Window"};
-  lab::Webgpu webgpu{"My instance"};
-  lab::Shader shader{"shaders/test.wgsl"};
+  lab::Window window{"My Window", 640, 400};
+  lab::Webgpu webgpu{"My Instance"};
+  lab::Shader shader{"My Shader", "shaders/test.wgsl"};
+
+  lab::create_pipeline(webgpu, shader);
   lab::Surface surface{window, webgpu};
 
-  shader.transfer(webgpu.device);
-  webgpu.create_pipeline(shader.module);
-
   while (lab::tick()) {
-    webgpu.render_frame(surface.wgpu_surface);
+    lab::render_frame(surface);
     lab::sleep(16ms);
   }
 

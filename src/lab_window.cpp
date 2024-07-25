@@ -7,7 +7,7 @@
 
 namespace lab {
 
-Window::Window(int width, int height, const char* title) {
+Window::Window(const char* title, int width, int height) {
   if (!state.init) {
     if (!glfwInit()) {
       std::cerr << "Error: GLFW: Failed to initialize!" << std::endl;

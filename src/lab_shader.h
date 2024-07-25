@@ -8,12 +8,13 @@
 namespace lab {
 
 struct Shader {
-  wgpu::ShaderModule module;
+  std::string label;
   std::string source;
+  wgpu::ShaderModule module;
 
-  Shader(const char* path);
+  Shader(const std::string& label, const std::string& path);
 
-  void transfer(wgpu::Device device);
+  wgpu::ShaderModule transfer(wgpu::Device device) const;
 
   ~Shader();
 };
