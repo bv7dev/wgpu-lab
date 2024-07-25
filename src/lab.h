@@ -14,12 +14,9 @@ namespace lab {
 
 using Handle = void*;
 
-template <class _Rep, class _Period> inline void sleep(const std::chrono::duration<_Rep, _Period>& d) { std::this_thread::sleep_for(d); }
-
 bool tick();
-void link(Window&, Webgpu&);
 
-void swt(Window&, Webgpu&);
+template <class _Rep, class _Period> inline void sleep(const std::chrono::duration<_Rep, _Period>& d) { std::this_thread::sleep_for(d); }
 
 } // namespace lab
 

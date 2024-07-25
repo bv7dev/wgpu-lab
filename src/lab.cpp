@@ -11,6 +11,8 @@
 
 namespace lab {
 
+State state;
+
 bool tick() {
   glfwPollEvents();
 

@@ -4,8 +4,6 @@
 #include "lab_webgpu.h"
 #include "lab_window.h"
 
-#include <webgpu/webgpu.hpp>
-
 namespace lab {
 
 struct Surface {

@@ -35,7 +35,6 @@ endif()
 # Test -------------------------------------------------------------------------
 add_executable(test
   src/lab_state.h
-  src/lab_state.cpp
   src/lab_surface.h
   src/lab_surface.cpp
   src/lab_window.h

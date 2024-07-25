@@ -8,12 +8,10 @@ namespace lab {
 using Handle = void*;
 using Objmap = std::unordered_map<Handle, Handle>;
 
-struct State {
-  Objmap window_map;
+extern struct State {
+  Objmap window_map{};
   bool init = false;
-};
-
-extern State state;
+} state;
 
 } // namespace lab
 
