@@ -5,9 +5,6 @@
 #include "lab_state.h"
 
 #include <GLFW/glfw3.h>
-#include <glfw3webgpu.h>
-
-#include <thread>
 
 namespace lab {
 

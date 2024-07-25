@@ -1,4 +1,4 @@
-#include <lab.h>
+#include <lab>
 
 int main() {
   lab::Window window{640, 400, "My Window"};

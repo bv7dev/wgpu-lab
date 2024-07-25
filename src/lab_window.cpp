@@ -2,10 +2,8 @@
 #include "lab_state.h"
 
 #include <GLFW/glfw3.h>
-#include <glfw3webgpu.h>
 
 #include <iostream>
-#include <unordered_map>
 
 namespace lab {
 
