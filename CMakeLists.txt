@@ -44,7 +44,7 @@ add_executable(test
   src/lab_webgpu.cpp
   src/lab.h
   src/lab.cpp
-  tests/test_window_2.cpp
+  tests/test_window.cpp
 )
 
 target_include_directories(test PRIVATE src)
