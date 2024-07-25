@@ -58,6 +58,8 @@ Webgpu::Webgpu(const char* lbl) : label{lbl} {
   adapter.release();
 
   glfwDestroyWindow(window);
+
+  queue = device.getQueue();
 }
 
 void Webgpu::create_pipeline(wgpu::ShaderModule shaderModule) {
@@ -106,8 +108,6 @@ void Webgpu::create_pipeline(wgpu::ShaderModule shaderModule) {
   }};
   pipeline = device.createRenderPipeline(pipelineDesc);
   shaderModule.release();
-
-  queue = device.getQueue();
 }
 
 void Webgpu::render_frame(wgpu::Surface surface) {

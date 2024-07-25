@@ -43,6 +43,4 @@ bool tick() {
 
 void render_frame(const Surface& surface) { surface.webgpu.render_frame(surface.wgpu_surface); }
 
-void create_pipeline(Webgpu& webgpu, const Shader& shader) { webgpu.create_pipeline(shader.transfer(webgpu.device)); }
-
 } // namespace lab

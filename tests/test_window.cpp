@@ -6,10 +6,11 @@ int main() {
   lab::Shader shader{"My Shader", "shaders/test.wgsl"};
 
   lab::Surface surface{window, webgpu};
-  lab::create_pipeline(webgpu, shader);
+  lab::Pipeline pipeline{webgpu, shader, surface};
 
   while (lab::tick()) {
-    lab::render_frame(surface);
+    // lab::render_frame(surface);
+    pipeline.render_frame();
     lab::sleep(16ms);
   }
 
