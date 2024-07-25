@@ -1,3 +1,5 @@
+// Tutorial: https://eliemichel.github.io/LearnWebGPU/
+
 #define WEBGPU_CPP_IMPLEMENTATION
 #include <webgpu/webgpu.hpp>
 

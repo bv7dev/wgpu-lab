@@ -9,16 +9,17 @@ add_subdirectory(libs/glfw-3.4)
 add_subdirectory(libs/webgpu-dawn)
 add_subdirectory(libs/glfw3webgpu)
 
-add_executable(${CMAKE_PROJECT_NAME}
-  src/webgpu-utils.h
-  src/webgpu-utils.cpp
-  src/main.cpp
+# Tutorial ---------------------------------------------------------------------
+add_executable(tutorial
+  tutorial/webgpu-utils.h
+  tutorial/webgpu-utils.cpp
+  tutorial/main.cpp
 )
 
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE src)
-target_link_libraries(${CMAKE_PROJECT_NAME} glfw webgpu glfw3webgpu)
+target_include_directories(tutorial PRIVATE src)
+target_link_libraries(tutorial glfw webgpu glfw3webgpu)
 
-set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+set_target_properties(tutorial PROPERTIES
 	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
@@ -26,13 +27,13 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
 )
 
 if (MSVC)
-	target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE /W4)
+	target_compile_options(tutorial PRIVATE /W4)
 else()
-	target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic)
+	target_compile_options(tutorial PRIVATE -Wall -Wextra -pedantic)
 endif()
 
-
-add_executable(test-window
+# Test -------------------------------------------------------------------------
+add_executable(test
   src/lab_state.h
   src/lab_state.cpp
   src/lab_surface.h
@@ -46,10 +47,10 @@ add_executable(test-window
   tests/test_window_2.cpp
 )
 
-target_include_directories(test-window PRIVATE src)
-target_link_libraries(test-window glfw webgpu glfw3webgpu)
+target_include_directories(test PRIVATE src)
+target_link_libraries(test glfw webgpu glfw3webgpu)
 
-set_target_properties(test-window PROPERTIES
+set_target_properties(test PROPERTIES
 	CXX_STANDARD 20
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS OFF
@@ -57,7 +58,7 @@ set_target_properties(test-window PROPERTIES
 )
 
 if (MSVC)
-	target_compile_options(test-window PRIVATE /W4)
+	target_compile_options(test PRIVATE /W4)
 else()
-	target_compile_options(test-window PRIVATE -Wall -Wextra -pedantic)
+	target_compile_options(test PRIVATE -Wall -Wextra -pedantic)
 endif()
