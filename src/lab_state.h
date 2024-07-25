@@ -1,5 +1,5 @@
-#ifndef LAB_STATE_H
-#define LAB_STATE_H
+#ifndef WGPU_LAB_STATE_H
+#define WGPU_LAB_STATE_H
 
 #include <unordered_map>
 
@@ -14,4 +14,4 @@ struct State {
 
 } // namespace lab
 
-#endif // LAB_STATE_H
+#endif // WGPU_LAB_STATE_H

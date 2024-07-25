@@ -1,5 +1,5 @@
-#ifndef LAB_WINDOW_H
-#define LAB_WINDOW_H
+#ifndef WGPU_LAB_WINDOW_H
+#define WGPU_LAB_WINDOW_H
 
 #include <functional>
 
@@ -44,4 +44,4 @@ private:
 
 } // namespace lab
 
-#endif // LAB_WINDOW_H
+#endif // WGPU_LAB_WINDOW_H
