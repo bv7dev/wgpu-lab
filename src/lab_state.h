@@ -6,11 +6,14 @@
 namespace lab {
 
 using Handle = void*;
+using Objmap = std::unordered_map<Handle, Handle>;
 
 struct State {
-  std::unordered_map<Handle, Handle> window_map;
+  Objmap window_map;
   bool init = false;
 };
+
+extern State state;
 
 } // namespace lab
 

@@ -4,7 +4,17 @@
 
 namespace lab {
 
-Webgpu::Webgpu() {}
+Webgpu::Webgpu() {
+  glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  GLFWwindow* window = glfwCreateWindow(1, 1, "", nullptr, nullptr);
+
+  wgpu::Surface surface = glfwGetWGPUSurface(instance, window);
+  init(surface);
+
+  glfwDestroyWindow(window);
+}
 
 void Webgpu::init(wgpu::Surface surface) {
   instance = wgpu::createInstance({});
@@ -38,7 +48,6 @@ void Webgpu::init(wgpu::Surface surface) {
   device = adapter.requestDevice(deviceDesc);
   std::cout << "Info: WGPU: Request: " << device << std::endl;
 
-  // set device error callback
   auto onDeviceError = [](wgpu::ErrorType type, char const* message) {
     std::cerr << "Error: WGPU: " << type;
     if (message) std::cerr << " (" << message << ")";
@@ -48,19 +57,6 @@ void Webgpu::init(wgpu::Surface surface) {
 
   surface.getCapabilities(adapter, &capabilities);
   adapter.release();
-}
-
-void Webgpu::configure_surface(wgpu::Surface surface, uint32_t width, uint32_t height) {
-  wgpu::SurfaceConfiguration surfaceConfig = {{
-      .device = device,
-      .format = capabilities.formats[0],
-      .usage = wgpu::TextureUsage::RenderAttachment,
-      .alphaMode = wgpu::CompositeAlphaMode::Auto,
-      .width = width,
-      .height = height,
-      .presentMode = wgpu::PresentMode::Fifo,
-  }};
-  surface.configure(surfaceConfig);
 }
 
 void Webgpu::create_pipeline() {
@@ -141,14 +137,14 @@ void Webgpu::create_pipeline() {
   queue = device.getQueue();
 }
 
-bool Webgpu::render_frame(wgpu::Surface surface) {
-  if (!instance) return false;
+void Webgpu::render_frame(wgpu::Surface surface) {
+  if (!instance) return;
 
   wgpu::SurfaceTexture surfaceTexture;
   surface.getCurrentTexture(&surfaceTexture);
   if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
     std::cerr << "Error: WGPU: could not get current texture" << std::endl;
-    return false;
+    return;
   }
   WGPUTextureViewDescriptor viewDescriptor{
       .label = "My texture view",
@@ -163,7 +159,7 @@ bool Webgpu::render_frame(wgpu::Surface surface) {
   wgpu::TextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
   if (!targetView) {
     std::cerr << "Error: WGPU: Could not create texture view" << std::endl;
-    return false;
+    return;
   }
 
   wgpu::CommandEncoderDescriptor encoderDesc = {{.label = "My command encoder"}};
@@ -191,7 +187,6 @@ bool Webgpu::render_frame(wgpu::Surface surface) {
   renderPass.end();
   renderPass.release();
 
-  // Finally encode and submit the render pass
   wgpu::CommandBufferDescriptor cmdBufferDescriptor = {{.label = "My command buffer"}};
   wgpu::CommandBuffer commands = encoder.finish(cmdBufferDescriptor);
   encoder.release();
@@ -202,8 +197,6 @@ bool Webgpu::render_frame(wgpu::Surface surface) {
   targetView.release();
   surface.present();
   device.tick();
-
-  return true;
 }
 
 Webgpu::~Webgpu() {
@@ -211,9 +204,7 @@ Webgpu::~Webgpu() {
     std::cout << "Info: WGPU: Release: " << instance << std::endl;
 
     pipeline.release();
-    // surface.unconfigure();
     queue.release();
-    // surface.release();
     device.release();
     instance.release();
 

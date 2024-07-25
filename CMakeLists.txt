@@ -33,13 +33,17 @@ endif()
 
 
 add_executable(test-window
+  src/lab_state.h
+  src/lab_state.cpp
+  src/lab_surface.h
+  src/lab_surface.cpp
   src/lab_window.h
   src/lab_window.cpp
   src/lab_webgpu.h
   src/lab_webgpu.cpp
   src/lab.h
   src/lab.cpp
-  tests/test_window.cpp
+  tests/test_window_2.cpp
 )
 
 target_include_directories(test-window PRIVATE src)

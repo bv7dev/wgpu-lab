@@ -1,8 +1,6 @@
 #ifndef WGPU_LAB_WEBGPU_H
 #define WGPU_LAB_WEBGPU_H
 
-#include <iostream>
-
 #include <webgpu/webgpu.hpp>
 
 namespace lab {
@@ -14,19 +12,18 @@ struct Webgpu {
   Webgpu& operator=(const Webgpu&) = delete;
 
   void init(wgpu::Surface surface);
-  void configure_surface(wgpu::Surface surface, uint32_t width, uint32_t height);
   void create_pipeline();
 
-  bool render_frame(wgpu::Surface surface);
+  void render_frame(wgpu::Surface surface);
 
   ~Webgpu();
 
   wgpu::SurfaceCapabilities capabilities;
+
   wgpu::Instance instance;
   wgpu::Device device;
-  // wgpu::Surface surface;
-  wgpu::Queue queue;
   wgpu::RenderPipeline pipeline;
+  wgpu::Queue queue;
 };
 
 } // namespace lab

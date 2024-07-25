@@ -1,4 +1,5 @@
 #include "lab_window.h"
+#include "lab_state.h"
 
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
@@ -6,13 +7,9 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "lab.h"
-
 namespace lab {
 
-State& get_state(); // forward declacre get_state() defined in lab.cpp
-
-Window::Window(int width, int height, const char* title) : state{get_state()} {
+Window::Window(int width, int height, const char* title) {
   if (!state.init) {
     if (!glfwInit()) {
       std::cerr << "Error: GLFW: Failed to initialize!" << std::endl;
@@ -32,12 +29,10 @@ Window::Window(int width, int height, const char* title) : state{get_state()} {
   state.window_map[handle] = this;
 }
 
-void Window::init_surface(Webgpu& wgpu) { surface = glfwGetWGPUSurface(wgpu.instance, reinterpret_cast<GLFWwindow*>(handle)); }
-
 void Window::set_key_callback(KeyCallback kcb) {
   keycb = kcb;
   glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(handle), [](GLFWwindow* wnd, int key, int scancode, int action, int mod) {
-    reinterpret_cast<Window*>(get_state().window_map[wnd])->keycb(key, scancode, action, mod);
+    reinterpret_cast<Window*>(state.window_map[wnd])->keycb(key, scancode, action, mod);
   });
 }
 
@@ -46,10 +41,16 @@ void Window::clear_key_callback() {
   glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(handle), nullptr);
 }
 
-Window::Dimensions Window::get_dimensions() const {
-  int width, height;
-  glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(handle), &width, &height);
-  return {width, height};
+int Window::width() const {
+  int width;
+  glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(handle), &width, nullptr);
+  return width;
+}
+
+int Window::height() const {
+  int height;
+  glfwGetWindowSize(reinterpret_cast<GLFWwindow*>(handle), &height, nullptr);
+  return height;
 }
 
 Handle Window::get_handle() const { return handle; }
@@ -58,10 +59,6 @@ bool Window::is_open() const { return handle != nullptr; }
 
 Window::~Window() {
   if (handle) {
-    if (surface) {
-      surface.unconfigure();
-      surface.release();
-    }
     std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(handle)) << " - " << handle << ") destroyed!" << std::endl;
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(handle));
     state.window_map.erase(handle);

@@ -2,21 +2,14 @@
 #include <webgpu/webgpu.hpp>
 
 #include "lab.h"
+#include "lab_state.h"
 
 #include <GLFW/glfw3.h>
 #include <glfw3webgpu.h>
 
+#include <thread>
+
 namespace lab {
-
-State state;
-State& get_state() { return state; }
-
-void link(Window& wnd, Webgpu& wgpu) { wnd.surface = glfwGetWGPUSurface(wgpu.instance, reinterpret_cast<GLFWwindow*>(wnd.get_handle())); }
-
-void swt(Window& wnd, Webgpu& wgpu) {
-  auto dims = wnd.get_dimensions();
-  wgpu.configure_surface(wnd.surface, dims.width, dims.height);
-}
 
 bool tick() {
   glfwPollEvents();
