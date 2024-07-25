@@ -22,8 +22,6 @@ void Surface::configure() {
   wgpu_surface.configure(surfaceConfig);
 }
 
-void Surface::render_frame() { webgpu.render_frame(wgpu_surface); }
-
 Surface::~Surface() {
   wgpu_surface.unconfigure();
   wgpu_surface.release();

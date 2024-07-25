@@ -18,7 +18,6 @@ struct Surface {
   Surface& operator=(const Surface&) = delete;
 
   void configure();
-  void render_frame();
 
   ~Surface();
 };

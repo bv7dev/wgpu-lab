@@ -6,15 +6,14 @@
 namespace lab {
 
 struct Webgpu {
-  Webgpu();
+  Webgpu(const char* label);
 
   Webgpu(const Webgpu&) = delete;
   Webgpu& operator=(const Webgpu&) = delete;
 
-  void init(wgpu::Surface surface);
-  void create_pipeline();
+  void create_pipeline(wgpu::ShaderModule);
 
-  void render_frame(wgpu::Surface surface);
+  void render_frame(wgpu::Surface);
 
   ~Webgpu();
 
@@ -24,6 +23,8 @@ struct Webgpu {
   wgpu::Device device;
   wgpu::RenderPipeline pipeline;
   wgpu::Queue queue;
+
+  const char* label;
 };
 
 } // namespace lab

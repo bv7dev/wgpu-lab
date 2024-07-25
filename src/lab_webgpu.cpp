@@ -4,19 +4,14 @@
 
 namespace lab {
 
-Webgpu::Webgpu() {
+Webgpu::Webgpu(const char* lbl) : label{lbl} {
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
   GLFWwindow* window = glfwCreateWindow(1, 1, "", nullptr, nullptr);
 
   wgpu::Surface surface = glfwGetWGPUSurface(instance, window);
-  init(surface);
 
-  glfwDestroyWindow(window);
-}
-
-void Webgpu::init(wgpu::Surface surface) {
   instance = wgpu::createInstance({});
   if (!instance) {
     std::cerr << "Error: WGPU: Could not create Instance!" << std::endl;
@@ -32,8 +27,8 @@ void Webgpu::init(wgpu::Surface surface) {
   std::cout << "Info: WGPU: Request: " << adapter << std::endl;
 
   wgpu::DeviceDescriptor deviceDesc = {{
-      .label = "My device",
-      .defaultQueue = {.label = "My default queue"},
+      .label = "default device",
+      .defaultQueue = {.label = "default queue"},
       .deviceLostCallbackInfo =
           {
               .mode = wgpu::CallbackMode::AllowSpontaneous,
@@ -57,39 +52,41 @@ void Webgpu::init(wgpu::Surface surface) {
 
   surface.getCapabilities(adapter, &capabilities);
   adapter.release();
+
+  glfwDestroyWindow(window);
 }
 
-void Webgpu::create_pipeline() {
-  const char* _SHADER_SOURCE = R"(
-  @vertex
-  fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
-      var p = vec2f(0.0, 0.0);
-      if (in_vertex_index == 0u) {
-          p = vec2f(-0.5, -0.5);
-      } else if (in_vertex_index == 1u) {
-          p = vec2f(0.5, -0.5);
-      } else {
-          p = vec2f(0.0, 0.5);
-      }
-      return vec4f(p, 0.0, 1.0);
-  }
+void Webgpu::create_pipeline(wgpu::ShaderModule shaderModule) {
+  // const char* _SHADER_SOURCE = R"(
+  // @vertex
+  // fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
+  //     var p = vec2f(0.0, 0.0);
+  //     if (in_vertex_index == 0u) {
+  //         p = vec2f(-0.5, -0.5);
+  //     } else if (in_vertex_index == 1u) {
+  //         p = vec2f(0.5, -0.5);
+  //     } else {
+  //         p = vec2f(0.0, 0.5);
+  //     }
+  //     return vec4f(p, 0.0, 1.0);
+  // }
 
-  @fragment
-  fn fs_main() -> @location(0) vec4f {
-      return vec4f(0.0, 0.4, 1.0, 1.0);
-  }
-  )";
+  // @fragment
+  // fn fs_main() -> @location(0) vec4f {
+  //     return vec4f(0.0, 0.4, 1.0, 1.0);
+  // }
+  // )";
 
-  wgpu::ShaderModuleWGSLDescriptor shaderCodeDesc = {{
-      .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
-      .code = _SHADER_SOURCE,
-  }};
+  // wgpu::ShaderModuleWGSLDescriptor shaderCodeDesc = {{
+  //     .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
+  //     .code = _SHADER_SOURCE,
+  // }};
 
-  wgpu::ShaderModuleDescriptor shaderDesc;
-  shaderDesc.nextInChain = &shaderCodeDesc.chain;
-  shaderDesc.label = "My shader module";
+  // wgpu::ShaderModuleDescriptor shaderDesc;
+  // shaderDesc.nextInChain = &shaderCodeDesc.chain;
+  // shaderDesc.label = "My shader module";
 
-  wgpu::ShaderModule shaderModule = device.createShaderModule(shaderDesc);
+  // wgpu::ShaderModule shaderModule = device.createShaderModule(shaderDesc);
 
   wgpu::BlendComponent blendColor = {{
       .operation = wgpu::BlendOperation::Add,
@@ -132,7 +129,7 @@ void Webgpu::create_pipeline() {
       .fragment = &fragmentState,
   }};
   pipeline = device.createRenderPipeline(pipelineDesc);
-  shaderModule.release();
+  // shaderModule.release();
 
   queue = device.getQueue();
 }
