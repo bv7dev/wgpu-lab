@@ -48,6 +48,9 @@ add_executable(test
   tests/test_window.cpp
 )
 
+# copy shader file to binary dir
+configure_file(shaders/test.wgsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/test.wgsl COPYONLY)
+
 target_include_directories(test PRIVATE src)
 target_link_libraries(test glfw webgpu glfw3webgpu)
 

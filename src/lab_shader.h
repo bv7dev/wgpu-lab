@@ -3,10 +3,13 @@
 
 #include <webgpu/webgpu.hpp>
 
+#include <iostream>
+
 namespace lab {
 
 struct Shader {
   wgpu::ShaderModule module;
+  std::string source;
 
   Shader(const char* path);
 

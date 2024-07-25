@@ -1,34 +1,27 @@
 #include "lab_shader.h"
 
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+
 namespace lab {
 
-const char* _SHADER_SOURCE = R"(
-  @vertex
-  fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4f {
-      var p = vec2f(0.0, 0.0);
-      if (in_vertex_index == 0u) {
-          p = vec2f(-0.5, -0.5);
-      } else if (in_vertex_index == 1u) {
-          p = vec2f(0.5, -0.5);
-      } else {
-          p = vec2f(0.0, 0.5);
-      }
-      return vec4f(p, 0.0, 1.0);
+Shader::Shader(const char* path) {
+  std::ifstream file(path);
+  if (!file.is_open()) {
+    std::cerr << "Error: Shader: Could not open " << path << std::endl;
+    return;
   }
-  @fragment
-  fn fs_main() -> @location(0) vec4f {
-      return vec4f(0.0, 0.4, 1.0, 1.0);
-  }
-  )";
-
-Shader::Shader(const char*) {
-  // load shader from source
+  std::stringstream buffer;
+  buffer << file.rdbuf();
+  source = buffer.str();
 }
 
 void Shader::transfer(wgpu::Device device) {
   wgpu::ShaderModuleWGSLDescriptor wgslDesc = {{
       .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
-      .code = _SHADER_SOURCE,
+      .code = source.c_str(),
   }};
 
   wgpu::ShaderModuleDescriptor shaderDesc;
