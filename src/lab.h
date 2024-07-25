@@ -15,6 +15,7 @@ namespace lab {
 
 using Handle = void*;
 
+bool init();
 bool tick();
 
 void render_frame(const Surface&);

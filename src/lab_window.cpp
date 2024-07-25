@@ -7,15 +7,11 @@
 
 namespace lab {
 
+bool init();
+
 Window::Window(const char* title, int width, int height) {
-  if (!state.init) {
-    if (!glfwInit()) {
-      std::cerr << "Error: GLFW: Failed to initialize!" << std::endl;
-      return;
-    }
-    std::cout << "Info: GLFW: Initialized!" << std::endl;
-    state.init = true;
-  }
+  init();
+  glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
   handle = glfwCreateWindow(width, height, title, nullptr, nullptr);

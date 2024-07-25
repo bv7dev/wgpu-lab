@@ -1,8 +1,8 @@
 #include <lab>
 
 int main() {
-  lab::Window window{"My Window", 640, 400};
   lab::Webgpu webgpu{"My Instance"};
+  lab::Window window{"My Window", 640, 400};
   lab::Shader shader{"My Shader", "shaders/test.wgsl"};
 
   lab::create_pipeline(webgpu, shader);

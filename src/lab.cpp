@@ -10,6 +10,19 @@ namespace lab {
 
 State state;
 
+bool init() {
+  if (!state.init) {
+    if (!glfwInit()) {
+      std::cerr << "Error: GLFW: Failed to initialize!" << std::endl;
+      return false;
+    }
+    std::cout << "Info: GLFW: Initialized!" << std::endl;
+    state.init = true;
+    return true;
+  }
+  return false;
+}
+
 bool tick() {
   glfwPollEvents();
 
