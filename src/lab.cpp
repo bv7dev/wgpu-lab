@@ -41,6 +41,4 @@ bool tick() {
   return state.window_map.size() > 0;
 }
 
-void render_frame(const Surface& surface) { surface.webgpu.render_frame(surface.wgpu_surface); }
-
 } // namespace lab

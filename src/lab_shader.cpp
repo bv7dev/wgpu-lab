@@ -28,14 +28,14 @@ wgpu::ShaderModule Shader::transfer(wgpu::Device device) {
   shaderDesc.nextInChain = &wgslDesc.chain;
   shaderDesc.label = "My shader module";
 
-  wgpu_shader_module = device.createShaderModule(shaderDesc);
-  return wgpu_shader_module;
+  wgpu_shadermodule = device.createShaderModule(shaderDesc);
+  return wgpu_shadermodule;
 }
 
 Shader::~Shader() {
-  if (wgpu_shader_module) {
-    wgpu_shader_module.release();
-    wgpu_shader_module = nullptr;
+  if (wgpu_shadermodule) {
+    wgpu_shadermodule.release();
+    wgpu_shadermodule = nullptr;
   }
 }
 

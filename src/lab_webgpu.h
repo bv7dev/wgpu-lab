@@ -11,10 +11,6 @@ struct Webgpu {
   Webgpu(const Webgpu&) = delete;
   Webgpu& operator=(const Webgpu&) = delete;
 
-  void create_pipeline(wgpu::ShaderModule);
-
-  void render_frame(wgpu::Surface);
-
   ~Webgpu();
 
   wgpu::SurfaceCapabilities capabilities;

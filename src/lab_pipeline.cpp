@@ -93,7 +93,7 @@ Pipeline::Pipeline(Webgpu& wg, Shader& sh, Surface& sf) : webgpu{wg}, shader{sh}
   }};
 
   wgpu::FragmentState fragmentState = {{
-      .module = shader.wgpu_shader_module,
+      .module = shader.wgpu_shadermodule,
       .entryPoint = "fs_main",
       .targetCount = 1,
       .targets = &colorTarget,
@@ -101,7 +101,7 @@ Pipeline::Pipeline(Webgpu& wg, Shader& sh, Surface& sf) : webgpu{wg}, shader{sh}
 
   wgpu::RenderPipelineDescriptor pipelineDesc = {{
       .label = "My render pipeline",
-      .vertex = {.module = shader.wgpu_shader_module, .entryPoint = "vs_main"},
+      .vertex = {.module = shader.wgpu_shadermodule, .entryPoint = "vs_main"},
       .primitive = {.topology = wgpu::PrimitiveTopology::TriangleList,
                     .stripIndexFormat = wgpu::IndexFormat::Undefined,
                     .frontFace = wgpu::FrontFace::CCW,

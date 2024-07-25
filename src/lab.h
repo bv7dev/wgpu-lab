@@ -19,8 +19,6 @@ using Handle = void*;
 bool init();
 bool tick();
 
-void render_frame(const Surface&);
-
 template<class _Rep, class _Period>
 inline void sleep(const std::chrono::duration<_Rep, _Period>& d) {
   std::this_thread::sleep_for(d);
