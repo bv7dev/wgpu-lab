@@ -65,7 +65,6 @@ Webgpu::Webgpu(const char* lbl) : label{lbl} {
 Webgpu::~Webgpu() {
   if (wgpu_instance) {
     std::cout << "Info: WGPU: Release: " << wgpu_instance << std::endl;
-    pipeline.release();
     queue.release();
     device.release();
     wgpu_instance.release();

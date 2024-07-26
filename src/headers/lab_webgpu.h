@@ -17,7 +17,6 @@ struct Webgpu {
 
   wgpu::Instance wgpu_instance = nullptr;
   wgpu::Device device = nullptr;
-  wgpu::RenderPipeline pipeline = nullptr;
   wgpu::Queue queue = nullptr;
 
   const char* label;
