@@ -1,5 +1,7 @@
 #include <lab>
 
+#include <memory>
+
 #include <GLFW/glfw3.h>
 
 int main() {
@@ -36,6 +38,47 @@ int main() {
       }
 
       lab::sleep(16ms);
+    }
+  }
+  {
+    using namespace lab;
+
+    Webgpu webgpu{"My Instance"};
+    Window window{"My Window", 640, 400};
+    Shader shader{"My Shader", "shaders/test1.wgsl"};
+
+    Surface surface{window, webgpu};
+    Pipeline pipeline{shader, webgpu};
+
+    std::unique_ptr<Window> sometimes_open;
+    std::unique_ptr<Surface> sometimes_surf;
+
+    window.set_key_callback([&](const Window::KeyEvent& event) {
+      if (event.key == 32 && event.action == 0) {
+        if (!sometimes_open) {
+          sometimes_open = std::make_unique<Window>("test", 400, 300);
+          sometimes_surf = std::make_unique<Surface>(*sometimes_open.get(), webgpu);
+
+          sometimes_open.get()->set_key_callback([&](const Window::KeyEvent& event) {
+            if (event.key == 32 && event.action == 0) {
+              sometimes_surf.get()->~Surface();
+              sometimes_open.get()->~Window();
+              sometimes_surf.release();
+              sometimes_open.release();
+            }
+          });
+        }
+      }
+    });
+
+    while (tick()) {
+      pipeline.render_frame(surface);
+
+      if (sometimes_open && sometimes_open.get()->is_open()) {
+        pipeline.render_frame(*sometimes_surf.get());
+      }
+
+      sleep(16ms);
     }
   }
   {
