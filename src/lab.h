@@ -14,11 +14,24 @@ using namespace std::chrono_literals;
 
 namespace lab {
 
-using Handle = void*;
+// Automatically called by Window and Webgpu constructors
+//  - generally lab user should not need to call this
+//  - returns `false` when init has been previously called, or has failed.
+bool init_lab();
 
-bool init();
+// Processes GLFW Events and manages open Windows (and closes them)
+//  - generally should be called once in the main loop
+// ```cpp
+// while(lab::tick()) {
+//   pipeline.render_frame(surface); // render artworks
+// }
+// ```
 bool tick();
 
+// Wrapper for visual simplicity around `std::this_thread::sleep_for(duration);`
+// ```cpp
+// lab::sleep(16ms);
+// ```
 template<class _Rep, class _Period>
 inline void sleep(const std::chrono::duration<_Rep, _Period>& d) {
   std::this_thread::sleep_for(d);

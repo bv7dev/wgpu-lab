@@ -10,14 +10,14 @@ namespace lab {
 
 State state;
 
-bool init() {
-  if (!state.init) {
+bool init_lab() {
+  if (!state.glfw_init) {
     if (!glfwInit()) {
       std::cerr << "Error: GLFW: Failed to initialize!" << std::endl;
       return false;
     }
     std::cout << "Info: GLFW: Initialized!" << std::endl;
-    state.init = true;
+    state.glfw_init = true;
     return true;
   }
   return false;

@@ -10,15 +10,14 @@
 namespace lab {
 
 struct Pipeline {
-  Webgpu& webgpu;
   Shader& shader;
-  Surface& surface;
+  Webgpu& webgpu;
 
   wgpu::RenderPipeline wgpu_pipeline;
 
-  Pipeline(Webgpu&, Shader&, Surface&);
+  Pipeline(Shader&, Webgpu&);
 
-  void render_frame();
+  bool render_frame(Surface& surface);
 
   ~Pipeline();
 };

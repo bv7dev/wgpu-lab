@@ -4,30 +4,30 @@
 
 namespace lab {
 
-bool init();
+bool init_lab();
 
 Webgpu::Webgpu(const char* lbl) : label{lbl} {
-  init();
+  init_lab();
 
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
   GLFWwindow* window = glfwCreateWindow(1, 1, "", nullptr, nullptr);
 
-  wgpu::Surface surface = glfwGetWGPUSurface(instance, window);
+  wgpu::Surface surface = glfwGetWGPUSurface(wgpu_instance, window);
 
-  instance = wgpu::createInstance({});
-  if (!instance) {
+  wgpu_instance = wgpu::createInstance({});
+  if (!wgpu_instance) {
     std::cerr << "Error: WGPU: Could not create Instance!" << std::endl;
     return;
   }
-  std::cout << "Info: WGPU: Create: " << instance << std::endl;
+  std::cout << "Info: WGPU: Create: " << wgpu_instance << std::endl;
 
   wgpu::RequestAdapterOptions adapterOpts = {{
       .compatibleSurface = surface,
       .powerPreference = wgpu::PowerPreference::HighPerformance,
   }};
-  wgpu::Adapter adapter = instance.requestAdapter(adapterOpts);
+  wgpu::Adapter adapter = wgpu_instance.requestAdapter(adapterOpts);
   std::cout << "Info: WGPU: Request: " << adapter << std::endl;
 
   wgpu::DeviceDescriptor deviceDesc = {{
@@ -63,15 +63,13 @@ Webgpu::Webgpu(const char* lbl) : label{lbl} {
 }
 
 Webgpu::~Webgpu() {
-  if (instance) {
-    std::cout << "Info: WGPU: Release: " << instance << std::endl;
-
+  if (wgpu_instance) {
+    std::cout << "Info: WGPU: Release: " << wgpu_instance << std::endl;
     pipeline.release();
     queue.release();
     device.release();
-    instance.release();
-
-    instance = nullptr;
+    wgpu_instance.release();
+    wgpu_instance = nullptr;
   }
 }
 

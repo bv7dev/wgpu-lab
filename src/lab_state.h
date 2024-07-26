@@ -9,8 +9,8 @@ using Handle = void*;
 using Objmap = std::unordered_map<Handle, Handle>;
 
 extern struct State {
+  bool glfw_init = false;
   Objmap window_map{};
-  bool init = false;
 } state;
 
 } // namespace lab

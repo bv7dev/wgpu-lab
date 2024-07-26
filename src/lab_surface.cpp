@@ -5,7 +5,7 @@
 namespace lab {
 
 Surface::Surface(Window& wnd, Webgpu& wgpu)
-    : window{wnd}, webgpu{wgpu}, wgpu_surface{glfwGetWGPUSurface(wgpu.instance, reinterpret_cast<GLFWwindow*>(wnd.get_handle()))} {
+    : window{wnd}, webgpu{wgpu}, wgpu_surface{glfwGetWGPUSurface(wgpu.wgpu_instance, reinterpret_cast<GLFWwindow*>(wnd.get_handle()))} {
   configure();
 }
 
@@ -23,9 +23,11 @@ void Surface::configure() {
 }
 
 Surface::~Surface() {
-  wgpu_surface.unconfigure();
-  wgpu_surface.release();
-  wgpu_surface = nullptr;
+  if (wgpu_surface) {
+    wgpu_surface.unconfigure();
+    wgpu_surface.release();
+    wgpu_surface = nullptr;
+  }
 }
 
 } // namespace lab

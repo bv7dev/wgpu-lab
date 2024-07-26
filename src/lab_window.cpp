@@ -7,10 +7,10 @@
 
 namespace lab {
 
-bool init();
+bool init_lab();
 
 Window::Window(const char* title, int width, int height) {
-  init();
+  init_lab();
   glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -26,7 +26,7 @@ Window::Window(const char* title, int width, int height) {
 void Window::set_key_callback(KeyCallback kcb) {
   keycb = kcb;
   glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(handle), [](GLFWwindow* wnd, int key, int scancode, int action, int mod) {
-    reinterpret_cast<Window*>(state.window_map[wnd])->keycb(key, scancode, action, mod);
+    reinterpret_cast<Window*>(state.window_map[wnd])->keycb({key, scancode, action, mod});
   });
 }
 
@@ -58,9 +58,9 @@ Window::~Window() {
     state.window_map.erase(handle);
     handle = nullptr;
     if (state.window_map.size() == 0) {
-      if (state.init) {
+      if (state.glfw_init) {
         glfwTerminate();
-        state.init = false;
+        state.glfw_init = false;
         std::cout << "Info: GLFW: Terminated!" << std::endl;
       }
     }

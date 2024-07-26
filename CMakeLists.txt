@@ -51,7 +51,8 @@ add_executable(test
 )
 
 # copy shader file to binary dir
-configure_file(shaders/test.wgsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/test.wgsl COPYONLY)
+configure_file(shaders/test1.wgsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/test1.wgsl COPYONLY)
+configure_file(shaders/test2.wgsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/test2.wgsl COPYONLY)
 
 target_include_directories(test PRIVATE src)
 target_link_libraries(test glfw webgpu glfw3webgpu)

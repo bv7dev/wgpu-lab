@@ -8,7 +8,10 @@ namespace lab {
 using Handle = void*;
 
 struct Window {
-  using KeyCallback = std::function<void(int key, int scancode, int action, int mod)>;
+  struct KeyEvent {
+    int key, scancode, action, mod;
+  };
+  using KeyCallback = std::function<void(const KeyEvent&)>;
 
   Window(const char* title, int width, int height);
 
