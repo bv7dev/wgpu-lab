@@ -30,14 +30,20 @@ target_include_directories(wgpu-lab PUBLIC src/headers)
 target_link_libraries(wgpu-lab glfw webgpu glfw3webgpu)
 
 
-# test executable --------------------------------------------------------------
-add_executable(test
-  tests/test_window.cpp
-)
-target_include_directories(wgpu-lab PUBLIC src/headers)
-target_link_libraries(test wgpu-lab)
+# test executables -------------------------------------------------------------
+file(GLOB TEST_FILES tests/*.cpp)
+set(TEST_TARGETS)
+foreach(TEST_FILE IN LISTS TEST_FILES)
+  get_filename_component(TEST_FILENAME ${TEST_FILE} NAME_WE)
+  list(APPEND TEST_TARGETS ${TEST_FILENAME})
+  add_executable(${TEST_FILENAME}
+    tests/${TEST_FILENAME}.cpp
+  )
+  target_link_libraries(${TEST_FILENAME} wgpu-lab)
+endforeach(TEST_FILE)
 
-# copy shader files to binary dir
+
+# copy shader files to binary dir ----------------------------------------------
 file(GLOB SHADER_FILES shaders/*.wgsl)
 foreach(SHADER_FILE IN LISTS SHADER_FILES)
   get_filename_component(SHADER_FILENAME ${SHADER_FILE} NAME)
@@ -55,11 +61,11 @@ add_executable(tutorial
 target_link_libraries(tutorial glfw webgpu glfw3webgpu)
 
 
-# set properties and options for all targets -----------------------------------
-set(LAB_TARGETS
-  wgpu-lab test tutorial
+# set properties and compile options for all targets ---------------------------
+set(ALL_TARGETS
+  wgpu-lab tutorial ${TEST_TARGETS}
 )
-foreach(LAB_TARGET IN LISTS LAB_TARGETS)
+foreach(LAB_TARGET IN LISTS ALL_TARGETS)
   set_target_properties(${LAB_TARGET} PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
