@@ -37,8 +37,10 @@ Webgpu::Webgpu(const char* lbl) : label{lbl} {
           {
               .mode = wgpu::CallbackMode::AllowSpontaneous,
               .callback =
-                  [](const WGPUDevice* device, WGPUDeviceLostReason reason, char const* message, void*) {
-                    std::cout << "Warning: WGPU: Device " << device << " lost: reason " << reason;
+                  [](const WGPUDevice* device, WGPUDeviceLostReason reason,
+                     char const* message, void*) {
+                    std::cout << "Warning: WGPU: Device " << device
+                              << " lost: reason " << reason;
                     if (message) std::cout << " (" << message << ")";
                     std::cout << std::endl;
                   },

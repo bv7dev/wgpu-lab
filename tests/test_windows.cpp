@@ -22,11 +22,12 @@ int main() {
 
     bool toggle_pipeline = false;
 
-    window_1.set_key_callback([&toggle_pipeline](const lab::Window::KeyEvent& event) {
-      if (event.key == GLFW_KEY_SPACE && event.action == GLFW_PRESS) {
-        toggle_pipeline = !toggle_pipeline;
-      }
-    });
+    window_1.set_key_callback(
+        [&toggle_pipeline](const lab::Window::KeyEvent& event) {
+          if (event.key == GLFW_KEY_SPACE && event.action == GLFW_PRESS) {
+            toggle_pipeline = !toggle_pipeline;
+          }
+        });
 
     while (lab::tick()) {
       if (window_1.is_open()) pipeline_1.render_frame(surface_1);
@@ -57,16 +58,18 @@ int main() {
       if (event.key == 32 && event.action == 0) {
         if (!sometimes_open) {
           sometimes_open = std::make_unique<Window>("test", 400, 300);
-          sometimes_surf = std::make_unique<Surface>(*sometimes_open.get(), webgpu);
+          sometimes_surf =
+              std::make_unique<Surface>(*sometimes_open.get(), webgpu);
 
-          sometimes_open.get()->set_key_callback([&](const Window::KeyEvent& event) {
-            if (event.key == 32 && event.action == 0) {
-              sometimes_surf.get()->~Surface();
-              sometimes_open.get()->~Window();
-              sometimes_surf.release();
-              sometimes_open.release();
-            }
-          });
+          sometimes_open.get()->set_key_callback(
+              [&](const Window::KeyEvent& event) {
+                if (event.key == 32 && event.action == 0) {
+                  sometimes_surf.get()->~Surface();
+                  sometimes_open.get()->~Window();
+                  sometimes_surf.release();
+                  sometimes_open.release();
+                }
+              });
         }
       }
     });
@@ -109,7 +112,8 @@ int main() {
     lab::Window second_window{"Test", 300, 200};
     lab::Shader shader{"My Shader", "shaders/test2.wgsl"};
 
-    // Todo: Investigate: Maybe 2 webgpu instances could be useful in multi-threaded contexts
+    // Todo: Investigate: Maybe 2 webgpu instances could be useful in
+    // multi-threaded contexts
     lab::Webgpu webgpu1{"Inst 1"};
     lab::Webgpu webgpu2{"Inst 2"};
 

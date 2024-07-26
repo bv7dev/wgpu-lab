@@ -10,7 +10,8 @@ namespace lab {
 Shader::Shader(const std::string& lbl, const std::string& path) : label{lbl} {
   std::ifstream file(path);
   if (!file.is_open()) {
-    std::cerr << "Error: Shader: Could not open \"" << path << "\"" << std::endl;
+    std::cerr << "Error: Shader: Could not open \"" << path << "\""
+              << std::endl;
     return;
   }
   std::stringstream buffer;
@@ -20,7 +21,8 @@ Shader::Shader(const std::string& lbl, const std::string& path) : label{lbl} {
 
 wgpu::ShaderModule Shader::transfer(wgpu::Device device) const {
   wgpu::ShaderModuleWGSLDescriptor wgslDesc = {{
-      .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
+      .chain = {.next = nullptr,
+                .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
       .code = source.c_str(),
   }};
   wgpu::ShaderModuleDescriptor shaderDesc;
