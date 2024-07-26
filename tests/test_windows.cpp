@@ -112,8 +112,8 @@ int main() {
     lab::Window second_window{"Test", 300, 200};
     lab::Shader shader{"My Shader", "shaders/test2.wgsl"};
 
-    // Todo: Investigate: Maybe 2 webgpu instances could be useful in
-    // multi-threaded contexts
+    // Todo: Investigate:
+    // Maybe 2 webgpu instances could be useful in multi-threaded contexts
     lab::Webgpu webgpu1{"Inst 1"};
     lab::Webgpu webgpu2{"Inst 2"};
 
@@ -127,6 +127,54 @@ int main() {
       if (first_window.is_open()) pipe1.render_frame(first_surface);
       if (second_window.is_open()) pipe2.render_frame(second_surface);
       lab::sleep(16ms);
+    }
+  }
+  {
+    // time experiments
+    using namespace lab;
+
+    Webgpu webgpu{"My Instance"};
+    Window window{"My Window", 640, 400};
+    Shader shader{"My Shader", "shaders/test1.wgsl"};
+
+    Surface surface{window, webgpu};
+    Pipeline pipeline{shader, webgpu};
+
+    window.set_resize_callback([&surface](int width, int height) {
+      surface.reconfigure(width, height);
+    });
+
+    window.set_key_callback([&window](const Window::KeyEvent& event) {
+      if (event.key == GLFW_KEY_SPACE && event.action == GLFW_PRESS) {
+        window.clear_resize_callback();
+      }
+    });
+
+    Window w2{"bla", 400, 280};
+    Surface s2{w2, webgpu};
+
+    int frame = 0;
+    double last_t = glfwGetTime();
+    double last_T = last_t;
+
+    while (tick()) {
+      if (window.is_open()) pipeline.render_frame(surface);
+      if (w2.is_open()) pipeline.render_frame(s2);
+      frame++;
+
+      if ((frame & 0xFF) == 0x00) {
+        std::cout << "fps: " << (256.0 / (glfwGetTime() - last_t)) << std::endl;
+        last_t = glfwGetTime();
+      }
+
+      double x = glfwGetTime() - last_T;
+      last_T = glfwGetTime();
+      if ((frame & 0xFF) == 0x01) {
+        std::cout << x << std::endl;
+      }
+
+      sleep(std::chrono::duration<double, std::ratio<1>>(0.016 - x));
+      // sleep(0.05s);
     }
   }
 }
