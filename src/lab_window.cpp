@@ -13,7 +13,7 @@ Window::Window(const char* title, int width, int height) {
   init_lab();
   glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+  glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
   handle = glfwCreateWindow(width, height, title, nullptr, nullptr);
   if (!handle) {
     std::cerr << "Error: GLFW: Failed to create Window!" << std::endl;
@@ -30,9 +30,20 @@ void Window::set_key_callback(KeyCallback kcb) {
   });
 }
 
+void Window::set_resize_callback(std::function<void(int width, int height)> rcb) {
+  rescb = rcb;
+  glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(handle),
+                            [](GLFWwindow* wnd, int w, int h) { reinterpret_cast<Window*>(state.window_map[wnd])->rescb(w, h); });
+}
+
 void Window::clear_key_callback() {
-  state.window_map[handle] = nullptr;
   glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(handle), nullptr);
+  keycb = nullptr;
+}
+
+void Window::clear_resize_callback() {
+  glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(handle), nullptr);
+  rescb = nullptr;
 }
 
 int Window::width() const {

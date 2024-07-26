@@ -95,6 +95,7 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "expected": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "lab": "cpp"
     }
 }

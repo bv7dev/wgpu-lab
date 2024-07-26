@@ -3,8 +3,6 @@
 
 #include <webgpu/webgpu.hpp>
 
-#include <iostream>
-
 namespace lab {
 
 struct Shader {

@@ -1,4 +1,5 @@
 #include <lab>
+
 using namespace lab;
 
 int main() {
@@ -8,6 +9,11 @@ int main() {
 
   Surface surface{window, webgpu};
   Pipeline pipeline{shader, webgpu};
+
+  window.set_resize_callback([&](int width, int height) {
+    std::cout << width << ", " << height << std::endl;
+    surface.configure();
+  });
 
   while (tick()) {
     pipeline.render_frame(surface);

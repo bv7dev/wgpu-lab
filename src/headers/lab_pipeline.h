@@ -5,8 +5,6 @@
 #include "lab_surface.h"
 #include "lab_webgpu.h"
 
-#include <string>
-
 namespace lab {
 
 struct Pipeline {
