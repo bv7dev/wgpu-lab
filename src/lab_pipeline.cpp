@@ -53,7 +53,7 @@ Pipeline::Pipeline(Shader& sh, Webgpu& wg) : shader{sh}, webgpu{wg} {
   shaderModule.release();
 }
 
-bool Pipeline::render_frame(Surface& surface) {
+bool Pipeline::render_frame(Surface& surface) const {
   wgpu::SurfaceTexture surfaceTexture;
   surface.wgpu_surface.getCurrentTexture(&surfaceTexture);
   if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {

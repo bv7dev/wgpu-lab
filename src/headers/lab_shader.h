@@ -14,7 +14,7 @@ struct Shader {
 
   // Warning! User is responsible to release the returned shader module
   // - automatically managed by `Pipeline` constructor
-  [[nodiscard]] wgpu::ShaderModule transfer(wgpu::Device device);
+  [[nodiscard]] wgpu::ShaderModule transfer(wgpu::Device device) const;
 };
 
 } // namespace lab

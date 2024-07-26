@@ -17,7 +17,10 @@ struct Pipeline {
 
   Pipeline(Shader&, Webgpu&);
 
-  bool render_frame(Surface& surface);
+  Pipeline(const Pipeline&) = delete;
+  Pipeline& operator=(const Pipeline&) = delete;
+
+  bool render_frame(Surface& surface) const;
 
   ~Pipeline();
 };

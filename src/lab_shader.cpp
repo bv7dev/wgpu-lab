@@ -18,7 +18,7 @@ Shader::Shader(const std::string& lbl, const std::string& path) : label{lbl} {
   source = buffer.str();
 }
 
-wgpu::ShaderModule Shader::transfer(wgpu::Device device) {
+wgpu::ShaderModule Shader::transfer(wgpu::Device device) const {
   wgpu::ShaderModuleWGSLDescriptor wgslDesc = {{
       .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
       .code = source.c_str(),
