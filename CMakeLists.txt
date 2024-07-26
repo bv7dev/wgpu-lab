@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.4...3.28 FATAL_ERROR)
+
 project(
   WGPU_LAB
   VERSION 0.1.0
   LANGUAGES CXX C
 )
-# dependencies
+
 add_subdirectory(libs/glfw-3.4)
 add_subdirectory(libs/webgpu-dawn)
 add_subdirectory(libs/glfw3webgpu)
@@ -49,6 +50,10 @@ add_executable(test
 )
 target_include_directories(wgpu-lab PUBLIC src/headers)
 target_link_libraries(test wgpu-lab)
+
+# copy shader files to binary dir
+configure_file(shaders/test1.wgsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/test1.wgsl COPYONLY)
+configure_file(shaders/test2.wgsl ${CMAKE_CURRENT_BINARY_DIR}/shaders/test2.wgsl COPYONLY)
 
 set_target_properties(test PROPERTIES
 	CXX_STANDARD 20
