@@ -5,8 +5,12 @@
 // Buffer by using a command, and finally it maps the second Buffer back to the
 // CPU to print it's content.
 
+// Note: Weirdly, mapAsync2 only works sometimes. No reason discovered so far.
+// TODO: investigate further. (probably I'm using it wrong)
+
 int main() {
   lab::Webgpu labgpu{"My Instance"};
+  lab::Window window{"test", 400, 300}; // needed for mapAsync2 ?
 
   // Buffer 1
   wgpu::BufferDescriptor bufferDesc;
@@ -35,7 +39,6 @@ int main() {
   for (uint8_t i = 0; i < 16; ++i) {
     numbers[i] = i;
   }
-
   // Copy this from `numbers` (RAM) to `buffer1` (VRAM)
   labgpu.queue.writeBuffer(buffer1, 0, numbers.data(), numbers.size());
 
@@ -53,34 +56,54 @@ int main() {
   struct BufferCbUserData1 {
     wgpu::Buffer buffer;
     bool ready;
-  } context{buffer1, false};
-  wgpu::BufferMapCallbackInfo2 cbinfo;
+  } context{buffer2, false};
+  wgpu::BufferMapCallbackInfo2 cbinfo{};
   cbinfo.callback = [](WGPUMapAsyncStatus status, char const*, void* ud1,
                        void*) {
     std::cout << "Buffer 2 mapped with status " << status << std::endl;
-    reinterpret_cast<BufferCbUserData1*>(ud1)->ready = true;
+    BufferCbUserData1* ctx = reinterpret_cast<BufferCbUserData1*>(ud1);
+    const uint8_t* bufMap = reinterpret_cast<const uint8_t*>(
+        ctx->buffer.getConstMappedRange(0, 16));
+
+    // Print mapped data
+    for (int i = 0; i < 16; ++i) {
+      std::cout << (i > 0 ? ", " : "") << int(bufMap[i]);
+    }
+    std::cout << std::endl;
+    ctx->buffer.unmap();
+    ctx->ready = true;
   };
   cbinfo.userdata1 = &context;
   cbinfo.userdata2 = nullptr;
   cbinfo.mode = wgpu::CallbackMode::AllowSpontaneous;
-  buffer2.mapAsync2(wgpu::MapMode::Read, 0, 16, cbinfo);
+  wgpu::Future fut = buffer2.mapAsync2(wgpu::MapMode::Read, 0, 16, cbinfo);
+
+  // auto cb = buffer2.mapAsync(wgpu::MapMode::Read, 0, 16,
+  //                            [&](WGPUBufferMapAsyncStatus status) {
+  //                              if (status !=
+  //                              WGPUBufferMapAsyncStatus_Success)
+  //                                std::cout << "problem\n";
+  //                              context.ready = true;
+  //                              std::cout << "map ready\n";
+  //                            });
 
   // Tick, so work actually gets performed on device
-  while (!context.ready) {
+  while (!context.ready && lab::tick()) {
     labgpu.device.tick();
   }
 
-  // Get a pointer to wherever the driver mapped the GPU memory to the RAM
-  const uint8_t* bufMap =
-      reinterpret_cast<const uint8_t*>(buffer2.getConstMappedRange(0, 16));
+  // // Get a pointer to wherever the driver mapped the GPU memory to the RAM
+  // const uint8_t* bufMap =
+  //     reinterpret_cast<const uint8_t*>(buffer2.getConstMappedRange(0, 16));
 
-  // Print mapped data
-  for (int i = 0; i < 16; ++i) {
-    std::cout << (i > 0 ? ", " : "") << int(bufMap[i]);
-  }
-  std::cout << std::endl;
+  // // Print mapped data
+  // for (int i = 0; i < 16; ++i) {
+  //   std::cout << (i > 0 ? ", " : "") << int(bufMap[i]);
+  // }
+  // std::cout << std::endl;
 
-  buffer2.unmap();
+  // buffer2.unmap();
+
   buffer2.release();
   buffer1.release();
 
