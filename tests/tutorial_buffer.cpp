@@ -41,24 +41,35 @@ int main() {
   command.release();
 
   // Callback to confirm mapping
-  struct Context {
-    wgpu::Buffer buffer;
-    bool ready;
-  } context{nullptr, false};
+  bool ready = false;
+  // ---------------------------------------------------------------------------
+  // auto buffer2MappedCb = [](WGPUMapAsyncStatus status, char const* msg,
+  //                           void* ready, void*) {
+  //   std::cout << "Buffer 2 mapped with status " << status << std::endl;
+  //   std::cout << msg << std::endl;
+  //   if (status != wgpu::MapAsyncStatus::Success) {
+  //     std::cout << "Something went wrong :(" << std::endl;
+  //   }
+  //   *reinterpret_cast<bool*>(ready) = true;
+  // };
+  // wgpu::BufferMapCallbackInfo2 cbinfo;
+  // cbinfo.callback = buffer2MappedCb;
+  // cbinfo.userdata1 = &ready;
+  // cbinfo.mode = wgpu::CallbackMode::AllowSpontaneous;
+  // wgpu::Future fut = buffer2.mapAsync2(wgpu::MapMode::Read, 0, 16, cbinfo);
+  //
+  // TODO: Investigate: Unfortunately mapAsync gives a warning that it's
+  // deprecated and mapAsync2 seems broken or I'm using it wrong?
+  // ---------------------------------------------------------------------------
 
-  auto onBuffer2Mapped = [](WGPUBufferMapAsyncStatus status, void* context) {
-    std::cout << "Buffer 2 mapped with status " << status << std::endl;
-    if (status != wgpu::BufferMapAsyncStatus::Success) {
-      std::cout << "Something wrong :(" << std::endl;
-      return;
-    }
-    reinterpret_cast<Context*>(context)->ready = true;
-  };
-  wgpuBufferMapAsync(buffer2, wgpu::MapMode::Read, 0, 16, onBuffer2Mapped,
-                     &context);
+  auto cb_lifetime_extender = buffer2.mapAsync(
+      wgpu::MapMode::Read, 0, 16, [&ready](wgpu::BufferMapAsyncStatus status) {
+        std::cout << "Buffer 2 mapped with status: " << status << std::endl;
+        ready = true;
+      });
 
   // tick, so work actually gets performed on device
-  while (!context.ready) {
+  while (!ready) {
     labgpu.device.tick();
   }
 
