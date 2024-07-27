@@ -13,22 +13,32 @@ int main() {
   bufferDesc.label = "My Buffer";
   bufferDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::CopySrc;
   bufferDesc.size = 16;
-  bufferDesc.mappedAtCreation = false;
+  bufferDesc.mappedAtCreation = true;
   wgpu::Buffer buffer1 = labgpu.device.createBuffer(bufferDesc);
+
+  uint8_t* bufferData =
+      reinterpret_cast<uint8_t*>(buffer1.getMappedRange(0, 16));
+
+  for (uint8_t i = 0; i < 16; ++i) {
+    bufferData[i] = 3 + i;
+  }
+
+  buffer1.unmap();
 
   // BUFFER 2 (reuse desc)
   bufferDesc.label = "Output buffer";
   bufferDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
+  bufferDesc.mappedAtCreation = false;
   wgpu::Buffer buffer2 = labgpu.device.createBuffer(bufferDesc);
 
-  // CPU-side data buffer (of size 16 bytes)
-  std::vector<uint8_t> numbers(16);
-  for (uint8_t i = 0; i < 16; ++i) {
-    numbers[i] = i;
-  }
+  // // CPU-side data buffer (of size 16 bytes)
+  // std::vector<uint8_t> numbers(16);
+  // for (uint8_t i = 0; i < 16; ++i) {
+  //   numbers[i] = i;
+  // }
 
-  // Copy this from `numbers` (RAM) to `buffer1` (VRAM)
-  labgpu.queue.writeBuffer(buffer1, 0, numbers.data(), numbers.size());
+  // // Copy this from `numbers` (RAM) to `buffer1` (VRAM)
+  // labgpu.queue.writeBuffer(buffer1, 0, numbers.data(), numbers.size());
 
   // Copy one buffer to another on GPU (requires command encoder)
   wgpu::CommandEncoder encoder = labgpu.device.createCommandEncoder({});
@@ -74,12 +84,12 @@ int main() {
   }
 
   // Get a pointer to wherever the driver mapped the GPU memory to the RAM
-  const uint8_t* bufferData =
+  const uint8_t* bufMap =
       reinterpret_cast<const uint8_t*>(buffer2.getConstMappedRange(0, 16));
 
   // print mapped data
   for (int i = 0; i < 16; ++i) {
-    std::cout << (i > 0 ? ", " : "") << int(bufferData[i]);
+    std::cout << (i > 0 ? ", " : "") << int(bufMap[i]);
   }
   std::cout << std::endl;
 
