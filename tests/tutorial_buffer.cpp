@@ -13,17 +13,16 @@ int main() {
   bufferDesc.label = "My Buffer";
   bufferDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::CopySrc;
   bufferDesc.size = 16;
-  bufferDesc.mappedAtCreation = true;
+  bufferDesc.mappedAtCreation = false;
+  // bufferDesc.mappedAtCreation = true;
   wgpu::Buffer buffer1 = labgpu.device.createBuffer(bufferDesc);
 
-  uint8_t* bufferData =
-      reinterpret_cast<uint8_t*>(buffer1.getMappedRange(0, 16));
-
-  for (uint8_t i = 0; i < 16; ++i) {
-    bufferData[i] = 3 + i;
-  }
-
-  buffer1.unmap();
+  // uint8_t* bufferData =
+  //     reinterpret_cast<uint8_t*>(buffer1.getMappedRange(0, 16));
+  // for (uint8_t i = 0; i < 16; ++i) {
+  //   bufferData[i] = 3 + i;
+  // }
+  // buffer1.unmap();
 
   // BUFFER 2 (reuse desc)
   bufferDesc.label = "Output buffer";
@@ -31,14 +30,14 @@ int main() {
   bufferDesc.mappedAtCreation = false;
   wgpu::Buffer buffer2 = labgpu.device.createBuffer(bufferDesc);
 
-  // // CPU-side data buffer (of size 16 bytes)
-  // std::vector<uint8_t> numbers(16);
-  // for (uint8_t i = 0; i < 16; ++i) {
-  //   numbers[i] = i;
-  // }
+  // CPU-side data buffer (of size 16 bytes)
+  std::vector<uint8_t> numbers(16);
+  for (uint8_t i = 0; i < 16; ++i) {
+    numbers[i] = i;
+  }
 
-  // // Copy this from `numbers` (RAM) to `buffer1` (VRAM)
-  // labgpu.queue.writeBuffer(buffer1, 0, numbers.data(), numbers.size());
+  // Copy this from `numbers` (RAM) to `buffer1` (VRAM)
+  labgpu.queue.writeBuffer(buffer1, 0, numbers.data(), numbers.size());
 
   // Copy one buffer to another on GPU (requires command encoder)
   wgpu::CommandEncoder encoder = labgpu.device.createCommandEncoder({});
@@ -51,35 +50,36 @@ int main() {
   command.release();
 
   // Callback to confirm mapping
-  bool ready = false;
-  // ---------------------------------------------------------------------------
-  // auto buffer2MappedCb = [](WGPUMapAsyncStatus status, char const* msg,
-  //                           void* ready, void*) {
-  //   std::cout << "Buffer 2 mapped with status " << status << std::endl;
-  //   std::cout << msg << std::endl;
-  //   if (status != wgpu::MapAsyncStatus::Success) {
-  //     std::cout << "Something went wrong :(" << std::endl;
-  //   }
-  //   *reinterpret_cast<bool*>(ready) = true;
-  // };
-  // wgpu::BufferMapCallbackInfo2 cbinfo;
-  // cbinfo.callback = buffer2MappedCb;
-  // cbinfo.userdata1 = &ready;
-  // cbinfo.mode = wgpu::CallbackMode::AllowSpontaneous;
-  // wgpu::Future fut = buffer2.mapAsync2(wgpu::MapMode::Read, 0, 16, cbinfo);
+  struct BufferCbUserData1 {
+    wgpu::Buffer buffer;
+    bool ready;
+  } context{buffer1, false};
+  wgpu::BufferMapCallbackInfo2 cbinfo;
+  cbinfo.callback = [](WGPUMapAsyncStatus status, char const*, void* ud1,
+                       void*) {
+    std::cout << "Buffer 2 mapped with status " << status << std::endl;
+    reinterpret_cast<BufferCbUserData1*>(ud1)->ready = true;
+  };
+  cbinfo.userdata1 = &context;
+  cbinfo.userdata2 = nullptr;
+  cbinfo.mode = wgpu::CallbackMode::AllowSpontaneous;
+  wgpu::Future fut = buffer2.mapAsync2(wgpu::MapMode::Read, 0, 16, cbinfo);
   //
   // TODO: Investigate: Unfortunately mapAsync gives a warning that it's
   // deprecated and mapAsync2 seems broken or I'm using it wrong?
+  // Found issue: dawn crashed because I tried to cout the msg param to see
+  // what's it about
   // ---------------------------------------------------------------------------
 
-  auto cb_lifetime_extender = buffer2.mapAsync(
-      wgpu::MapMode::Read, 0, 16, [&ready](wgpu::BufferMapAsyncStatus status) {
-        std::cout << "Buffer 2 mapped with status: " << status << std::endl;
-        ready = true;
-      });
+  // auto cb_lifetime_extender = buffer2.mapAsync(
+  //     wgpu::MapMode::Read, 0, 16, [&ready](wgpu::BufferMapAsyncStatus status)
+  //     {
+  //       std::cout << "Buffer 2 mapped with status: " << status << std::endl;
+  //       ready = true;
+  //     });
 
   // tick, so work actually gets performed on device
-  while (!ready) {
+  while (!context.ready) {
     labgpu.device.tick();
   }
 
