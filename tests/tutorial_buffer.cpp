@@ -1,30 +1,30 @@
 #include <lab>
 
-// this example creates 2 gpu side buffers, writes data copied from a cpu side
-// buffer into the first gpu buffer, copies from the first into the second gpu
-// buffer by using a command, and finally it maps the second buffer back to the
-// cpu to print it's content.
+// This example creates 2 GPU side Buffers, writes data copied from a CPU side
+// Buffer into the first GPU Buffer, copies from the first into the second GPU
+// Buffer by using a command, and finally it maps the second Buffer back to the
+// CPU to print it's content.
 
 int main() {
   lab::Webgpu labgpu{"My Instance"};
 
-  // BUFFER 1
+  // Buffer 1
   wgpu::BufferDescriptor bufferDesc;
   bufferDesc.label = "My Buffer";
   bufferDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::CopySrc;
   bufferDesc.size = 16;
   bufferDesc.mappedAtCreation = false;
-  // bufferDesc.mappedAtCreation = true;
+  // bufferDesc.mappedAtCreation = true; // ------------------------------------
   wgpu::Buffer buffer1 = labgpu.device.createBuffer(bufferDesc);
-
+  // alternative to writeBuffer maps buffer at creation
   // uint8_t* bufferData =
   //     reinterpret_cast<uint8_t*>(buffer1.getMappedRange(0, 16));
   // for (uint8_t i = 0; i < 16; ++i) {
   //   bufferData[i] = 3 + i;
   // }
-  // buffer1.unmap();
+  // buffer1.unmap(); // -------------------------------------------------------
 
-  // BUFFER 2 (reuse desc)
+  // Buffer 2 (reuse desc)
   bufferDesc.label = "Output buffer";
   bufferDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::MapRead;
   bufferDesc.mappedAtCreation = false;
@@ -49,7 +49,7 @@ int main() {
   labgpu.queue.submit(1, &command);
   command.release();
 
-  // Callback to confirm mapping
+  // Callback to confirm mapping is done
   struct BufferCbUserData1 {
     wgpu::Buffer buffer;
     bool ready;
@@ -63,22 +63,9 @@ int main() {
   cbinfo.userdata1 = &context;
   cbinfo.userdata2 = nullptr;
   cbinfo.mode = wgpu::CallbackMode::AllowSpontaneous;
-  wgpu::Future fut = buffer2.mapAsync2(wgpu::MapMode::Read, 0, 16, cbinfo);
-  //
-  // TODO: Investigate: Unfortunately mapAsync gives a warning that it's
-  // deprecated and mapAsync2 seems broken or I'm using it wrong?
-  // Found issue: dawn crashed because I tried to cout the msg param to see
-  // what's it about
-  // ---------------------------------------------------------------------------
+  buffer2.mapAsync2(wgpu::MapMode::Read, 0, 16, cbinfo);
 
-  // auto cb_lifetime_extender = buffer2.mapAsync(
-  //     wgpu::MapMode::Read, 0, 16, [&ready](wgpu::BufferMapAsyncStatus status)
-  //     {
-  //       std::cout << "Buffer 2 mapped with status: " << status << std::endl;
-  //       ready = true;
-  //     });
-
-  // tick, so work actually gets performed on device
+  // Tick, so work actually gets performed on device
   while (!context.ready) {
     labgpu.device.tick();
   }
@@ -87,7 +74,7 @@ int main() {
   const uint8_t* bufMap =
       reinterpret_cast<const uint8_t*>(buffer2.getConstMappedRange(0, 16));
 
-  // print mapped data
+  // Print mapped data
   for (int i = 0; i < 16; ++i) {
     std::cout << (i > 0 ? ", " : "") << int(bufMap[i]);
   }
