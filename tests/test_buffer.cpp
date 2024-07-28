@@ -1,50 +1,27 @@
 #include <lab>
 
-#include <GLFW/glfw3.h>
-
 int main() {
   lab::Webgpu webgpu{"My Instance"};
-  lab::Window window{"My Window", 640, 400};
-  lab::Shader shader{"My Shader", "shaders/test1.wgsl"};
 
-  lab::Surface surface{window, webgpu};
-  lab::Pipeline pipeline{shader, webgpu};
+  auto write_buffer = [](auto& vmap) {
+    for (int i = 0; i < vmap.capacity(); ++i) {
+      vmap.push(i + 1);
+    }
+  };
+  lab::ReadableBuffer<int> buffer(webgpu, 1024, write_buffer);
 
-  lab::ReadableBuffer<int> buffer{webgpu, 8, [](auto& vmap) {
-                                    int num = 1;
-                                    for (int& e : vmap) {
-                                      e = num++;
-                                    }
-                                  }};
-
-  auto test = buffer.read_async(2, 3, [](const std::vector<int>& data) {
-    std::cout << "callback: ";
-    for (auto d : data) {
-      std::cout << d << ", ";
+  buffer.read_async(20, 4, [](auto& vmap) {
+    std::cout << "read callback: ";
+    for (auto& e : vmap) {
+      std::cout << e;
+      if ((&e) != vmap.end() - 1) {
+        std::cout << ", ";
+      }
     }
     std::cout << std::endl;
   });
 
-  // const void* const* bufmap = buffer.get_read_map(0, len);
-
   while (lab::tick()) {
-    if (test.is_ready()) {
-      std::cout << "ready" << std::endl;
-
-      for (auto d : test.data) {
-        std::cout << d << ", ";
-      }
-      std::cout << std::endl;
-
-      test.data.clear();
-    }
-    // if (*bufmap) {
-    //   std::cout << (const char*)(*bufmap) << std::endl;
-    //   glfwSetWindowTitle((GLFWwindow*)window.get_handle(),
-    //                      (const char*)(*bufmap));
-    //   buffer.unmap();
-    // }
-    pipeline.render_frame(surface);
     lab::sleep(16ms);
   }
 }
