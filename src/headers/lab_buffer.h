@@ -81,7 +81,8 @@ struct ReadableBuffer {
     wgpu_buffer.unmap();
   }
 
-  void read_async(size_t offset, size_t num_elems, ReadCallback callback) {
+  wgpu::Future read_async(size_t offset, size_t num_elems,
+                          ReadCallback callback) {
     assert(wgpu_buffer != nullptr && mapping_active == false);
     mapping_active = true;
 
@@ -121,8 +122,8 @@ struct ReadableBuffer {
     };
 
     // TODO: I still need to figure out what the returned future is used for
-    wgpu::Future fut = wgpu_buffer.mapAsync2(
-        wgpu::MapMode::Read, sizeof(T) * offset, sizeof(T) * num_elems, cbinfo);
+    return wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
+                                 sizeof(T) * num_elems, cbinfo);
   }
 
   ~ReadableBuffer() {
