@@ -10,23 +10,31 @@
 
 int main() {
   lab::Webgpu labgpu{"My Instance"};
-  lab::Window window{"test", 400, 300}; // needed for mapAsync2 ?
+  // lab::Window window{"test", 400, 300}; // needed for mapAsync2 ?
 
   // Buffer 1
   wgpu::BufferDescriptor bufferDesc;
   bufferDesc.label = "My Buffer";
-  bufferDesc.usage = wgpu::BufferUsage::CopyDst | wgpu::BufferUsage::CopySrc;
+  bufferDesc.usage = wgpu::BufferUsage::CopySrc | wgpu::BufferUsage::CopyDst;
   bufferDesc.size = 16;
   bufferDesc.mappedAtCreation = false;
-  // bufferDesc.mappedAtCreation = true; // ------------------------------------
+  // ---------------------------------------------------------------------------
+  // bufferDesc.mappedAtCreation = true;
   wgpu::Buffer buffer1 = labgpu.device.createBuffer(bufferDesc);
-  // alternative to writeBuffer maps buffer at creation
   // uint8_t* bufferData =
   //     reinterpret_cast<uint8_t*>(buffer1.getMappedRange(0, 16));
   // for (uint8_t i = 0; i < 16; ++i) {
   //   bufferData[i] = 3 + i;
   // }
-  // buffer1.unmap(); // -------------------------------------------------------
+  // buffer1.unmap();
+  //
+  // Alternative to mapAtCreation: writeBuffer (creates copy of data) ----------
+  std::vector<uint8_t> numbers(16);
+  for (uint8_t i = 0; i < 16; ++i) {
+    numbers[i] = i;
+  }
+  labgpu.queue.writeBuffer(buffer1, 0, numbers.data(), numbers.size());
+  // ---------------------------------------------------------------------------
 
   // Buffer 2 (reuse desc)
   bufferDesc.label = "Output buffer";
@@ -34,23 +42,25 @@ int main() {
   bufferDesc.mappedAtCreation = false;
   wgpu::Buffer buffer2 = labgpu.device.createBuffer(bufferDesc);
 
-  // CPU-side data buffer (of size 16 bytes)
-  std::vector<uint8_t> numbers(16);
-  for (uint8_t i = 0; i < 16; ++i) {
-    numbers[i] = i;
-  }
-  // Copy this from `numbers` (RAM) to `buffer1` (VRAM)
-  labgpu.queue.writeBuffer(buffer1, 0, numbers.data(), numbers.size());
-
   // Copy one buffer to another on GPU (requires command encoder)
   wgpu::CommandEncoder encoder = labgpu.device.createCommandEncoder({});
 
   encoder.copyBufferToBuffer(buffer1, 0, buffer2, 0, 16);
 
-  wgpu::CommandBuffer command = encoder.finish({});
+  wgpu::CommandBufferDescriptor cmdBufDesc{{.label = "My Command Buffer"}};
+  wgpu::CommandBuffer command = encoder.finish(cmdBufDesc);
   encoder.release();
+
   labgpu.queue.submit(1, &command);
   command.release();
+
+  // doing some ticking here seems to make mapAsync2 work reliably
+  // maybe copy command didn't finish (do i need callback?)
+  for (int i = 0; i < 1000; ++i) {
+    labgpu.device.tick();
+    // lab::tick();
+  }
+  std::cout << "finished ticking\n";
 
   // Callback to confirm mapping is done
   struct BufferCbUserData1 {
@@ -88,7 +98,7 @@ int main() {
   //                            });
 
   // Tick, so work actually gets performed on device
-  while (!context.ready && lab::tick()) {
+  while (!context.ready /* && lab::tick() */) {
     labgpu.device.tick();
   }
 
