@@ -1,27 +1,29 @@
 #include <lab>
 
 int main() {
-  lab::Webgpu webgpu{"My Instance"};
+  lab::Webgpu webgpu("My Instance");
 
+  lab::ReadableBuffer<int> buffer("My Buffer", webgpu);
   auto write_buffer = [](auto& vmap) {
-    for (int i = 0; i < vmap.capacity(); ++i) {
+    for (auto i = 0; i < vmap.capacity(); ++i) {
       vmap.push(i + 1);
     }
   };
-  lab::ReadableBuffer<int> buffer(webgpu, 1024, write_buffer);
+  buffer.to_device(1024, write_buffer);
 
-  buffer.read_async(20, 4, [](auto& vmap) {
-    std::cout << "read callback: ";
+  // Read buffer ---------------------------
+  bool reading_done = false;
+
+  buffer.read_async(2, 356, [&reading_done](auto& vmap) {
+    std::cout << "buffer read callback: ";
     for (auto& e : vmap) {
-      std::cout << e;
-      if ((&e) != vmap.end() - 1) {
-        std::cout << ", ";
-      }
+      std::cout << e << " ";
+      lab::sleep(20ms); // simulate slow transfer
     }
     std::cout << std::endl;
+    reading_done = true;
   });
 
-  while (lab::tick()) {
-    lab::sleep(16ms);
-  }
+  // TODO: Investigate: weirdly, no while-tick loop needed and read_async
+  // call turns out to be sync
 }

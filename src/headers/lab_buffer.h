@@ -47,10 +47,14 @@ struct ReadableBuffer {
   using WriteCallback = std::function<void(MappedVRAM<T>&)>;
   using ReadCallback = std::function<void(MappedVRAM<const T>&)>;
 
-  ReadableBuffer(Webgpu& instance, size_t capacity, WriteCallback callback)
-      : webgpu{instance} {
+  const char* _label;
+
+  ReadableBuffer(const char* label, Webgpu& instance)
+      : webgpu{instance}, _label{label} {}
+
+  void to_device(size_t capacity, WriteCallback callback) {
     wgpu::BufferDescriptor bufferDesc;
-    bufferDesc.label = "My Readable Buffer";
+    bufferDesc.label = _label;
     bufferDesc.usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst;
     bufferDesc.size = sizeof(T) * capacity;
     bufferDesc.mappedAtCreation = true;
@@ -77,17 +81,9 @@ struct ReadableBuffer {
     wgpu_buffer.unmap();
   }
 
-  ReadCallback current_callback;
-  size_t current_offset;
-  size_t current_num_elems;
-  bool map_async = false;
-
   void read_async(size_t offset, size_t num_elems, ReadCallback callback) {
-    if (map_async) {
-      std::cout << "Warning: mapAsync call already in progress!" << std::endl;
-      return;
-    }
-    map_async = true;
+    assert(wgpu_buffer != nullptr && mapping_active == false);
+    mapping_active = true;
 
     current_callback = callback;
     current_offset = offset;
@@ -118,14 +114,15 @@ struct ReadableBuffer {
       self->current_callback = nullptr;
       self->current_num_elems = 0;
       self->current_offset = 0;
-      self->map_async = false;
+      self->mapping_active = false;
 
-      // Todo: I don't know yet what this msg parameter is
+      // TODO: I don't know yet what this msg parameter is
       if (msg) std::cout << "read_async: message: " << msg << std::endl;
     };
 
-    wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
-                          sizeof(T) * num_elems, cbinfo);
+    // TODO: I still need to figure out what the returned future is used for
+    wgpu::Future fut = wgpu_buffer.mapAsync2(
+        wgpu::MapMode::Read, sizeof(T) * offset, sizeof(T) * num_elems, cbinfo);
   }
 
   ~ReadableBuffer() {
@@ -135,10 +132,13 @@ struct ReadableBuffer {
     }
   }
 
-  wgpu::Buffer wgpu_buffer;
+  wgpu::Buffer wgpu_buffer = nullptr;
   Webgpu& webgpu;
 
-  const void* read_map = nullptr;
+private:
+  size_t current_offset, current_num_elems;
+  ReadCallback current_callback;
+  bool mapping_active = false;
 };
 
 } // namespace lab
