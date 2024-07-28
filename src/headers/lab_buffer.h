@@ -81,49 +81,67 @@ struct ReadableBuffer {
     wgpu_buffer.unmap();
   }
 
-  wgpu::Future read_async(size_t offset, size_t num_elems,
-                          ReadCallback callback) {
+  auto read_async(size_t offset, size_t num_elems, ReadCallback callback) {
     assert(wgpu_buffer != nullptr && mapping_active == false);
-    mapping_active = true;
 
+    mapping_active = true;
     current_callback = callback;
     current_offset = offset;
     current_num_elems = num_elems;
 
-    WGPUBufferMapCallbackInfo2 cbinfo{};
-    cbinfo.mode = wgpu::CallbackMode::AllowSpontaneous;
-    cbinfo.userdata1 = this;
-    cbinfo.userdata2 = nullptr;
-    cbinfo.callback = [](WGPUMapAsyncStatus status, char const* msg,
-                         void* userdata1, void*) {
-      std::cout << "Buffer mapped with status: " << status << std::endl;
-      if (status != WGPUMapAsyncStatus_Success) {
-        std::cout << "Error: read_async: mapping failed!" << std::endl;
-        return;
-      }
+    // WGPUBufferMapCallbackInfo2 cbinfo{};
+    // cbinfo.mode = wgpu::CallbackMode::AllowProcessEvents;
+    // cbinfo.userdata1 = this;
+    // cbinfo.userdata2 = nullptr;
+    // cbinfo.callback = [](WGPUMapAsyncStatus status, char const* msg,
+    //                      void* userdata1, void*) {
+    //   std::cout << "Buffer mapped with status: " << status << std::endl;
+    //   if (status != WGPUMapAsyncStatus_Success) {
+    //     std::cout << "Error: read_async: mapping failed!" << std::endl;
+    //     return;
+    //   }
 
-      ReadableBuffer* self = reinterpret_cast<ReadableBuffer*>(userdata1);
+    //   ReadableBuffer* self = reinterpret_cast<ReadableBuffer*>(userdata1);
 
-      MappedVRAM<const T> vmap(
-          reinterpret_cast<const T*>(self->wgpu_buffer.getConstMappedRange(
-              sizeof(T) * self->current_offset,
-              sizeof(T) * self->current_num_elems)),
-          self->current_num_elems, self->current_num_elems, self->wgpu_buffer);
+    //   MappedVRAM<const T> vmap(
+    //       reinterpret_cast<const T*>(self->wgpu_buffer.getConstMappedRange(
+    //           sizeof(T) * self->current_offset,
+    //           sizeof(T) * self->current_num_elems)),
+    //       self->current_num_elems, self->current_num_elems,
+    //       self->wgpu_buffer);
 
-      self->current_callback(vmap);
+    //   self->current_callback(vmap);
 
-      self->current_callback = nullptr;
-      self->current_num_elems = 0;
-      self->current_offset = 0;
-      self->mapping_active = false;
+    //   self->current_callback = nullptr;
+    //   self->current_num_elems = 0;
+    //   self->current_offset = 0;
+    //   self->mapping_active = false;
 
-      // TODO: I don't know yet what this msg parameter is
-      if (msg) std::cout << "read_async: message: " << msg << std::endl;
-    };
+    //   // TODO: I don't know yet what this msg parameter is
+    //   if (msg) std::cout << "read_async: message: " << msg << std::endl;
+    // };
 
-    // TODO: I still need to figure out what the returned future is used for
-    return wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
-                                 sizeof(T) * num_elems, cbinfo);
+    // // TODO: I still need to figure out what the returned future is used for
+    // return wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
+    //                              sizeof(T) * num_elems, cbinfo);
+
+    return wgpu_buffer.mapAsync(
+        wgpu::MapMode::Read, sizeof(T) * offset, sizeof(T) * num_elems,
+        [&](wgpu::BufferMapAsyncStatus status) {
+          if (status != wgpu::BufferMapAsyncStatus::Success) {
+            std::cout << "Error: MapAsync status: " << status << std::endl;
+            return;
+          }
+          MappedVRAM<const T> vmap(
+              reinterpret_cast<const T*>(wgpu_buffer.getConstMappedRange(
+                  sizeof(T) * current_offset, sizeof(T) * current_num_elems)),
+              current_num_elems, current_num_elems, wgpu_buffer);
+          current_callback(vmap);
+          current_callback = nullptr;
+          mapping_active = false;
+          current_num_elems = 0;
+          current_offset = 0;
+        });
   }
 
   ~ReadableBuffer() {

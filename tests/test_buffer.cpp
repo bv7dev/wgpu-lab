@@ -14,18 +14,26 @@ int main() {
   // Read buffer ---------------------------
   bool reading_done = false;
 
-  auto future = buffer.read_async(2, 356, [&reading_done](auto& vmap) {
+  auto cb = buffer.read_async(2, 356, [&reading_done](auto& vmap) {
     std::cout << "buffer read callback: ";
     for (auto& e : vmap) {
       std::cout << e << " ";
-      lab::sleep(5ms); // simulate slow transfer
+      lab::sleep(2ms); // simulate slow transfer
     }
     std::cout << std::endl;
     reading_done = true;
   });
 
+  while (!reading_done) {
+    webgpu.device.tick();
+    std::cout << ".";
+    lab::sleep(20ms);
+  }
+
   std::cout << "FIN !!!" << std::endl;
 
-  // TODO: Investigate: weirdly, no while-tick loop needed and read_async
-  // call turns out to be sync
+  // TODO: Investigate: weirdly, no while-tick loop needed and
+  // read_async call turns out to be sync
+  // ....
+  // maybe I'm supposed to call mapAsync on another thread myself?
 }
