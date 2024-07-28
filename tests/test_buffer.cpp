@@ -1,7 +1,14 @@
 #include <lab>
 
+#include <thread>
+
 int main() {
+  lab::Window window("My window", 400, 280);
   lab::Webgpu webgpu("My Instance");
+  lab::Shader shader("My shader", "shaders/test1.wgsl");
+
+  lab::Surface surface(window, webgpu);
+  lab::Pipeline pipeline(shader, webgpu);
 
   lab::ReadableBuffer<int> buffer("My Buffer", webgpu);
   auto write_buffer = [](auto& vmap) {
@@ -14,6 +21,7 @@ int main() {
   // Read buffer ---------------------------
   bool reading_done = false;
 
+  // std::thread t1([&]() { // try other thread
   auto cb = buffer.read_async(2, 356, [&reading_done](auto& vmap) {
     std::cout << "buffer read callback: ";
     for (auto& e : vmap) {
@@ -23,17 +31,26 @@ int main() {
     std::cout << std::endl;
     reading_done = true;
   });
+  // });
 
-  while (!reading_done) {
+  int tick = 0;
+
+  while (lab::tick() && (!reading_done)) {
+    pipeline.render_frame(surface);
     webgpu.device.tick();
     std::cout << ".";
     lab::sleep(20ms);
+    ++tick;
+
+    if (tick == 100) {
+      buffer.wgpu_buffer.release();
+    }
   }
 
-  std::cout << "FIN !!!" << std::endl;
+  // t1.join();
+
+  std::cout << "\n\nFIN !!!\n" << std::endl;
 
   // TODO: Investigate: weirdly, no while-tick loop needed and
   // read_async call turns out to be sync
-  // ....
-  // maybe I'm supposed to call mapAsync on another thread myself?
 }
