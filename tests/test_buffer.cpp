@@ -10,8 +10,12 @@ int main() {
   lab::Surface surface{window, webgpu};
   lab::Pipeline pipeline{shader, webgpu};
 
-  std::vector<int> message{1, 2, 3, 4, 5, 6, 7, 8};
-  lab::ReadableBuffer buffer{webgpu, message};
+  lab::ReadableBuffer<int> buffer{webgpu, 8, [](auto& vmap) {
+                                    int num = 1;
+                                    for (int& e : vmap) {
+                                      e = num++;
+                                    }
+                                  }};
 
   auto test = buffer.read_async(2, 3, [](const std::vector<int>& data) {
     std::cout << "callback: ";
