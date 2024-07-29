@@ -30,17 +30,17 @@ target_include_directories(wgpu-lab PUBLIC src/headers)
 target_link_libraries(wgpu-lab glfw webgpu glfw3webgpu)
 
 
-# test executables -------------------------------------------------------------
-file(GLOB TEST_FILES tests/*.cpp)
-set(TEST_TARGETS)
-foreach(TEST_FILE IN LISTS TEST_FILES)
-  get_filename_component(TEST_FILENAME ${TEST_FILE} NAME_WE)
-  list(APPEND TEST_TARGETS ${TEST_FILENAME})
-  add_executable(${TEST_FILENAME}
-    tests/${TEST_FILENAME}.cpp
+# sample executables -------------------------------------------------------------
+file(GLOB SAMPLE_FILES samples/*.cpp)
+set(SAMPLE_TARGETS)
+foreach(SAMPLE_FILE IN LISTS SAMPLE_FILES)
+  get_filename_component(SAMPLE_FILENAME ${SAMPLE_FILE} NAME_WE)
+  list(APPEND SAMPLE_TARGETS ${SAMPLE_FILENAME})
+  add_executable(${SAMPLE_FILENAME}
+    samples/${SAMPLE_FILENAME}.cpp
   )
-  target_link_libraries(${TEST_FILENAME} wgpu-lab)
-endforeach(TEST_FILE)
+  target_link_libraries(${SAMPLE_FILENAME} wgpu-lab)
+endforeach(SAMPLE_FILE)
 
 
 # copy shader files to binary dir ----------------------------------------------
@@ -63,7 +63,7 @@ target_link_libraries(tutorial glfw webgpu glfw3webgpu)
 
 # set properties and compile options for all targets ---------------------------
 set(ALL_TARGETS
-  wgpu-lab tutorial ${TEST_TARGETS}
+  wgpu-lab tutorial ${SAMPLE_TARGETS}
 )
 foreach(LAB_TARGET IN LISTS ALL_TARGETS)
   set_target_properties(${LAB_TARGET} PROPERTIES
