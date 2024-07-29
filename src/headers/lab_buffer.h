@@ -96,6 +96,7 @@ struct ReadableBuffer {
   }
 
   using ReadCallback = std::function<void(ConstMappedVRAM<T>&&)>;
+  std::unique_ptr<std::thread> read_thread = nullptr;
 
   auto read_async(size_t offset, size_t num_elems, ReadCallback user_callback) {
     assert(wgpu_buffer != nullptr && current.in_progress == false);
@@ -112,33 +113,37 @@ struct ReadableBuffer {
         std::cout << "Error: read_async: mapping failed!" << std::endl;
         return;
       }
-      auto self = reinterpret_cast<ReadableBuffer*>(userdata1);
+      ReadableBuffer* self = reinterpret_cast<ReadableBuffer*>(userdata1);
+      self->read_thread = std::make_unique<std::thread>(
+          [](ReadableBuffer* self) {
+            const T* map = reinterpret_cast<const T*>(
+                self->wgpu_buffer.getConstMappedRange(
+                    sizeof(T) * self->current.offset,
+                    sizeof(T) * self->current.num_elems));
 
-      const T* map =
-          reinterpret_cast<const T*>(self->wgpu_buffer.getConstMappedRange(
-              sizeof(T) * self->current.offset,
-              sizeof(T) * self->current.num_elems));
+            ConstMappedVRAM<T> vmap{{map, self->current.num_elems},
+                                    self->current.num_elems,
+                                    self->wgpu_buffer};
 
-      ConstMappedVRAM<T> vmap{{map, self->current.num_elems},
-                              self->current.num_elems,
-                              self->wgpu_buffer};
-
-      self->current.user_callback(std::move(vmap));
-      self->current = {nullptr, 0, 0, false};
+            self->current.user_callback(std::move(vmap));
+            self->current = {nullptr, 0, 0, false};
+          },
+          self);
     };
 
-    return std::thread([&]() {
-      std::cout << "mapAsync2 begin\n";
-      wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
-                            sizeof(T) * num_elems, map_callback_info);
-      std::cout << "mapAsync2 end\n";
-    });
+    // return std::thread([&]() {
+    std::cout << "mapAsync2 begin\n";
+    wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
+                          sizeof(T) * num_elems, map_callback_info);
+    std::cout << "mapAsync2 end\n";
+    // });
   }
 
   ~ReadableBuffer() {
     if (wgpu_buffer) {
       wgpu_buffer.release();
       wgpu_buffer = nullptr;
+      std::cout << label << " released\n";
     }
   }
 

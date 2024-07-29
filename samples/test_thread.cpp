@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <thread>
 
 int main() {
@@ -8,18 +9,18 @@ int main() {
 
   int x = 0;
 
-  thread t1{[&]() {
+  auto t1 = make_unique<thread>([&]() {
     for (int i = 0; i < 20; ++i) {
       x += i;
       std::cout << "thread t1: tick " << i << std::endl;
       this_thread::sleep_for(1s);
     }
-  }};
+  });
 
   for (int i = 0; i < 20; ++i) {
     std::cout << "main thread: tick " << i << std::endl;
     this_thread::sleep_for(1s);
   }
 
-  t1.join();
+  t1->join();
 }

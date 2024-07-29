@@ -21,12 +21,7 @@ int main() {
   // Read buffer ---------------------------
   bool reading_done = false;
 
-  for (int i = 0; i < 100; ++i) {
-    webgpu.device.tick();
-    lab::tick();
-  }
-
-  auto t1 = buffer.read_async(2, 256, [&](auto&& vmap) {
+  buffer.read_async(2, 256, [&](auto&& vmap) {
     std::cout << "\nbuffer read callback: ";
     for (auto& e : vmap) {
       if ((e & 0xF) == 0) {
@@ -46,7 +41,7 @@ int main() {
     lab::sleep(20ms);
   }
 
-  t1.join();
+  buffer.read_thread->join();
 
   std::cout << "\n\nFIN !!!\n" << std::endl;
 
