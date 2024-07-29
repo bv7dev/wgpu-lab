@@ -18,20 +18,32 @@ int main() {
   };
   buffer.to_device(1024, write_buffer);
 
+  buffer.wgpu_buffer.unmap();
+
   // Read buffer ---------------------------
   bool reading_done = false;
+  bool thread_calls_read_async = false;
+  bool thread_call_done = false;
 
-  // std::thread t1([&]() { // try other thread
-  auto cb = buffer.read_async(2, 356, [&reading_done](auto& vmap) {
-    std::cout << "buffer read callback: ";
-    for (auto& e : vmap) {
-      std::cout << e << " ";
-      lab::sleep(2ms); // simulate slow transfer
-    }
-    std::cout << std::endl;
-    reading_done = true;
+  std::thread t1([&]() { // try other thread
+    lab::sleep(2s);
+    thread_calls_read_async = true;
+    std::cout << "\nt1 calls read_async now..." << std::endl;
+    auto cb = buffer.read_async(2, 356, [&reading_done](auto& vmap) {
+      std::cout << "buffer read callback: ";
+      for (auto& e : vmap) {
+        std::cout << e << " ";
+        lab::sleep(2ms); // simulate slow transfer
+      }
+      std::cout << std::endl;
+      reading_done = true;
+    });
+    thread_call_done = true;
   });
-  // });
+
+  // Threading tests:
+  // it is possible to launch read_async on another thread, but unmapping needs
+  // to happen on the main thread and can cause exceptions done too soon.
 
   int tick = 0;
 
@@ -42,12 +54,19 @@ int main() {
     lab::sleep(20ms);
     ++tick;
 
-    if (tick == 100) {
-      buffer.wgpu_buffer.release();
+    if (thread_calls_read_async) {
+      std::cout << "\n_#!(#!_)**$!\n" << std::endl;
+      thread_calls_read_async = false;
+    }
+
+    if (thread_call_done) {
+      t1.join();
+      thread_call_done = false;
     }
   }
 
-  // t1.join();
+  lab::sleep(2s);
+  buffer.wgpu_buffer.unmap();
 
   std::cout << "\n\nFIN !!!\n" << std::endl;
 

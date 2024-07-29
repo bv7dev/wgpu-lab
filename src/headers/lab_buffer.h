@@ -40,7 +40,7 @@ public:
 
   ~MappedVRAM() {
     std::cout << "~unmap\n";
-    _buffer.unmap();
+    // _buffer.unmap();
   }
   void unmap() { ~MappedVRAM(); }
 };
