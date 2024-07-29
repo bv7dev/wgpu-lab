@@ -10,13 +10,7 @@
 namespace lab {
 
 template<typename T>
-class MappedVRAM {
-  wgpu::Buffer buffer;
-  size_t view_size;
-
-public:
-  std::span<T> view;
-
+struct MappedVRAM {
   MappedVRAM(std::span<T> view, size_t size, wgpu::Buffer buffer)
       : view{view}, view_size{size}, buffer{buffer} {}
   MappedVRAM(MappedVRAM&& rhs)
@@ -47,12 +41,17 @@ public:
 
   ~MappedVRAM() {
     if (buffer) {
-      std::cout << "~unmap\n";
       buffer.unmap();
       buffer = nullptr;
     }
   }
   void unmap() { ~MappedVRAM(); }
+
+  std::span<T> view;
+
+private:
+  wgpu::Buffer buffer;
+  size_t view_size;
 };
 
 template<typename T>
@@ -66,12 +65,12 @@ struct ReadableBuffer {
   using WriteCallback = std::function<void(MappedVRAM<T>&&)>;
 
   void to_device(size_t capacity, WriteCallback callback) {
-    wgpu::BufferDescriptor bufferDesc;
-    bufferDesc.label = label;
-    bufferDesc.usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst;
-    bufferDesc.size = sizeof(T) * capacity;
-    bufferDesc.mappedAtCreation = true;
-
+    wgpu::BufferDescriptor bufferDesc{{
+        .label = label,
+        .usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst,
+        .size = sizeof(T) * capacity,
+        .mappedAtCreation = true,
+    }};
     wgpu_buffer = webgpu.device.createBuffer(bufferDesc);
 
     T* map = reinterpret_cast<T*>(
@@ -96,54 +95,24 @@ struct ReadableBuffer {
   }
 
   using ReadCallback = std::function<void(ConstMappedVRAM<T>&&)>;
-  std::unique_ptr<std::thread> read_thread = nullptr;
-
   auto read_async(size_t offset, size_t num_elems, ReadCallback user_callback) {
     assert(wgpu_buffer != nullptr && current.in_progress == false);
     current = {user_callback, offset, num_elems, true};
-
-    map_callback_info.nextInChain = nullptr;
-    map_callback_info.userdata1 = this;
-    map_callback_info.userdata2 = nullptr;
-    map_callback_info.mode = wgpu::CallbackMode::AllowSpontaneous;
-    map_callback_info.callback = [](WGPUMapAsyncStatus status, char const*,
-                                    void* userdata1, void*) {
-      std::cout << "Buffer mapped with status: " << status << std::endl;
-      if (status != WGPUMapAsyncStatus_Success) {
-        std::cout << "Error: read_async: mapping failed!" << std::endl;
-        return;
-      }
-      ReadableBuffer* self = reinterpret_cast<ReadableBuffer*>(userdata1);
-      self->read_thread = std::make_unique<std::thread>(
-          [](ReadableBuffer* self) {
-            const T* map = reinterpret_cast<const T*>(
-                self->wgpu_buffer.getConstMappedRange(
-                    sizeof(T) * self->current.offset,
-                    sizeof(T) * self->current.num_elems));
-
-            ConstMappedVRAM<T> vmap{{map, self->current.num_elems},
-                                    self->current.num_elems,
-                                    self->wgpu_buffer};
-
-            self->current.user_callback(std::move(vmap));
-            self->current = {nullptr, 0, 0, false};
-          },
-          self);
+    WGPUBufferMapCallbackInfo2 cbinfo = {
+        .nextInChain = nullptr,
+        .mode = wgpu::CallbackMode::AllowSpontaneous,
+        .callback = map_callback,
+        .userdata1 = this,
+        .userdata2 = nullptr,
     };
-
-    // return std::thread([&]() {
-    std::cout << "mapAsync2 begin\n";
-    wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
-                          sizeof(T) * num_elems, map_callback_info);
-    std::cout << "mapAsync2 end\n";
-    // });
+    return wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
+                                 sizeof(T) * num_elems, cbinfo);
   }
 
   ~ReadableBuffer() {
     if (wgpu_buffer) {
       wgpu_buffer.release();
       wgpu_buffer = nullptr;
-      std::cout << label << " released\n";
     }
   }
 
@@ -151,7 +120,29 @@ struct ReadableBuffer {
   Webgpu& webgpu;
 
 private:
-  WGPUBufferMapCallbackInfo2 map_callback_info{};
+  static void read_thread_func(ReadableBuffer* self) {
+    ConstMappedVRAM<T> vmap{
+        {reinterpret_cast<const T*>(self->wgpu_buffer.getConstMappedRange(
+             sizeof(T) * self->current.offset,
+             sizeof(T) * self->current.num_elems)),
+         self->current.num_elems},
+        self->current.num_elems,
+        self->wgpu_buffer};
+    self->current.user_callback(std::move(vmap));
+    self->current = {nullptr, 0, 0, false};
+  }
+
+  static void map_callback(WGPUMapAsyncStatus status, char const*,
+                           void* userdata1, void*) {
+    std::cout << "Buffer mapped with status: " << status << std::endl;
+    if (status != WGPUMapAsyncStatus_Success) {
+      std::cout << "Error: read_async: mapping failed!" << std::endl;
+      return;
+    }
+    ReadableBuffer* self = reinterpret_cast<ReadableBuffer*>(userdata1);
+    auto read_thread = std::thread(read_thread_func, self);
+    read_thread.detach();
+  }
 
   struct AsyncContext {
     ReadCallback user_callback;

@@ -10,6 +10,7 @@ int main() {
   lab::Surface surface(window, webgpu);
   lab::Pipeline pipeline(shader, webgpu);
 
+  // Write Buffer ---------------------------------------
   lab::ReadableBuffer<int> buffer("My Buffer", webgpu);
   auto write_buffer = [](auto&& vmap) {
     for (auto i = 0; i < vmap.capacity(); ++i) {
@@ -18,33 +19,34 @@ int main() {
   };
   buffer.to_device(1024, write_buffer);
 
-  // Read buffer ---------------------------
+  // Read buffer -------------------------------------------
   bool reading_done = false;
 
   buffer.read_async(2, 256, [&](auto&& vmap) {
-    std::cout << "\nbuffer read callback: ";
     for (auto& e : vmap) {
       if ((e & 0xF) == 0) {
         std::cout << e << " ";
       }
+      // Investigate: seems to sleep much longer than 1ms ----------------
       lab::sleep(1ms); // simulate slow data processing
-      // TODO: Investigate: seems to sleep much longer than 1ms
+      // Turns out that sleep is not really good for precise time control.
+      // I guess for testing and experimenting it's fine though.
     }
     std::cout << std::endl;
     reading_done = true;
+
+    for (int i = 0; i < 100; i++) {
+      std::cout << "+ ";
+      lab::sleep(20ms);
+    }
   });
 
-  while (lab::tick() && !reading_done) {
+  while (lab::tick()) {
     pipeline.render_frame(surface);
     webgpu.device.tick();
     std::cout << ".";
     lab::sleep(20ms);
   }
 
-  buffer.read_thread->join();
-
   std::cout << "\n\nFIN !!!\n" << std::endl;
-
-  // TODO: Investigate: weirdly, no while-tick loop needed and
-  // read_async call turns out to be sync
 }
