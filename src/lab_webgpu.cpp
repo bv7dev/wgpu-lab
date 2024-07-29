@@ -6,13 +6,13 @@ namespace lab {
 
 bool init_lab();
 
-Webgpu::Webgpu(const char* lbl) : label{lbl} {
+Webgpu::Webgpu(const char* label) : label{label} {
   init_lab();
 
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-  GLFWwindow* window = glfwCreateWindow(1, 1, "", nullptr, nullptr);
+  auto window = glfwCreateWindow(64, 64, "", nullptr, nullptr);
 
   wgpu::Surface surface = glfwGetWGPUSurface(wgpu_instance, window);
 
@@ -37,10 +37,9 @@ Webgpu::Webgpu(const char* lbl) : label{lbl} {
           {
               .mode = wgpu::CallbackMode::AllowSpontaneous,
               .callback =
-                  [](const WGPUDevice* device, WGPUDeviceLostReason reason,
-                     char const* message, void*) {
-                    std::cout << "Warning: WGPU: Device " << device
-                              << " lost: reason " << reason;
+                  [](const WGPUDevice* device, WGPUDeviceLostReason reason, char const* message,
+                     void*) {
+                    std::cout << "Warning: WGPU: Device " << device << " lost: reason " << reason;
                     if (message) std::cout << " (" << message << ")";
                     std::cout << std::endl;
                   },

@@ -3,30 +3,53 @@
 int main() {
   lab::Webgpu webgpu("My Instance");
 
-  // Write Buffer ---------------------------------------
+  // Init Buffer ---------------------------------------------------------------
+  bool writing_done = false;
+  std::cout << "\n\nWriting Buffer...\n";
   lab::ReadableBuffer<int> buffer("My Buffer", webgpu);
-  auto write_buffer = [](auto&& vmap) {
-    for (auto i = 0; i < vmap.capacity(); ++i) {
-      vmap.push(i + 1);
-    }
-  };
-  buffer.to_device(1024, write_buffer);
 
-  // Read buffer -------------------------------------------
+  auto init_buffer = [&](auto&& vmap) {
+    for (auto i = 0; i < vmap.capacity(); ++i) {
+      lab::sleep(10ms); // simulate slow loading, converting, etc.
+      std::cout << vmap.push(i + 1) << " ";
+    }
+    std::cout << "init done\n";
+    writing_done = true;
+  };
+  buffer.to_device(256, init_buffer);
+
+  std::cout << "waiting ";
+  while (!writing_done) {
+    lab::sleep(20ms);
+    std::cout << ".";
+  }
+
+  // this buffer does nothing, it's just to see if something breaks
+  lab::ReadableBuffer<int> another("Stress Test", std::vector<int>{1, 2, 3, 4}, webgpu);
+
+  // Read buffer ---------------------------------------------------------------
   bool reading_done = false;
-  buffer.read_async(2, 256, [&](auto&& vmap) {
+  std::cout << "\n\nReading Buffer...\n";
+  auto read_buffer = [&](auto&& vmap) {
     for (auto& e : vmap) {
-      if ((e & 0xF) == 0) std::cout << e << " ";
-      lab::sleep(50ms);
+      lab::sleep(50ms); // simulate slow processing of received data
+      std::cout << e << " ";
     }
     std::cout << std::endl;
     reading_done = true;
-  });
+  };
+  buffer.from_device(2, 64, read_buffer);
 
-  std::cout << "waiting";
+  std::cout << "waiting ";
   while (!reading_done) {
-    lab::sleep(200ms);
+    lab::sleep(10ms);
     std::cout << ".";
   }
   std::cout << "\nFIN !!!\n" << std::endl;
+
+  reading_done = false;
+  another.from_device(0, 4, read_buffer);
+  while (!reading_done) {
+  }
+  // end stress test
 }

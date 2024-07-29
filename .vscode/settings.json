@@ -96,6 +96,7 @@
         "xutility": "cpp",
         "expected": "cpp",
         "ranges": "cpp",
-        "lab": "cpp"
+        "lab": "cpp",
+        "*.inc": "cpp"
     }
 }
