@@ -40,7 +40,7 @@ public:
 
   ~MappedVRAM() {
     std::cout << "~unmap\n";
-    // _buffer.unmap();
+    _buffer.unmap();
   }
   void unmap() { ~MappedVRAM(); }
 };
@@ -48,7 +48,7 @@ public:
 template<typename T>
 struct ReadableBuffer {
   using WriteCallback = std::function<void(MappedVRAM<T>&)>;
-  using ReadCallback = std::function<void(MappedVRAM<const T>&)>;
+  using ReadCallback = std::function<void(const MappedVRAM<const T>&)>;
 
   const char* _label;
 
