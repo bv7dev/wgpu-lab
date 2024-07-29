@@ -1,14 +1,7 @@
 #include <lab>
 
-#include <thread>
-
 int main() {
-  lab::Window window("My window", 400, 280);
   lab::Webgpu webgpu("My Instance");
-  lab::Shader shader("My shader", "shaders/test1.wgsl");
-
-  lab::Surface surface(window, webgpu);
-  lab::Pipeline pipeline(shader, webgpu);
 
   // Write Buffer ---------------------------------------
   lab::ReadableBuffer<int> buffer("My Buffer", webgpu);
@@ -21,32 +14,19 @@ int main() {
 
   // Read buffer -------------------------------------------
   bool reading_done = false;
-
   buffer.read_async(2, 256, [&](auto&& vmap) {
     for (auto& e : vmap) {
-      if ((e & 0xF) == 0) {
-        std::cout << e << " ";
-      }
-      // Investigate: seems to sleep much longer than 1ms ----------------
-      lab::sleep(1ms); // simulate slow data processing
-      // Turns out that sleep is not really good for precise time control.
-      // I guess for testing and experimenting it's fine though.
+      if ((e & 0xF) == 0) std::cout << e << " ";
+      lab::sleep(50ms);
     }
     std::cout << std::endl;
     reading_done = true;
-
-    for (int i = 0; i < 100; i++) {
-      std::cout << "+ ";
-      lab::sleep(20ms);
-    }
   });
 
-  while (lab::tick()) {
-    pipeline.render_frame(surface);
-    webgpu.device.tick();
+  std::cout << "waiting";
+  while (!reading_done) {
+    lab::sleep(200ms);
     std::cout << ".";
-    lab::sleep(20ms);
   }
-
-  std::cout << "\n\nFIN !!!\n" << std::endl;
+  std::cout << "\nFIN !!!\n" << std::endl;
 }
