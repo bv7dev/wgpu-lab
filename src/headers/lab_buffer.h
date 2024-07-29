@@ -4,6 +4,7 @@
 #include "lab_webgpu.h"
 
 #include <functional>
+#include <thread>
 
 namespace lab {
 
@@ -107,7 +108,8 @@ struct ReadableBuffer {
     wgpu_buffer.unmap();
   }
 
-  void read_async(size_t offset, size_t num_elems, ReadCallback callback) {
+  std::thread read_async(size_t offset, size_t num_elems,
+                         ReadCallback callback) {
     assert(wgpu_buffer != nullptr && mapping_active == false);
 
     mapping_active = true;
@@ -146,8 +148,12 @@ struct ReadableBuffer {
       if (msg) std::cout << "read_async: message: " << msg << std::endl;
     };
 
-    wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
-                          sizeof(T) * num_elems, map_callback_info);
+    return std::thread([&]() {
+      std::cout << "map_thread_begin\n";
+      wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset,
+                            sizeof(T) * num_elems, map_callback_info);
+      std::cout << "map_thread_end\n";
+    });
 
     // // Deprecated mapAsync --------------------------------------------------
     // wgpu_buffer.mapAsync(

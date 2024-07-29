@@ -19,14 +19,14 @@ int main() {
   buffer.to_device(1024, write_buffer);
 
   // Read buffer ---------------------------
-  bool reading_done = true;
+  bool reading_done = false;
 
   for (int i = 0; i < 100; ++i) {
     webgpu.device.tick();
     lab::tick();
   }
 
-  buffer.read_async(4, 256, [&](auto&& vmap) {
+  auto t1 = buffer.read_async(4, 256, [&](auto&& vmap) {
     std::cout << "vmap-size: " << vmap.size() << std::endl;
     std::cout << "vmap-size: " << vmap.size() << std::endl;
     std::cout << "\nbuffer read callback: ";
@@ -34,19 +34,21 @@ int main() {
       if ((e & 0xF) == 0) {
         std::cout << e << " ";
       }
-      lab::sleep(4ms); // simulate slow transfer
+      lab::sleep(1ms); // simulate slow data processing
       // TODO: Investigate: seems to sleep much longer than 4ms
     }
     std::cout << std::endl;
     reading_done = true;
   });
 
-  while (lab::tick() && (!reading_done)) {
+  while (lab::tick() && !reading_done) {
     pipeline.render_frame(surface);
     webgpu.device.tick();
     std::cout << ".";
     lab::sleep(20ms);
   }
+
+  t1.join();
 
   std::cout << "\n\nFIN !!!\n" << std::endl;
 
