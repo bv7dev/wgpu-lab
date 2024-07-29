@@ -26,16 +26,14 @@ int main() {
     lab::tick();
   }
 
-  auto t1 = buffer.read_async(4, 256, [&](auto&& vmap) {
-    std::cout << "vmap-size: " << vmap.size() << std::endl;
-    std::cout << "vmap-size: " << vmap.size() << std::endl;
+  auto t1 = buffer.read_async(2, 256, [&](auto&& vmap) {
     std::cout << "\nbuffer read callback: ";
     for (auto& e : vmap) {
       if ((e & 0xF) == 0) {
         std::cout << e << " ";
       }
       lab::sleep(1ms); // simulate slow data processing
-      // TODO: Investigate: seems to sleep much longer than 4ms
+      // TODO: Investigate: seems to sleep much longer than 1ms
     }
     std::cout << std::endl;
     reading_done = true;
