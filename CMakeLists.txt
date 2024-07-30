@@ -31,13 +31,13 @@ target_link_libraries(wgpu-lab glfw webgpu glfw3webgpu)
 
 
 # sample executables -------------------------------------------------------------
-file(GLOB SAMPLE_FILES samples/*.cpp)
+file(GLOB SAMPLE_FILES executables/*.cpp)
 set(SAMPLE_TARGETS)
 foreach(SAMPLE_FILE IN LISTS SAMPLE_FILES)
   get_filename_component(SAMPLE_FILENAME ${SAMPLE_FILE} NAME_WE)
   list(APPEND SAMPLE_TARGETS ${SAMPLE_FILENAME})
   add_executable(${SAMPLE_FILENAME}
-    samples/${SAMPLE_FILENAME}.cpp
+    executables/${SAMPLE_FILENAME}.cpp
   )
   target_link_libraries(${SAMPLE_FILENAME} wgpu-lab)
 endforeach(SAMPLE_FILE)
