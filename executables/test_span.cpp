@@ -32,4 +32,9 @@ int main() {
   for (auto& e : view_b)
     std::cout << e << " ";
   std::cout << std::endl;
+
+  view_b = {};
+
+  std::cout << view_b.empty() << std::endl;
+  std::cout << view_b.size() << std::endl;
 }

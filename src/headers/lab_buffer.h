@@ -45,6 +45,7 @@ struct MappedVRAM {
 
   void unmap() {
     if (buffer) {
+      view = {};
       buffer.unmap();
       buffer = nullptr;
     }
