@@ -5,11 +5,13 @@
 #include <GLFW/glfw3.h>
 
 int main() {
+
+  // TEST 1 - press space to change pipeline of window 2
   {
     lab::Webgpu webgpu{"My Webgpu Instance"};
 
-    lab::Window window_1{"My Window 1", 640, 400};
     lab::Window window_2{"My Window 2", 320, 200};
+    lab::Window window_1{"My Window 1   Press Space to toggle My Window 2 pipeline", 640, 400};
 
     lab::Shader shader_1{"My Shader 1", "shaders/test1.wgsl"};
     lab::Shader shader_2{"My Shader 2", "shaders/test2.wgsl"};
@@ -22,12 +24,11 @@ int main() {
 
     bool toggle_pipeline = false;
 
-    window_1.set_key_callback(
-        [&toggle_pipeline](const lab::Window::KeyEvent& event) {
-          if (event.key == GLFW_KEY_SPACE && event.action == GLFW_PRESS) {
-            toggle_pipeline = !toggle_pipeline;
-          }
-        });
+    window_1.set_key_callback([&toggle_pipeline](const lab::KeyEvent& event) {
+      if (event.key == lab::KeyCode::space && event.action == lab::InputAction::press) {
+        toggle_pipeline = !toggle_pipeline;
+      }
+    });
 
     while (lab::tick()) {
       if (window_1.is_open()) pipeline_1.render_frame(surface_1);
@@ -41,6 +42,8 @@ int main() {
       lab::sleep(16ms);
     }
   }
+
+  // TEST 2 - press space to open second window
   {
     using namespace lab;
 
@@ -54,22 +57,20 @@ int main() {
     std::unique_ptr<Window> sometimes_open;
     std::unique_ptr<Surface> sometimes_surf;
 
-    window.set_key_callback([&](const Window::KeyEvent& event) {
-      if (event.key == 32 && event.action == 0) {
+    window.set_key_callback([&](const KeyEvent& event) {
+      if (event.key == KeyCode::space && event.action == InputAction::press) {
         if (!sometimes_open) {
           sometimes_open = std::make_unique<Window>("test", 400, 300);
-          sometimes_surf =
-              std::make_unique<Surface>(*sometimes_open.get(), webgpu);
+          sometimes_surf = std::make_unique<Surface>(*sometimes_open.get(), webgpu);
 
-          sometimes_open.get()->set_key_callback(
-              [&](const Window::KeyEvent& event) {
-                if (event.key == 32 && event.action == 0) {
-                  sometimes_surf.get()->~Surface();
-                  sometimes_open.get()->~Window();
-                  sometimes_surf.release();
-                  sometimes_open.release();
-                }
-              });
+          sometimes_open.get()->set_key_callback([&](const KeyEvent& event) {
+            if (event.key == KeyCode::tab && event.action == InputAction::release) {
+              sometimes_surf.get()->~Surface();
+              sometimes_open.get()->~Window();
+              sometimes_surf.release();
+              sometimes_open.release();
+            }
+          });
         }
       }
     });
@@ -84,12 +85,14 @@ int main() {
       sleep(16ms);
     }
   }
+
+  // TEST 3 - press space to close the first window
   {
     lab::Window first_window{"My Window", 640, 400};
-    lab::Window second_window{"Test", 300, 200};
+    lab::Window second_window{"Press space to close My Window", 500, 200};
 
-    second_window.set_key_callback([&](const lab::Window::KeyEvent& event) {
-      if (event.key == GLFW_KEY_SPACE) {
+    second_window.set_key_callback([&](const lab::KeyEvent& event) {
+      if (event.key == lab::KeyCode::space) {
         first_window.~Window();
       }
     });
@@ -107,9 +110,11 @@ int main() {
       lab::sleep(16ms);
     }
   }
+
+  // TEST 4 - test multiple webgpu instances
   {
-    lab::Window first_window{"My Window", 640, 400};
-    lab::Window second_window{"Test", 300, 200};
+    lab::Window first_window{"uses Webgpu instance 1", 640, 400};
+    lab::Window second_window{"uses Webgpu instance 2", 300, 200};
     lab::Shader shader{"My Shader", "shaders/test2.wgsl"};
 
     // Todo: Investigate:
@@ -129,6 +134,8 @@ int main() {
       lab::sleep(16ms);
     }
   }
+
+  // TEST 7 - unholy experiments
   {
     // time experiments
     using namespace lab;
@@ -140,12 +147,11 @@ int main() {
     Surface surface{window, webgpu};
     Pipeline pipeline{shader, webgpu};
 
-    window.set_resize_callback([&surface](int width, int height) {
-      surface.reconfigure(width, height);
-    });
+    window.set_resize_callback(
+        [&surface](int width, int height) { surface.reconfigure(width, height); });
 
-    window.set_key_callback([&window](const Window::KeyEvent& event) {
-      if (event.key == GLFW_KEY_SPACE && event.action == GLFW_PRESS) {
+    window.set_key_callback([&window](const KeyEvent& event) {
+      if (event.key == KeyCode::space && event.action == InputAction::press) {
         window.clear_resize_callback();
       }
     });
@@ -174,7 +180,6 @@ int main() {
       }
 
       sleep(std::chrono::duration<double, std::ratio<1>>(0.016 - x));
-      // sleep(0.05s);
     }
   }
 }

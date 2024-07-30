@@ -3,14 +3,22 @@
 
 #include <functional>
 
+#include "lab_enums.h"
+
 namespace lab {
 
 using Handle = void*;
 
+struct KeyEvent {
+  KeyCode key;
+  InputAction action;
+  ModKey mod = ModKey::none;
+  int scancode;
+};
+
+bool operator==(const KeyEvent& lhs, const KeyEvent& rhs);
+
 struct Window {
-  struct KeyEvent {
-    int key, scancode, action, mod;
-  };
   using KeyCallback = std::function<void(const KeyEvent&)>;
   using ResizeCallback = std::function<void(int width, int height)>;
 
@@ -25,6 +33,8 @@ struct Window {
   void set_resize_callback(ResizeCallback);
   void clear_resize_callback();
 
+  void set_title(const char* title);
+
   int width() const;
   int height() const;
 
@@ -35,8 +45,8 @@ struct Window {
   ~Window();
 
 private:
-  KeyCallback keycb;
-  ResizeCallback rescb;
+  KeyCallback user_key_callback;
+  ResizeCallback user_resize_callback;
   Handle handle;
 };
 

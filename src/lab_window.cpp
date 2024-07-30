@@ -1,4 +1,5 @@
 #include "lab_window.h"
+#include "lab_enums.h"
 #include "lab_state.h"
 
 #include <GLFW/glfw3.h>
@@ -19,39 +20,41 @@ Window::Window(const char* title, int width, int height) {
     std::cerr << "Error: GLFW: Failed to create Window!" << std::endl;
     return;
   }
-  std::cout << "Info: GLFW: Window("
-            << glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(handle))
+  std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(handle))
             << " - " << handle << ") created!" << std::endl;
   state.window_map[handle] = this;
 }
 
 void Window::set_key_callback(KeyCallback kcb) {
-  keycb = kcb;
-  glfwSetKeyCallback(
-      reinterpret_cast<GLFWwindow*>(handle),
-      [](GLFWwindow* wnd, int key, int scancode, int action, int mod) {
-        reinterpret_cast<Window*>(state.window_map[wnd])
-            ->keycb({key, scancode, action, mod});
-      });
+  user_key_callback = kcb;
+  glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(handle), [](GLFWwindow* wnd, int key,
+                                                               int scancode, int action, int mod) {
+    reinterpret_cast<Window*>(state.window_map[wnd])
+        ->user_key_callback({static_cast<KeyCode>(key), static_cast<InputAction>(action),
+                             static_cast<ModKey>(mod), scancode});
+  });
 }
 
-void Window::set_resize_callback(
-    std::function<void(int width, int height)> rcb) {
-  rescb = rcb;
+void Window::set_resize_callback(std::function<void(int width, int height)> rcb) {
+  user_resize_callback = rcb;
   glfwSetWindowSizeCallback(
       reinterpret_cast<GLFWwindow*>(handle), [](GLFWwindow* wnd, int w, int h) {
-        reinterpret_cast<Window*>(state.window_map[wnd])->rescb(w, h);
+        reinterpret_cast<Window*>(state.window_map[wnd])->user_resize_callback(w, h);
       });
 }
 
 void Window::clear_key_callback() {
   glfwSetKeyCallback(reinterpret_cast<GLFWwindow*>(handle), nullptr);
-  keycb = nullptr;
+  user_key_callback = nullptr;
 }
 
 void Window::clear_resize_callback() {
   glfwSetWindowSizeCallback(reinterpret_cast<GLFWwindow*>(handle), nullptr);
-  rescb = nullptr;
+  user_resize_callback = nullptr;
+}
+
+void Window::set_title(const char* title) {
+  glfwSetWindowTitle(reinterpret_cast<GLFWwindow*>(handle), title);
 }
 
 int Window::width() const {
@@ -72,8 +75,7 @@ bool Window::is_open() const { return handle != nullptr; }
 
 Window::~Window() {
   if (handle) {
-    std::cout << "Info: GLFW: Window("
-              << glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(handle))
+    std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(reinterpret_cast<GLFWwindow*>(handle))
               << " - " << handle << ") destroyed!" << std::endl;
     glfwDestroyWindow(reinterpret_cast<GLFWwindow*>(handle));
     state.window_map.erase(handle);

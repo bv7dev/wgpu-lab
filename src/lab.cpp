@@ -20,6 +20,7 @@ bool init_lab() {
     state.glfw_init = true;
     return true;
   }
+  // potentially more init stuff in the future
   return false;
 }
 
@@ -39,6 +40,10 @@ bool tick() {
   }
 
   return state.window_map.size() > 0;
+}
+
+bool operator==(const KeyEvent& lhs, const KeyEvent& rhs) {
+  return lhs.key == rhs.key && lhs.mod == rhs.mod && lhs.action == rhs.action;
 }
 
 } // namespace lab
