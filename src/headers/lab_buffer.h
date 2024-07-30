@@ -35,25 +35,24 @@ struct MappedVRAM {
     view_size = size;
   }
 
-  const T& push(const T& e) {
-    view[view_size++] = e;
-    return e;
-  }
+  const T& push(const T& e) { return view[view_size++] = e; }
   T& pop() { return view[--view_size]; }
 
   auto begin() const { return view.begin(); }
-  auto end() const { return view.end(); }
+  auto end() const { return view.begin() + view_size; }
   auto begin() { return view.begin(); }
-  auto end() { return view.end(); }
+  auto end() { return view.begin() + view_size; }
 
-  ~MappedVRAM() {
+  void unmap() {
     if (buffer) {
       buffer.unmap();
       buffer = nullptr;
     }
   }
-  void unmap() { ~MappedVRAM(); }
 
+  ~MappedVRAM() { unmap(); }
+
+  // public underlying container
   std::span<T> view;
 
 private:
@@ -76,8 +75,8 @@ struct ReadableBuffer {
         .size = sizeof(T) * data.size(),
         .mappedAtCreation = true,
     }};
+    current.capacity = data.size();
     wgpu_buffer = webgpu.device.createBuffer(bufferDesc);
-
     void* map = wgpu_buffer.getMappedRange(0, sizeof(T) * data.size());
     memcpy(map, data.data(), sizeof(T) * data.size());
     wgpu_buffer.unmap();
@@ -85,6 +84,7 @@ struct ReadableBuffer {
 
   using WriteCallback = std::function<void(MappedVRAM<T>&&)>;
   void to_device(size_t capacity, WriteCallback write_func) {
+    assert(wgpu_buffer == nullptr);
     wgpu::BufferDescriptor bufferDesc{{
         .label = label,
         .usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst,
@@ -92,6 +92,7 @@ struct ReadableBuffer {
         .mappedAtCreation = true,
     }};
     wgpu_buffer = webgpu.device.createBuffer(bufferDesc);
+    current.capacity = capacity;
 
     auto write_thread = std::thread(
         [](WriteCallback write_func, size_t capacity, wgpu::Buffer buffer) {
@@ -105,8 +106,8 @@ struct ReadableBuffer {
 
   using ReadCallback = std::function<void(ConstMappedVRAM<T>&&)>;
   auto from_device(size_t offset, size_t num_elems, ReadCallback read_func) {
-    assert(wgpu_buffer != nullptr && current.in_progress == false);
-    current = {read_func, offset, num_elems, true};
+    assert(wgpu_buffer != nullptr && current.mapping == false);
+    current = {read_func, offset, num_elems, current.capacity, true};
     WGPUBufferMapCallbackInfo2 cbinfo = {
         .nextInChain = nullptr,
         .mode = wgpu::CallbackMode::AllowSpontaneous,
@@ -117,6 +118,8 @@ struct ReadableBuffer {
     return wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset, sizeof(T) * num_elems,
                                  cbinfo);
   }
+
+  auto from_device(ReadCallback read_func) { return from_device(0, current.capacity, read_func); }
 
   ~ReadableBuffer() {
     if (wgpu_buffer) {
@@ -137,7 +140,7 @@ private:
         self->current.num_elems,
         self->wgpu_buffer};
     self->current.user_callback(std::move(vmap));
-    self->current = {nullptr, 0, 0, false};
+    self->current = {nullptr, 0, 0, false, 0}; // user callback finished
   }
 
   static void map_callback(WGPUMapAsyncStatus status, char const*, void* userdata1, void*) {
@@ -154,7 +157,8 @@ private:
   struct AsyncContext {
     ReadCallback user_callback;
     size_t offset, num_elems;
-    bool in_progress;
+    size_t capacity;
+    bool mapping;
   } current{};
 
   const char* label;
