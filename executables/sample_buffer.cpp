@@ -6,7 +6,7 @@ using namespace lab;
 int main() {
   Webgpu webgpu("My Instance");
 
-  // Write Buffer on seperate thread -------------------------------------------
+  // Multi-threaded reading and writing onto mapped GPU memory  ----------------
   bool writing_done = false;
   cout << "\n\nWriting Buffer...\n";
   ReadableBuffer<int> buffer("My Buffer", webgpu);
@@ -15,7 +15,7 @@ int main() {
     int start_point = 6;
     vmap.resize(start_point);
     for (int i = 0; i < 100; ++i) {
-      cout << vmap.push(i + 5) << " "; // push some numbers
+      cout << vmap.push(i + 5) << " "; // stack some numbers on the buffer
     }
     cout << "\nbuffer initialized" << endl;
     writing_done = true;
@@ -26,7 +26,7 @@ int main() {
   while (!writing_done)
     cout << '.';
 
-  // Read buffer on seperate thread --------------------------------------------
+  // Read the buffer back to CPU -----------------------------------------------
   bool reading_done = false;
   cout << "\n\nReading Buffer...\n";
   auto read_buffer = [&reading_done](ConstMappedVRAM<int>&& vmap) {
