@@ -1,69 +1,13 @@
 #ifndef WGPU_LAB_BUFFER_H
 #define WGPU_LAB_BUFFER_H
 
+#include "lab_mapped_vram.h"
 #include "lab_webgpu.h"
 
 #include <functional>
-#include <ranges>
 #include <thread>
 
 namespace lab {
-
-template<typename T>
-struct MappedVRAM {
-  MappedVRAM(std::span<T> view, size_t size, wgpu::Buffer buffer)
-      : view{view}, view_size{size}, buffer{buffer} {}
-  MappedVRAM(MappedVRAM&& rhs) : view{rhs.view}, view_size{rhs.view_size}, buffer{rhs.buffer} {
-    rhs.buffer = nullptr;
-  }
-  MappedVRAM& operator=(MappedVRAM&& rhs) {
-    view = std::move(rhs.view);
-    view_size = std::move(rhs.view_size);
-    buffer = std::move(rhs.buffer);
-    rhs.buffer = nullptr;
-    return *this;
-  }
-
-  MappedVRAM(const MappedVRAM&) = delete;
-  MappedVRAM& operator=(const MappedVRAM&) = delete;
-
-  size_t capacity() const { return view.size(); }
-  size_t size() const { return view_size; }
-
-  void resize(size_t size) {
-    assert(size <= capacity());
-    view_size = size;
-  }
-
-  const T& push(const T& e) { return view[view_size++] = e; }
-  T& pop() { return view[--view_size]; }
-
-  auto begin() const { return view.begin(); }
-  auto end() const { return view.begin() + view_size; }
-  auto begin() { return view.begin(); }
-  auto end() { return view.begin() + view_size; }
-
-  void unmap() const {
-    if (buffer) {
-      buffer.unmap();
-      buffer = nullptr;
-      view = {};
-      view_size = 0;
-    }
-  }
-
-  ~MappedVRAM() { unmap(); }
-
-  // public underlying container
-  mutable std::span<T> view;
-
-private:
-  mutable wgpu::Buffer buffer;
-  mutable size_t view_size;
-};
-
-template<typename T>
-using ConstMappedVRAM = const MappedVRAM<const T>;
 
 template<typename T>
 struct ReadableBuffer {
@@ -120,7 +64,6 @@ struct ReadableBuffer {
     return wgpu_buffer.mapAsync2(wgpu::MapMode::Read, sizeof(T) * offset, sizeof(T) * num_elems,
                                  cbinfo);
   }
-
   auto from_device(ReadCallback read_func) { return from_device(0, current.capacity, read_func); }
 
   ~ReadableBuffer() {
