@@ -3,17 +3,18 @@
 
 #include <unordered_map>
 
-// Note: user should not need to interact with state directly -> not in lab.h
+// Note: user should not interact with state directly
+//       so it's not included in lab.h
+
+struct GLFWwindow;
 
 namespace lab {
 
-using Handle = void*;
-using Objmap = std::unordered_map<Handle, Handle>; // GLFWwindow* -> lab::Window*
-// todo: replace by more descriptive handels to get rid of many reinterpret casts
+using LabWindowMap = std::unordered_map<GLFWwindow*, Window*>;
 
 extern struct State {
   bool glfw_init = false;
-  Objmap window_map{};
+  LabWindowMap window_map{};
 } state;
 
 } // namespace lab

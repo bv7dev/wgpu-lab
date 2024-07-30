@@ -20,23 +20,25 @@ bool init_lab() {
     state.glfw_init = true;
     return true;
   }
+  //
   // potentially more init stuff in the future
+  //
   return false;
 }
 
 bool tick() {
   glfwPollEvents();
 
-  std::vector<Handle> to_erase;
+  std::vector<GLFWwindow*> to_erase;
   to_erase.reserve(state.window_map.size());
 
   for (auto [wnd, _] : state.window_map) {
-    if (glfwWindowShouldClose(reinterpret_cast<GLFWwindow*>(wnd))) {
+    if (glfwWindowShouldClose(wnd)) {
       to_erase.push_back(wnd);
     }
   }
   for (auto wnd : to_erase) {
-    reinterpret_cast<Window*>(state.window_map[wnd])->~Window();
+    state.window_map[wnd]->~Window();
   }
 
   return state.window_map.size() > 0;

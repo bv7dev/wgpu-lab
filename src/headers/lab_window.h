@@ -5,15 +5,16 @@
 
 #include "lab_enums.h"
 
+struct GLFWwindow;
+using GlfwWindowHandle = GLFWwindow*;
+
 namespace lab {
 
-using Handle = void*;
-
 struct KeyEvent {
-  KeyCode key;
-  InputAction action;
+  KeyCode key = KeyCode::unknown;
+  InputAction action = InputAction::none;
   ModKey mod = ModKey::none;
-  int scancode;
+  int scancode = 0;
 };
 
 bool operator==(const KeyEvent& lhs, const KeyEvent& rhs);
@@ -38,7 +39,7 @@ struct Window {
   int width() const;
   int height() const;
 
-  Handle get_handle() const;
+  GlfwWindowHandle get_handle() const;
 
   bool is_open() const;
 
@@ -47,8 +48,10 @@ struct Window {
 private:
   KeyCallback user_key_callback;
   ResizeCallback user_resize_callback;
-  Handle handle;
+  GlfwWindowHandle handle;
 };
+
+using WindowHandle = Window*;
 
 } // namespace lab
 

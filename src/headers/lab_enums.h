@@ -12,6 +12,7 @@
 namespace lab {
 
 enum class InputAction {
+  none = ~0,
   release = 0,
   press = 1,
   repeat = 2,
@@ -152,6 +153,10 @@ enum class KeyCode {
   unknown = -1,
 };
 
+// regular enum to allow for bit-wise combinations
+// ```cpp
+// auto mod = ModKey::shift | ModKey::ctrl;
+// ```
 enum ModKey {
   none = 0x0000,
   shift = 0x0001,
