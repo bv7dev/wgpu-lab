@@ -17,9 +17,6 @@ int main() {
         lab::sleep(10ms); // simulate slow loading, converting, etc.
         std::cout << vmap.push(std::to_string(i + 5)) << " ";
       }
-      // unmap CAN be called when done reading or writing, otherwise
-      vmap.unmap(); // it will be automatically unmapped on return
-
       std::cout << "\nbuffer initialized\n";
       writing_done = true;
     };
@@ -43,6 +40,11 @@ int main() {
         lab::sleep(50ms); // simulate slow processing of received data
         std::cout << e << " ";
       }
+
+      // unmap CAN be called when done reading or writing, otherwise
+      vmap.unmap(); // it will be automatically unmapped on return
+      // I found a way with mutable to make unmap const so that it's callable here
+
       std::cout << std::endl;
       reading_done = true;
     };

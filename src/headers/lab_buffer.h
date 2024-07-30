@@ -43,22 +43,23 @@ struct MappedVRAM {
   auto begin() { return view.begin(); }
   auto end() { return view.begin() + view_size; }
 
-  void unmap() {
+  void unmap() const {
     if (buffer) {
-      view = {};
       buffer.unmap();
       buffer = nullptr;
+      view = {};
+      view_size = 0;
     }
   }
 
   ~MappedVRAM() { unmap(); }
 
   // public underlying container
-  std::span<T> view;
+  mutable std::span<T> view;
 
 private:
-  wgpu::Buffer buffer;
-  size_t view_size;
+  mutable wgpu::Buffer buffer;
+  mutable size_t view_size;
 };
 
 template<typename T>
