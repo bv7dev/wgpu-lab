@@ -4,14 +4,14 @@
 // Copied and re-formatted from GLFW/glfw3.h
 //
 // todo: maybe: controller support
-// todo: bi-directional map to lookup all enum fields by strings and vice versa
+// idea: maybe: bi-directional map to lookup all enum fields by strings and vice versa
 // todo: maybe: generator script to produce this header
 //       with strings and potentially new enums
 // todo: overload cout << to be able to print enums
 
 namespace lab {
 
-enum class InputAction {
+enum class InputType {
   none = ~0,
   release = 0,
   press = 1,

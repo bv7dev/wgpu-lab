@@ -29,7 +29,7 @@ void Window::set_key_callback(KeyCallback kcb) {
   user_key_callback = kcb;
   glfwSetKeyCallback(handle, [](GLFWwindow* wnd, int key, int scancode, int action, int mod) {
     state.window_map[wnd]->user_key_callback({static_cast<KeyCode>(key),
-                                              static_cast<InputAction>(action),
+                                              static_cast<InputType>(action),
                                               static_cast<ModKey>(mod), scancode});
   });
 }

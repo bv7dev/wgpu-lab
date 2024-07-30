@@ -1,7 +1,7 @@
 #include <lab>
 
 int main() {
-  // TEST 1 - This evil creation should not work, but does somehow
+  // TEST 1 - Load strings onto GPU buffers - this evil creation should not be possible
   {
     lab::Webgpu webgpu("My Instance");
 

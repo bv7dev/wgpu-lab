@@ -25,7 +25,7 @@ int main() {
     bool toggle_pipeline = false;
 
     window_1.set_key_callback([&toggle_pipeline](const lab::KeyEvent& event) {
-      if (event.key == lab::KeyCode::space && event.action == lab::InputAction::press) {
+      if (event.key == lab::KeyCode::space && event.action == lab::InputType::press) {
         toggle_pipeline = !toggle_pipeline;
       }
     });
@@ -58,13 +58,13 @@ int main() {
     std::unique_ptr<Surface> sometimes_surf;
 
     window.set_key_callback([&](const KeyEvent& event) {
-      if (event.key == KeyCode::space && event.action == InputAction::press) {
+      if (event.key == KeyCode::space && event.action == InputType::press) {
         if (!sometimes_open) {
           sometimes_open = std::make_unique<Window>("test", 400, 300);
           sometimes_surf = std::make_unique<Surface>(*sometimes_open.get(), webgpu);
 
           sometimes_open.get()->set_key_callback([&](const KeyEvent& event) {
-            if (event.key == KeyCode::tab && event.action == InputAction::release) {
+            if (event.key == KeyCode::tab && event.action == InputType::release) {
               sometimes_surf.get()->~Surface();
               sometimes_open.get()->~Window();
               sometimes_surf.release();
@@ -151,7 +151,7 @@ int main() {
         [&surface](int width, int height) { surface.reconfigure(width, height); });
 
     window.set_key_callback([&window](const KeyEvent& event) {
-      if (event.key == KeyCode::space && event.action == InputAction::press) {
+      if (event.key == KeyCode::space && event.action == InputType::press) {
         window.clear_resize_callback();
       }
     });

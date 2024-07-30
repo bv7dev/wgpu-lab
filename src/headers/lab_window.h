@@ -12,7 +12,7 @@ namespace lab {
 
 struct KeyEvent {
   KeyCode key = KeyCode::unknown;
-  InputAction action = InputAction::none;
+  InputType action = InputType::none;
   ModKey mod = ModKey::none;
   int scancode = 0;
 };
