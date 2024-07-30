@@ -6,14 +6,14 @@ int main() {
   // Init Buffer ---------------------------------------------------------------
   bool writing_done = false;
   std::cout << "\n\nWriting Buffer...\n";
-  lab::ReadableBuffer<int> buffer("My Buffer", webgpu);
+  lab::ReadableBuffer<std::string> buffer("My Buffer", webgpu);
 
-  auto init_buffer = [&writing_done](lab::MappedVRAM<int>&& vmap) {
+  auto init_buffer = [&writing_done](lab::MappedVRAM<std::string>&& vmap) {
     int start_point = 6;
     vmap.resize(start_point);
     for (int i = 0; i < 100; ++i) {
       lab::sleep(10ms); // simulate slow loading, converting, etc.
-      std::cout << vmap.push(i + 5) << " ";
+      std::cout << vmap.push("bv7-" + (i + 5)) << " ";
     }
     // unmap CAN be called when done reading or writing, otherwise
     vmap.unmap(); // it will be automatically unmapped on return
@@ -30,13 +30,14 @@ int main() {
   }
 
   // this buffer does nothing, it's just to see if something breaks
-  lab::ReadableBuffer<int> another("Stress Test", std::vector<int>{1, 2, 3, 4}, webgpu);
+  lab::ReadableBuffer<std::string> another("Stress Test",
+                                           std::vector<std::string>{"1", "2", "3", "4+"}, webgpu);
 
   // Read buffer ---------------------------------------------------------------
   bool reading_done = false;
   std::cout << "\n\nReading Buffer...\n";
-  auto read_buffer = [&reading_done](lab::ConstMappedVRAM<int>&& vmap) {
-    for (int e : vmap) {
+  auto read_buffer = [&reading_done](lab::ConstMappedVRAM<std::string>&& vmap) {
+    for (auto e : vmap) {
       lab::sleep(50ms); // simulate slow processing of received data
       std::cout << e << " ";
     }
