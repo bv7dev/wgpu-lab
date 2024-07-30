@@ -30,6 +30,11 @@ struct MappedVRAM {
   size_t capacity() const { return view.size(); }
   size_t size() const { return view_size; }
 
+  void resize(size_t size) {
+    assert(size <= capacity());
+    view_size = size;
+  }
+
   const T& push(const T& e) {
     view[view_size++] = e;
     return e;

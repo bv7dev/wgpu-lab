@@ -8,8 +8,8 @@ int main() {
   std::cout << "\n\nWriting Buffer...\n";
   lab::ReadableBuffer<int> buffer("My Buffer", webgpu);
 
-  auto init_buffer = [&](auto&& vmap) {
-    for (auto i = 0; i < vmap.capacity(); ++i) {
+  auto init_buffer = [&](lab::MappedVRAM<int>&& vmap) {
+    for (int i = 0; i < vmap.capacity(); ++i) {
       lab::sleep(10ms); // simulate slow loading, converting, etc.
       std::cout << vmap.push(i + 1) << " ";
     }
@@ -18,7 +18,7 @@ int main() {
   };
   buffer.to_device(256, init_buffer);
 
-  std::cout << "waiting ";
+  std::cout << "Main thread waiting... ";
   while (!writing_done) {
     lab::sleep(20ms);
     std::cout << ".";
@@ -30,8 +30,8 @@ int main() {
   // Read buffer ---------------------------------------------------------------
   bool reading_done = false;
   std::cout << "\n\nReading Buffer...\n";
-  auto read_buffer = [&](auto&& vmap) {
-    for (auto& e : vmap) {
+  auto read_buffer = [&](lab::ConstMappedVRAM<int>&& vmap) {
+    for (int e : vmap) {
       lab::sleep(50ms); // simulate slow processing of received data
       std::cout << e << " ";
     }
@@ -40,7 +40,7 @@ int main() {
   };
   buffer.from_device(2, 64, read_buffer);
 
-  std::cout << "waiting ";
+  std::cout << "Main thread waiting... ";
   while (!reading_done) {
     lab::sleep(10ms);
     std::cout << ".";
