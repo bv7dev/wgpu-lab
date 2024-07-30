@@ -6,7 +6,7 @@ using namespace lab;
 int main() {
   Webgpu webgpu("My Instance");
 
-  // Write Buffer --------------------------------------------------------------
+  // Write Buffer on seperate thread -------------------------------------------
   bool writing_done = false;
   cout << "\n\nWriting Buffer...\n";
   ReadableBuffer<int> buffer("My Buffer", webgpu);
@@ -26,7 +26,7 @@ int main() {
   while (!writing_done)
     cout << '.';
 
-  // Read buffer ---------------------------------------------------------------
+  // Read buffer on seperate thread --------------------------------------------
   bool reading_done = false;
   cout << "\n\nReading Buffer...\n";
   auto read_buffer = [&reading_done](ConstMappedVRAM<int>&& vmap) {

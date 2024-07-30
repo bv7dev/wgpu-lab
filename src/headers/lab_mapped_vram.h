@@ -49,7 +49,6 @@ struct MappedVRAM {
       view = {};
     }
   }
-
   ~MappedVRAM() { unmap(); }
 
   // public underlying container
