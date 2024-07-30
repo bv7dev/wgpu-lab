@@ -2,7 +2,7 @@
 using namespace lab;
 
 int main() {
-  Window window("press space to say hello", 900, 400);
+  Window window("press space to say hello", 640, 400);
 
   window.set_key_callback([&window](auto& event) {
     if (event == KeyEvent{KeyCode::space, InputType::release}) {

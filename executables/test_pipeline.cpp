@@ -1,10 +1,12 @@
 #include <lab>
 using namespace lab;
 
+// TODO: make pipeline configurable and usable
+
 int main() {
   Webgpu webgpu("My Instance");
   Shader shader("My Shader", "shaders/test1.wgsl");
-  Window window("A Window and a Triangle", 640, 400);
+  Window window("pipeline tests", 640, 400);
 
   Surface surface(window, webgpu);
   Pipeline pipeline(shader, webgpu);

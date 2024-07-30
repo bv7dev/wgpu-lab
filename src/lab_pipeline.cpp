@@ -57,8 +57,7 @@ bool Pipeline::render_frame(Surface& surface) const {
   wgpu::SurfaceTexture surfaceTexture;
   surface.wgpu_surface.getCurrentTexture(&surfaceTexture);
   if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
-    std::cerr << "Error: Pipeline::render_frame: Could not get current texture"
-              << std::endl;
+    std::cerr << "Error: Pipeline: Could not get current texture" << std::endl;
     return false;
   }
   WGPUTextureViewDescriptor viewDescriptor{
@@ -71,18 +70,14 @@ bool Pipeline::render_frame(Surface& surface) const {
       .arrayLayerCount = 1,
       .aspect = WGPUTextureAspect_All,
   };
-  wgpu::TextureView targetView =
-      wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+  wgpu::TextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
   if (!targetView) {
-    std::cerr << "Error: Pipeline::render_frame: Could not create texture view"
-              << std::endl;
+    std::cerr << "Error: Pipeline: Could not create texture view" << std::endl;
     return false;
   }
 
-  wgpu::CommandEncoderDescriptor encoderDesc = {
-      {.label = "My command encoder"}};
-  wgpu::CommandEncoder encoder =
-      webgpu.device.createCommandEncoder(encoderDesc);
+  wgpu::CommandEncoderDescriptor encoderDesc = {{.label = "My command encoder"}};
+  wgpu::CommandEncoder encoder = webgpu.device.createCommandEncoder(encoderDesc);
 
   wgpu::RenderPassColorAttachment renderPassColorAttachment = {{
       .view = targetView,
@@ -106,8 +101,7 @@ bool Pipeline::render_frame(Surface& surface) const {
   renderPass.end();
   renderPass.release();
 
-  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {
-      {.label = "My command buffer"}};
+  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {{.label = "My command buffer"}};
   wgpu::CommandBuffer commands = encoder.finish(cmdBufferDescriptor);
   encoder.release();
 
