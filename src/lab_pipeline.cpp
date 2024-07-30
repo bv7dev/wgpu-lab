@@ -1,119 +1,54 @@
 #include "lab_pipeline.h"
 
+#include <format>
 #include <iostream>
+#include <sstream>
 
 namespace lab {
 
-Pipeline::Pipeline(Shader& sh, Webgpu& wg) : shader{sh}, webgpu{wg} {
-  std::cout << "Info: WGPU: Create Pipeline" << std::endl;
-  wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
+Pipeline::Pipeline(Shader& sh, Webgpu& wg, bool now) : shader{sh}, webgpu{wg} {
+  if (now) create();
+}
 
-  wgpu::BlendComponent blendColor = {{
-      .operation = wgpu::BlendOperation::Add,
-      .srcFactor = wgpu::BlendFactor::SrcAlpha,
-      .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
-  }};
-
-  wgpu::BlendComponent blendAlpha = {{
-      .operation = wgpu::BlendOperation::Add,
-      .srcFactor = wgpu::BlendFactor::Zero,
-      .dstFactor = wgpu::BlendFactor::One,
-  }};
+wgpu::RenderPipeline Pipeline::create(wgpu::ShaderModule shaderModule) {
+  if (config.label.empty()) {
+    config.label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
+  }
+  std::cout << "Info: WGPU: Create: " << config.label << std::endl;
 
   wgpu::BlendState blendState = {{
-      .color = blendColor,
-      .alpha = blendAlpha,
+      .color = config.blendColor,
+      .alpha = config.blendAlpha,
   }};
 
-  wgpu::ColorTargetState colorTarget = {{
-      .format = webgpu.capabilities.formats[0],
-      .blend = &blendState,
-      .writeMask = wgpu::ColorWriteMask::All,
-  }};
+  config.colorTarget.format = webgpu.capabilities.formats[0];
+  config.colorTarget.blend = &blendState;
 
-  wgpu::FragmentState fragmentState = {{
-      .module = shaderModule,
-      .entryPoint = "fs_main",
-      .targetCount = 1,
-      .targets = &colorTarget,
-  }};
+  config.fragmentState.module = shaderModule;
+  config.fragmentState.targetCount = 1;
+  config.fragmentState.targets = &config.colorTarget;
+
+  config.vertexState.module = shaderModule;
 
   wgpu::RenderPipelineDescriptor pipelineDesc = {{
-      .label = "My render pipeline",
-      .vertex = {.module = shaderModule, .entryPoint = "vs_main"},
-      .primitive = {.topology = wgpu::PrimitiveTopology::TriangleList,
-                    .stripIndexFormat = wgpu::IndexFormat::Undefined,
-                    .frontFace = wgpu::FrontFace::CCW,
-                    .cullMode = wgpu::CullMode::None},
-      .multisample = {.count = 1, .mask = ~0u},
-      .fragment = &fragmentState,
+      .label = config.label.c_str(),
+      .vertex = config.vertexState,
+      .primitive = config.primitiveState,
+      .multisample = config.multisampleState,
+      .fragment = &config.fragmentState,
   }};
 
   wgpu_pipeline = webgpu.device.createRenderPipeline(pipelineDesc);
+  return wgpu_pipeline;
+}
+
+void Pipeline::create() {
+  wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
+  create(shaderModule);
   shaderModule.release();
 }
 
-bool Pipeline::render_frame(Surface& surface) const {
-  wgpu::SurfaceTexture surfaceTexture;
-  surface.wgpu_surface.getCurrentTexture(&surfaceTexture);
-  if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
-    std::cerr << "Error: Pipeline: Could not get current texture" << std::endl;
-    return false;
-  }
-  WGPUTextureViewDescriptor viewDescriptor{
-      .label = "My texture view",
-      .format = wgpuTextureGetFormat(surfaceTexture.texture),
-      .dimension = WGPUTextureViewDimension_2D,
-      .baseMipLevel = 0,
-      .mipLevelCount = 1,
-      .baseArrayLayer = 0,
-      .arrayLayerCount = 1,
-      .aspect = WGPUTextureAspect_All,
-  };
-  wgpu::TextureView targetView = wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
-  if (!targetView) {
-    std::cerr << "Error: Pipeline: Could not create texture view" << std::endl;
-    return false;
-  }
-
-  wgpu::CommandEncoderDescriptor encoderDesc = {{.label = "My command encoder"}};
-  wgpu::CommandEncoder encoder = webgpu.device.createCommandEncoder(encoderDesc);
-
-  wgpu::RenderPassColorAttachment renderPassColorAttachment = {{
-      .view = targetView,
-      .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED,
-      .loadOp = wgpu::LoadOp::Clear,
-      .storeOp = wgpu::StoreOp::Store,
-      .clearValue = WGPUColor{0.9, 0.1, 0.2, 1.0},
-  }};
-
-  wgpu::RenderPassDescriptor renderPassDesc = {{
-      .label = "My render pass",
-      .colorAttachmentCount = 1,
-      .colorAttachments = &renderPassColorAttachment,
-  }};
-
-  wgpu::RenderPassEncoder renderPass = encoder.beginRenderPass(renderPassDesc);
-  renderPass.setPipeline(wgpu_pipeline);
-
-  renderPass.draw(3, 1, 0, 0);
-
-  renderPass.end();
-  renderPass.release();
-
-  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {{.label = "My command buffer"}};
-  wgpu::CommandBuffer commands = encoder.finish(cmdBufferDescriptor);
-  encoder.release();
-
-  webgpu.queue.submit(commands);
-  commands.release();
-
-  targetView.release();
-  surface.wgpu_surface.present();
-  webgpu.device.tick();
-
-  return true;
-}
+bool Pipeline::render_frame(Surface& surface) { return render_func(*this, surface); }
 
 Pipeline::~Pipeline() {
   if (wgpu_pipeline) {

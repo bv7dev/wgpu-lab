@@ -11,6 +11,10 @@ int main() {
   Surface surface(window, webgpu);
   Pipeline pipeline(shader, webgpu);
 
+  // pipeline.config.
+  pipeline.create();
+  // pipeline.render_config.renderPassColorAttachment.
+
   window.set_resize_callback(
       [&surface](int width, int height) { surface.reconfigure(width, height); });
 
