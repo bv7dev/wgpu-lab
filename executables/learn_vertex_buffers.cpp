@@ -1,19 +1,27 @@
 #include <lab>
-using namespace lab;
+
+#include "tutorial_vertex_buffers.h"
+
+// todo: it seems like my webgpu error callback is not working, so i don't get any error messages
+
+// Assimilate tutorial code !!!
 
 int main() {
-  Webgpu webgpu("My Instance");
-  Shader shader("My Shader", "shaders/test1.wgsl");
-  Window window("A Window and a Triangle", 640, 400);
+  lab::Webgpu webgpu("My Instance");
+  lab::Shader shader("My Shader", "shaders/test1.wgsl");
+  shader.source = tutorial::shaderSource; // replace by tutorial shader
 
-  Surface surface(window, webgpu);
-  Pipeline pipeline(shader, webgpu);
+  lab::Window window("A Window with tutorial code", 640, 400);
+  lab::Surface surface(window, webgpu);
+
+  WGPURenderPipeline pip = tutorial::InitializePipeline(webgpu, shader);
+  auto res = tutorial::InitializeBuffers(webgpu);
 
   window.set_resize_callback(
       [&surface](int width, int height) { surface.reconfigure(width, height); });
 
-  while (tick()) {
-    pipeline.render_frame(surface, {3, 1});
+  while (lab::tick()) {
+    tutorial::MainLoop(webgpu, surface.wgpu_surface, pip, res.vertexBuffer, res.vertexCount);
     lab::sleep(50ms);
   }
 }
