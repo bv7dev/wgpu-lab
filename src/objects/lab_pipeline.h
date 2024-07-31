@@ -1,6 +1,8 @@
 #ifndef WGPU_LAB_PIPELINE_H
 #define WGPU_LAB_PIPELINE_H
 
+#include <extra/lab_pipeline_defaults.h>
+
 #include <objects/lab_shader.h>
 #include <objects/lab_surface.h>
 #include <objects/lab_webgpu.h>
@@ -9,10 +11,12 @@
 
 namespace lab {
 
-// Is responsible to render frames onto surfaces
+// Is responsible to manage the process of rendering frames onto surfaces
 struct Pipeline {
+  // Creates a new pipeline object
   // - param: `configurable = false` makes pipeline init-stage non-configurable
   //   and causes automatic call to `init()` inside constructor.
+  //
   // If configuration is desired:
   // ```cpp
   // lab::Pipeline pip(my_shader, my_webgpu, false);
@@ -61,7 +65,7 @@ struct Pipeline {
     wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
     finalize_config(shaderModule);
 
-    std::cout << "Info: WGPU: Create: " << config.label << std::endl;
+    std::cout << "Info: WGPU: Create: " << label << std::endl;
     assert(wgpu_pipeline == nullptr);
     wgpu_pipeline = transfer();
 
@@ -73,70 +77,13 @@ struct Pipeline {
   // ---------------------------------------------------------------------------
   // Configurable functions and structures with default values
 
-  struct InitConfig {
-    wgpu::BlendState blendState = {{
-        .color =
-            {
-                .operation = wgpu::BlendOperation::Add,
-                .srcFactor = wgpu::BlendFactor::SrcAlpha,
-                .dstFactor = wgpu::BlendFactor::OneMinusSrcAlpha,
-            },
-        .alpha =
-            {
-                .operation = wgpu::BlendOperation::Add,
-                .srcFactor = wgpu::BlendFactor::Zero,
-                .dstFactor = wgpu::BlendFactor::One,
-            },
-    }};
-
-    wgpu::ColorTargetState colorTarget = {{
-        .writeMask = wgpu::ColorWriteMask::All,
-    }};
-
-    wgpu::FragmentState fragmentState = {{
-        .entryPoint = "fs_main",
-    }};
-
-    wgpu::VertexState vertexState = {{
-        .entryPoint = "vs_main",
-    }};
-
-    wgpu::PrimitiveState primitiveState = {{
-        .topology = wgpu::PrimitiveTopology::TriangleList,
-        .stripIndexFormat = wgpu::IndexFormat::Undefined,
-        .frontFace = wgpu::FrontFace::CCW,
-        .cullMode = wgpu::CullMode::None,
-    }};
-
-    wgpu::MultisampleState multisampleState = {{
-        .count = 1,
-        .mask = ~0u,
-    }};
-
-    std::string label;
-  } default_config;
-
   // All config fields that have not been assigned a default value other than null
   // are non-configurable and will be overwritten in `finalize_config()` to guarantee consistency
-  InitConfig config = default_config;
-
-  struct RenderConfig {
-    wgpu::RenderPassColorAttachment renderPassColorAttachment = {{
-        .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED,
-        .loadOp = wgpu::LoadOp::Clear,
-        .storeOp = wgpu::StoreOp::Store,
-        .clearValue = WGPUColor{0.08, 0.08, 0.085, 1.0},
-    }};
-
-    wgpu::RenderPassDescriptor renderPassDesc = {{
-        .label = "Default Render Pass",
-        .colorAttachmentCount = 1,
-    }};
-  } default_render_config;
+  InitConfig config{};
 
   // All config fields that have not been assigned a default value other than null
   // are non-configurable and will be overwritten in `finalize_config()`
-  RenderConfig render_config = default_render_config;
+  RenderConfig render_config{};
 
   static bool default_render(Pipeline& self, wgpu::Surface surface,
                              const DrawCallParams& draw_params) {
@@ -200,6 +147,8 @@ struct Pipeline {
   RenderFunction user_render = default_render;
 
   wgpu::RenderPipeline wgpu_pipeline;
+
+  std::string label;
 
   Webgpu& webgpu;
   Shader& shader;

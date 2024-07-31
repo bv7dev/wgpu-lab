@@ -7,8 +7,8 @@
 namespace lab {
 
 void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
-  if (config.label.empty()) {
-    config.label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
+  if (label.empty()) {
+    label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
   }
 
   config.colorTarget.format = webgpu.capabilities.formats[0];
@@ -24,7 +24,7 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
 
 wgpu::RenderPipeline Pipeline::transfer() const {
   wgpu::RenderPipelineDescriptor pipelineDesc = {{
-      .label = config.label.c_str(),
+      .label = label.c_str(),
       .vertex = config.vertexState,
       .primitive = config.primitiveState,
       .multisample = config.multisampleState,
