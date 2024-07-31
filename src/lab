@@ -16,7 +16,7 @@ namespace lab {
 // Functions with side-effects, operating on the global application state --------------------------
 
 // Processes GLFW Events, handles open Windows and closes them
-//  - generally should be called once in any app main loop
+//  - generally should be called once per main-loop iteration
 //  - returns `true` as long as at least one Window is open
 // ```cpp
 // while(lab::tick()) {
