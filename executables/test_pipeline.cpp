@@ -21,7 +21,7 @@ int main() {
   // initialize after configuring
   pipeline.init();
 
-  // render config only
+  // render config only affects render_frame
   auto& cfg_color = pipeline.render_config.renderPassColorAttachment;
   cfg_color.clearValue = wgpu::Color(0.25, 0.2, 0.2, 1.0);
 
