@@ -1,25 +1,32 @@
 #include <lab>
-using namespace lab;
-
-// TODO: make pipeline configurable and usable
 
 int main() {
+  using namespace lab;
+
   Webgpu webgpu("My Instance");
   Shader shader("My Shader", "shaders/test1.wgsl");
   Window window("pipeline tests", 640, 400);
 
   Surface surface(window, webgpu);
-  Pipeline pipeline(shader, webgpu);
-
-  // pipeline.config.
-  pipeline.create();
-  // pipeline.render_config.renderPassColorAttachment.
-
   window.set_resize_callback(
       [&surface](int width, int height) { surface.reconfigure(width, height); });
 
+  // Configure Render Pipeline -------------------------------------------------
+  Pipeline pipeline(shader, webgpu);
+
+  auto& cfg_prim = pipeline.config.primitiveState;
+  cfg_prim.topology = wgpu::PrimitiveTopology::LineStrip;
+  cfg_prim.stripIndexFormat = wgpu::IndexFormat::Uint32;
+
+  // initialize after configuring
+  pipeline.init();
+
+  // render config only
+  auto& cfg_color = pipeline.render_config.renderPassColorAttachment;
+  cfg_color.clearValue = wgpu::Color(0.25, 0.2, 0.2, 1.0);
+
   while (tick()) {
-    pipeline.render_frame(surface);
+    pipeline.render_frame(surface, {3, 1});
     lab::sleep(50ms);
   }
 }

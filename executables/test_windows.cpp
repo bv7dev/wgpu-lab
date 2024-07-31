@@ -31,12 +31,12 @@ int main() {
     });
 
     while (lab::tick()) {
-      if (window_1.is_open()) pipeline_1.render_frame(surface_1);
+      if (window_1.is_open()) pipeline_1.render_frame(surface_1, {3, 1});
 
       if (toggle_pipeline) {
-        if (window_2.is_open()) pipeline_2.render_frame(surface_2);
+        if (window_2.is_open()) pipeline_2.render_frame(surface_2, {3, 1});
       } else {
-        if (window_2.is_open()) pipeline_1.render_frame(surface_2);
+        if (window_2.is_open()) pipeline_1.render_frame(surface_2, {3, 1});
       }
 
       lab::sleep(16ms);
@@ -76,10 +76,10 @@ int main() {
     });
 
     while (tick()) {
-      pipeline.render_frame(surface);
+      pipeline.render_frame(surface, {3, 1});
 
       if (sometimes_open && sometimes_open.get()->is_open()) {
-        pipeline.render_frame(*sometimes_surf.get());
+        pipeline.render_frame(*sometimes_surf.get(), {3, 1});
       }
 
       sleep(16ms);
@@ -105,8 +105,8 @@ int main() {
     lab::Surface second_surface{second_window, webgpu};
 
     while (lab::tick()) {
-      if (first_window.is_open()) pipeline.render_frame(first_surface);
-      if (second_window.is_open()) pipeline.render_frame(second_surface);
+      if (first_window.is_open()) pipeline.render_frame(first_surface, {3, 1});
+      if (second_window.is_open()) pipeline.render_frame(second_surface, {3, 1});
       lab::sleep(16ms);
     }
   }
@@ -129,8 +129,8 @@ int main() {
     lab::Surface second_surface{second_window, webgpu2};
 
     while (lab::tick()) {
-      if (first_window.is_open()) pipe1.render_frame(first_surface);
-      if (second_window.is_open()) pipe2.render_frame(second_surface);
+      if (first_window.is_open()) pipe1.render_frame(first_surface, {3, 1});
+      if (second_window.is_open()) pipe2.render_frame(second_surface, {3, 1});
       lab::sleep(16ms);
     }
   }
@@ -164,8 +164,8 @@ int main() {
     double last_T = last_t;
 
     while (tick()) {
-      if (window.is_open()) pipeline.render_frame(surface);
-      if (w2.is_open()) pipeline.render_frame(s2);
+      if (window.is_open()) pipeline.render_frame(surface, {3, 1});
+      if (w2.is_open()) pipeline.render_frame(s2, {3, 1});
       frame++;
 
       if ((frame & 0xFF) == 0x00) {

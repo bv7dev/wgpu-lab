@@ -6,10 +6,6 @@
 
 namespace lab {
 
-Pipeline::Pipeline(Shader& sh, Webgpu& wg, bool now) : shader{sh}, webgpu{wg} {
-  if (now) create();
-}
-
 wgpu::RenderPipeline Pipeline::create(wgpu::ShaderModule shaderModule) {
   if (config.label.empty()) {
     config.label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
@@ -30,25 +26,22 @@ wgpu::RenderPipeline Pipeline::create(wgpu::ShaderModule shaderModule) {
 
   config.vertexState.module = shaderModule;
 
+  wgpu::MultisampleState multisampleState = {{
+      .count = 1,
+      .mask = ~0u,
+  }};
+
   wgpu::RenderPipelineDescriptor pipelineDesc = {{
       .label = config.label.c_str(),
       .vertex = config.vertexState,
       .primitive = config.primitiveState,
-      .multisample = config.multisampleState,
+      .multisample = multisampleState,
       .fragment = &config.fragmentState,
   }};
 
   wgpu_pipeline = webgpu.device.createRenderPipeline(pipelineDesc);
   return wgpu_pipeline;
 }
-
-void Pipeline::create() {
-  wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
-  create(shaderModule);
-  shaderModule.release();
-}
-
-bool Pipeline::render_frame(Surface& surface) { return render_func(*this, surface); }
 
 Pipeline::~Pipeline() {
   if (wgpu_pipeline) {
