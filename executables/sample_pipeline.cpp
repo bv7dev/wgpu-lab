@@ -16,14 +16,14 @@ int main() {
   });
 
   // Configure Render Pipeline -------------------------------------------------
-  Pipeline pipeline(shader, webgpu);
+  Pipeline pipeline(shader, webgpu, true);
 
   // draw line strip
   auto& primitive_cfg = pipeline.config.primitiveState;
   primitive_cfg.topology = wgpu::PrimitiveTopology::LineStrip;
   primitive_cfg.stripIndexFormat = wgpu::IndexFormat::Uint32;
 
-  // initialize after configuring
+  // initialize after configuration
   pipeline.init();
 
   // render config only affects render_frame
@@ -31,8 +31,8 @@ int main() {
   color_cfg.clearValue = wgpu::Color(0.25, 0.2, 0.2, 1.0);
 
   while (tick()) {
-    Pipeline::DrawCallParams draw(3, 1); // draw 3 vertices and 1 instance
-    pipeline.render_frame(surface, draw);
+    Pipeline::DrawCallParams draw_params(3, 1); // draw 3 vertices and 1 instance
+    pipeline.render_frame(surface, draw_params);
     sleep(50ms);
   }
 }
