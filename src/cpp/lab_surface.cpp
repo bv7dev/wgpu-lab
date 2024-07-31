@@ -1,4 +1,4 @@
-#include "lab_surface.h"
+#include <objects/lab_surface.h>
 
 #include <glfw3webgpu.h>
 

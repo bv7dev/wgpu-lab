@@ -26,6 +26,9 @@ using SurfaceHandle = Surface*;
 struct Pipeline;
 using PipelineHandle = Pipeline*;
 
+struct Buffer;
+using BufferHandle = Buffer*;
+
 } // namespace lab
 
 // external structs ------------------------------

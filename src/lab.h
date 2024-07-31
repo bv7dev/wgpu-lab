@@ -1,18 +1,11 @@
 #ifndef WGPU_LAB_MAIN_H
 #define WGPU_LAB_MAIN_H
 
-// Main header to import all public lab- objects and -enum-classes
+#ifndef LAB_USER_DISABLE_CHRONO_LITERALS
+#define LAB_USE_STL_CHRONO_LITERALS
+#endif
 
-// for now, it's convenient to make all stl dependencies public
-#include "lab_stl_deps.h" // todo: remove
-
-#include "lab_buffer.h"
-#include "lab_enums.h"
-#include "lab_pipeline.h"
-#include "lab_shader.h"
-#include "lab_surface.h"
-#include "lab_webgpu.h"
-#include "lab_window.h"
+#include <extra/lab_public.h>
 
 namespace lab {
 

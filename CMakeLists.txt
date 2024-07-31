@@ -11,22 +11,29 @@ add_subdirectory(libs/glfw3webgpu)
 
 # wgpu-lab library -------------------------------------------------------------
 add_library(wgpu-lab
-  src/lab_pipeline.cpp
-  src/lab_shader.cpp
-  src/lab_surface.cpp
-  src/lab_window.cpp
-  src/lab_webgpu.cpp
-  src/lab.cpp
-  src/headers/lab_objects.h
-  src/headers/lab_pipeline.h
-  src/headers/lab_shader.h
-  src/headers/lab_state.h
-  src/headers/lab_surface.h
-  src/headers/lab_webgpu.h
-  src/headers/lab_window.h
-  src/headers/lab.h
+  src/cpp/lab_pipeline.cpp
+  src/cpp/lab_shader.cpp
+  src/cpp/lab_surface.cpp
+  src/cpp/lab_webgpu.cpp
+  src/cpp/lab_window.cpp
+  src/cpp/lab.cpp
+
+  src/extra/lab_enums.h
+  src/extra/lab_mapped_vram.h
+  src/extra/lab_objects.h
+  src/extra/lab_state.h
+  src/extra/lab_stl_deps.h
+
+  src/objects/lab_buffer.h
+  src/objects/lab_pipeline.h
+  src/objects/lab_shader.h
+  src/objects/lab_surface.h
+  src/objects/lab_webgpu.h
+  src/objects/lab_window.h
+
+  src/lab.h
 )
-target_include_directories(wgpu-lab PUBLIC src/headers)
+target_include_directories(wgpu-lab PUBLIC src)
 target_link_libraries(wgpu-lab glfw webgpu glfw3webgpu)
 
 

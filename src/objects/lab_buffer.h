@@ -1,8 +1,9 @@
 #ifndef WGPU_LAB_BUFFER_H
 #define WGPU_LAB_BUFFER_H
 
-#include "lab_mapped_vram.h"
-#include "lab_webgpu.h"
+#include <objects/lab_webgpu.h>
+
+#include <extra/lab_mapped_vram.h>
 
 #include <functional>
 #include <thread>

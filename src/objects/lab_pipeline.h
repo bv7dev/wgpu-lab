@@ -1,9 +1,9 @@
 #ifndef WGPU_LAB_PIPELINE_H
 #define WGPU_LAB_PIPELINE_H
 
-#include "lab_shader.h"
-#include "lab_surface.h"
-#include "lab_webgpu.h"
+#include <objects/lab_shader.h>
+#include <objects/lab_surface.h>
+#include <objects/lab_webgpu.h>
 
 #include <webgpu/webgpu.hpp>
 

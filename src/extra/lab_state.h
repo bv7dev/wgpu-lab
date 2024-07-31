@@ -1,7 +1,7 @@
 #ifndef WGPU_LAB_STATE_H
 #define WGPU_LAB_STATE_H
 
-#include "lab_objects.h"
+#include <extra/lab_objects.h>
 
 #include <unordered_map>
 

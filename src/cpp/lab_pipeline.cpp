@@ -1,4 +1,4 @@
-#include "lab_pipeline.h"
+#include <objects/lab_pipeline.h>
 
 #include <format>
 #include <iostream>

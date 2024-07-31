@@ -1,8 +1,8 @@
 #ifndef WGPU_LAB_SURFACE_H
 #define WGPU_LAB_SURFACE_H
 
-#include "lab_webgpu.h"
-#include "lab_window.h"
+#include <objects/lab_webgpu.h>
+#include <objects/lab_window.h>
 
 namespace lab {
 

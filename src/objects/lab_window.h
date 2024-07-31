@@ -1,8 +1,8 @@
 #ifndef WGPU_LAB_WINDOW_H
 #define WGPU_LAB_WINDOW_H
 
-#include "lab_enums.h"
-#include "lab_objects.h"
+#include <extra/lab_enums.h>
+#include <extra/lab_objects.h>
 
 #include <functional>
 

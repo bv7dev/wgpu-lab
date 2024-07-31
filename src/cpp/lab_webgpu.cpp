@@ -1,4 +1,4 @@
-#include "lab_webgpu.h"
+#include <objects/lab_webgpu.h>
 
 #include <glfw3webgpu.h>
 
