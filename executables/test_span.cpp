@@ -1,9 +1,6 @@
 #include <iostream>
 #include <ranges>
 
-// Maybe I can use stl span (C++ 20 ranges) to create a view on
-// mapped wgpu memory instead of maintaining MappedVRAM class.
-
 int main() {
   constexpr int num_elems = 32;
 
@@ -37,4 +34,10 @@ int main() {
 
   std::cout << view_b.empty() << std::endl;
   std::cout << view_b.size() << std::endl;
+
+  view_a = {view_a.begin(), 8};
+
+  for (auto& e : view_a)
+    std::cout << e << " ";
+  std::cout << std::endl;
 }

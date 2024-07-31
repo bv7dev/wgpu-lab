@@ -5,10 +5,8 @@
 namespace lab {
 
 Surface::Surface(Window& wnd, Webgpu& wgpu)
-    : window{wnd}, webgpu{wgpu}, wgpu_surface{glfwGetWGPUSurface(
-                                     wgpu.wgpu_instance,
-                                     reinterpret_cast<GLFWwindow*>(
-                                         wnd.get_handle()))} {
+    : window{wnd}, webgpu{wgpu}, wgpu_surface{
+                                     glfwGetWGPUSurface(wgpu.wgpu_instance, wnd.get_handle())} {
   reconfigure();
 }
 

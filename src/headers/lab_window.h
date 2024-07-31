@@ -1,12 +1,10 @@
 #ifndef WGPU_LAB_WINDOW_H
 #define WGPU_LAB_WINDOW_H
 
-#include <functional>
-
 #include "lab_enums.h"
+#include "lab_objects.h"
 
-struct GLFWwindow;
-using GlfwWindowHandle = GLFWwindow*;
+#include <functional>
 
 namespace lab {
 
@@ -51,8 +49,6 @@ private:
   ResizeCallback user_resize_callback;
   GlfwWindowHandle handle;
 };
-
-using WindowHandle = Window*;
 
 } // namespace lab
 

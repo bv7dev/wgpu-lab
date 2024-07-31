@@ -1,7 +1,8 @@
 #include <lab>
 
 int main() {
-  // TEST 1 - Load strings onto GPU buffers - this evil creation should not be possible
+  // TEST 1 - Load strings onto GPU buffers and read back.
+  // This evil creation should not be possible
   {
     lab::Webgpu webgpu("My Instance");
 

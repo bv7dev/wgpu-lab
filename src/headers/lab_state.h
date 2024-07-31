@@ -1,20 +1,20 @@
 #ifndef WGPU_LAB_STATE_H
 #define WGPU_LAB_STATE_H
 
+#include "lab_objects.h"
+
 #include <unordered_map>
 
 // Note: user should not interact with state directly
 //       so it's not included in lab.h
 
-struct GLFWwindow;
-
 namespace lab {
 
-using LabWindowMap = std::unordered_map<GLFWwindow*, Window*>;
+using WindowMap = std::unordered_map<GlfwWindowHandle, WindowHandle>;
 
 extern struct State {
+  WindowMap window_map{};
   bool glfw_init = false;
-  LabWindowMap window_map{};
 } state;
 
 } // namespace lab
