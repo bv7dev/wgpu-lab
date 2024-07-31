@@ -31,7 +31,7 @@ add_library(wgpu-lab
   src/objects/lab_webgpu.h
   src/objects/lab_window.h
 
-  src/lab.h
+  src/lab
 )
 target_include_directories(wgpu-lab PUBLIC src)
 target_link_libraries(wgpu-lab glfw webgpu glfw3webgpu)
