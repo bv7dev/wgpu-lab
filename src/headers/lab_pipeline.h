@@ -23,8 +23,8 @@ struct Pipeline {
   Pipeline(const Pipeline&) = delete;
   Pipeline& operator=(const Pipeline&) = delete;
 
-  bool render_frame(Surface& sf, DrawCallParams dcp) {
-    return user_render(*this, sf.wgpu_surface, dcp);
+  bool render_frame(Surface& surface, const DrawCallParams& draw_params) {
+    return user_render(*this, surface.wgpu_surface, draw_params);
   }
   void set_custom_renderfunc(RenderFunction func) { user_render = func; }
 
@@ -87,7 +87,8 @@ struct Pipeline {
     }};
   } render_config;
 
-  static bool default_render(Pipeline& self, wgpu::Surface surface, DrawCallParams draw_params) {
+  static bool default_render(Pipeline& self, wgpu::Surface surface,
+                             const DrawCallParams& draw_params) {
     wgpu::SurfaceTexture surfaceTexture;
     surface.getCurrentTexture(&surfaceTexture);
     if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {

@@ -43,6 +43,7 @@ struct Window {
 
   bool is_open() const;
 
+  void close();
   ~Window();
 
 private:

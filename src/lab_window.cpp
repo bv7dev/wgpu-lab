@@ -69,7 +69,7 @@ GlfwWindowHandle Window::get_handle() const { return handle; }
 
 bool Window::is_open() const { return handle != nullptr; }
 
-Window::~Window() {
+void Window::close() {
   if (handle) {
     std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(handle) << " - " << handle
               << ") destroyed!" << std::endl;
@@ -85,5 +85,6 @@ Window::~Window() {
     }
   }
 }
+Window::~Window() { close(); }
 
 } // namespace lab
