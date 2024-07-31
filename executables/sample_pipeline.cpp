@@ -31,7 +31,7 @@ int main() {
   color_cfg.clearValue = wgpu::Color(0.25, 0.2, 0.2, 1.0);
 
   while (tick()) {
-    DrawCallParams draw(3, 1); // draw 3 vertices and 1 instance
+    Pipeline::DrawCallParams draw(3, 1); // draw 3 vertices and 1 instance
     pipeline.render_frame(surface, draw);
     sleep(50ms);
   }

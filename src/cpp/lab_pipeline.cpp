@@ -6,46 +6,36 @@
 
 namespace lab {
 
-wgpu::RenderPipeline Pipeline::create(wgpu::ShaderModule shaderModule) {
+void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
   if (config.label.empty()) {
     config.label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
   }
-  std::cout << "Info: WGPU: Create: " << config.label << std::endl;
-
-  wgpu::BlendState blendState = {{
-      .color = config.blendColor,
-      .alpha = config.blendAlpha,
-  }};
 
   config.colorTarget.format = webgpu.capabilities.formats[0];
-  config.colorTarget.blend = &blendState;
+  config.colorTarget.blend = &config.blendState;
 
-  config.fragmentState.module = shaderModule;
+  // todo: make number of color targets configurable
   config.fragmentState.targetCount = 1;
   config.fragmentState.targets = &config.colorTarget;
 
   config.vertexState.module = shaderModule;
+  config.fragmentState.module = shaderModule;
+}
 
-  wgpu::MultisampleState multisampleState = {{
-      .count = 1,
-      .mask = ~0u,
-  }};
-
+wgpu::RenderPipeline Pipeline::transfer() const {
   wgpu::RenderPipelineDescriptor pipelineDesc = {{
       .label = config.label.c_str(),
       .vertex = config.vertexState,
       .primitive = config.primitiveState,
-      .multisample = multisampleState,
+      .multisample = config.multisampleState,
       .fragment = &config.fragmentState,
   }};
 
-  wgpu_pipeline = webgpu.device.createRenderPipeline(pipelineDesc);
-  return wgpu_pipeline;
+  return webgpu.device.createRenderPipeline(pipelineDesc);
 }
 
 Pipeline::~Pipeline() {
   if (wgpu_pipeline) {
-    std::cout << "Info: Release Pipeline" << std::endl;
     wgpu_pipeline.release();
     wgpu_pipeline = nullptr;
   }
