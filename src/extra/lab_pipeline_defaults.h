@@ -1,5 +1,7 @@
 #include <webgpu/webgpu.hpp>
 
+namespace lab::PipelineDefaults {
+
 struct InitConfig {
   wgpu::BlendState blendState = {{
       .color =
@@ -54,3 +56,5 @@ struct RenderConfig {
       .colorAttachmentCount = 1,
   }};
 };
+
+} // namespace lab::PipelineDefaults

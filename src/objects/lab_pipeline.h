@@ -1,6 +1,7 @@
 #ifndef WGPU_LAB_PIPELINE_H
 #define WGPU_LAB_PIPELINE_H
 
+#include <extra/lab_objects.h>
 #include <extra/lab_pipeline_defaults.h>
 
 #include <objects/lab_shader.h>
@@ -39,12 +40,12 @@ struct Pipeline {
     int vertexCount, instanceCount;
     int firstVertex, firstInstance;
   };
-  using RenderFunction = std::function<bool(Pipeline& self, wgpu::Surface, DrawCallParams)>;
+  using RenderFunction = std::function<bool(PipelineHandle self, wgpu::Surface, DrawCallParams)>;
 
   // Render onto surface
   // - param: `draw_params` is `{vertexCount, instanceCount, firstVertex, firstInstance}`
   bool render_frame(Surface& surface, const DrawCallParams& draw_params = {3, 1}) {
-    return user_render(*this, surface.wgpu_surface, draw_params);
+    return render_func(this, surface.wgpu_surface, draw_params);
   }
 
   // Bundles together user_config and default_config
@@ -74,18 +75,33 @@ struct Pipeline {
 
   ~Pipeline();
 
-  // ---------------------------------------------------------------------------
-  // Configurable functions and structures with default values
+  wgpu::RenderPipeline wgpu_pipeline;
+
+  Webgpu& webgpu;
+  Shader& shader;
+
+  // -----------------------------------------------------------------------------------------------
+  // Configurable functions and structures with default values -------------------------------------
+
+  // Default label: `Pipeline(shader.label, webgpu.label)`
+  // if required, can be customized by assigning before `init()`
+  std::string label;
 
   // All config fields that have not been assigned a default value other than null
   // are non-configurable and will be overwritten in `finalize_config()` to guarantee consistency
-  InitConfig config{};
+  PipelineDefaults::InitConfig config{};
 
   // All config fields that have not been assigned a default value other than null
   // are non-configurable and will be overwritten in `finalize_config()`
-  RenderConfig render_config{};
+  PipelineDefaults::RenderConfig render_config{};
 
-  static bool default_render(Pipeline& self, wgpu::Surface surface,
+  // Can be reassigned with custom render function
+  RenderFunction render_func = default_render;
+
+  // -----------------------------------------------------------------------------------------------
+  // default RenderFunction implementation details to base custom render function on ---------------
+
+  static bool default_render(PipelineHandle self, wgpu::Surface surface,
                              const DrawCallParams& draw_params) {
     wgpu::TextureView targetView = get_target_view(surface);
     if (!targetView) {
@@ -94,15 +110,16 @@ struct Pipeline {
     }
 
     wgpu::CommandEncoderDescriptor encoderDesc = {{.label = "lab default command encoder"}};
-    wgpu::CommandEncoder encoder = self.webgpu.device.createCommandEncoder(encoderDesc);
+    wgpu::CommandEncoder encoder = self->webgpu.device.createCommandEncoder(encoderDesc);
 
-    self.render_config.renderPassColorAttachment.view = targetView;
-    self.render_config.renderPassDesc.colorAttachmentCount = 1;
-    self.render_config.renderPassDesc.colorAttachments =
-        &self.render_config.renderPassColorAttachment;
+    self->render_config.renderPassColorAttachment.view = targetView;
+    self->render_config.renderPassDesc.colorAttachmentCount = 1;
+    self->render_config.renderPassDesc.colorAttachments =
+        &self->render_config.renderPassColorAttachment;
 
-    wgpu::RenderPassEncoder renderPass = encoder.beginRenderPass(self.render_config.renderPassDesc);
-    renderPass.setPipeline(self.wgpu_pipeline);
+    wgpu::RenderPassEncoder renderPass =
+        encoder.beginRenderPass(self->render_config.renderPassDesc);
+    renderPass.setPipeline(self->wgpu_pipeline);
 
     renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
                     draw_params.firstInstance);
@@ -114,12 +131,12 @@ struct Pipeline {
     wgpu::CommandBuffer commands = encoder.finish(cmdBufferDescriptor);
     encoder.release();
 
-    self.webgpu.queue.submit(commands);
+    self->webgpu.queue.submit(commands);
     commands.release();
 
     targetView.release();
     surface.present();
-    self.webgpu.device.tick();
+    self->webgpu.device.tick();
 
     return true;
   };
@@ -143,15 +160,6 @@ struct Pipeline {
     };
     return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
   }
-
-  RenderFunction user_render = default_render;
-
-  wgpu::RenderPipeline wgpu_pipeline;
-
-  std::string label;
-
-  Webgpu& webgpu;
-  Shader& shader;
 };
 
 } // namespace lab
