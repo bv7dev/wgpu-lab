@@ -37,15 +37,26 @@ struct Pipeline {
   };
   using RenderFunction = std::function<bool(Pipeline& self, wgpu::Surface, DrawCallParams)>;
 
-  bool render_frame(Surface& surface, const DrawCallParams& draw_params) {
+  // Render onto surface
+  // - param: `draw_params` is `{vertexCount, instanceCount, firstVertex, firstInstance}`
+  bool render_frame(Surface& surface, const DrawCallParams& draw_params = {3, 1}) {
     return user_render(*this, surface.wgpu_surface, draw_params);
   }
-  void set_custom_renderfunc(RenderFunction func) { user_render = func; }
 
+  // Bundles together user_config and default_config
   void finalize_config(wgpu::ShaderModule);
 
+  // Warning! User is responsible to `.release()` the returned render pipeline
+  // - be careful not to leak resources if you need to use it directly
+  // - by default, it's automatically managed, see: `Pipeline::init()`
   [[nodiscard]] wgpu::RenderPipeline transfer() const;
 
+  // Initializes a pipeline
+  // 1. creates shader module on gpu
+  // 2. bundles together default + user configs
+  // 3. creates render pipeline on gpu
+  // 4. releases shader module
+  // 5. render pipeline is released later in destructor
   void init() {
     wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
     finalize_config(shaderModule);
@@ -62,10 +73,6 @@ struct Pipeline {
   // ---------------------------------------------------------------------------
   // Configurable functions and structures with default values
 
-  RenderFunction user_render = default_render;
-
-  // All config fields that have not been assigned a default value other than null
-  // are non-configurable and will be overwritten in `finalize_config()`
   struct InitConfig {
     wgpu::BlendState blendState = {{
         .color =
@@ -107,10 +114,12 @@ struct Pipeline {
     }};
 
     std::string label;
-  } config;
+  } default_config;
 
   // All config fields that have not been assigned a default value other than null
-  // are non-configurable and will be overwritten in `finalize_config()`
+  // are non-configurable and will be overwritten in `finalize_config()` to guarantee consistency
+  InitConfig config = default_config;
+
   struct RenderConfig {
     wgpu::RenderPassColorAttachment renderPassColorAttachment = {{
         .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED,
@@ -123,7 +132,11 @@ struct Pipeline {
         .label = "Default Render Pass",
         .colorAttachmentCount = 1,
     }};
-  } render_config;
+  } default_render_config;
+
+  // All config fields that have not been assigned a default value other than null
+  // are non-configurable and will be overwritten in `finalize_config()`
+  RenderConfig render_config = default_render_config;
 
   static bool default_render(Pipeline& self, wgpu::Surface surface,
                              const DrawCallParams& draw_params) {
@@ -168,7 +181,7 @@ struct Pipeline {
     wgpu::SurfaceTexture surfaceTexture;
     surface.getCurrentTexture(&surfaceTexture);
     if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
-      std::cerr << "Error: Pipeline: Could not get current texture" << std::endl;
+      std::cerr << "Error: Pipeline: Could not get current render texture" << std::endl;
       return nullptr;
     }
     WGPUTextureViewDescriptor viewDescriptor{
@@ -184,7 +197,10 @@ struct Pipeline {
     return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
   }
 
+  RenderFunction user_render = default_render;
+
   wgpu::RenderPipeline wgpu_pipeline;
+
   Webgpu& webgpu;
   Shader& shader;
 };

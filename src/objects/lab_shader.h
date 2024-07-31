@@ -10,8 +10,9 @@ struct Shader {
 
   Shader(const std::string& label, const std::string& path);
 
-  // Warning! User is responsible to release the returned shader module
-  // - automatically managed by `Pipeline` constructor
+  // Warning! User is responsible to `.release()` the returned shader module
+  // - be careful not to leak resources if you need to use it directly
+  // - by default, it's automatically managed, see: `Pipeline::init()`
   [[nodiscard]] wgpu::ShaderModule transfer(wgpu::Device device) const;
 };
 

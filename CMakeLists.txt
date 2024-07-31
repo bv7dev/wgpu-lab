@@ -21,8 +21,8 @@ add_library(wgpu-lab
   src/extra/lab_enums.h
   src/extra/lab_mapped_vram.h
   src/extra/lab_objects.h
+  src/extra/lab_public.h
   src/extra/lab_state.h
-  src/extra/lab_stl_deps.h
 
   src/objects/lab_buffer.h
   src/objects/lab_pipeline.h
