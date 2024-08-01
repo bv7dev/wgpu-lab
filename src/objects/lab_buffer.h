@@ -18,7 +18,7 @@ struct ReadableBuffer {
       : webgpu{instance}, label{label} {
     wgpu::BufferDescriptor bufferDesc{{
         .label = label,
-        .usage = wgpu::BufferUsage::MapRead | wgpu::BufferUsage::CopyDst,
+        .usage = wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst,
         .size = sizeof(T) * data.size(),
         .mappedAtCreation = true,
     }};

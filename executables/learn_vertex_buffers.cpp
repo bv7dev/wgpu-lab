@@ -1,10 +1,6 @@
 #include <lab>
 
-#include "tutorial_vertex_buffers.h"
-
 // todo: it seems like my webgpu error callback is not working, so i don't get any error messages
-
-// Assimilate tutorial code !!!
 
 int main() {
   lab::Webgpu webgpu("My Instance");
@@ -13,18 +9,21 @@ int main() {
   lab::Window window("A Window with tutorial code", 640, 400);
   lab::Surface surface(window, webgpu);
 
-  lab::Pipeline mypip(shader, webgpu, true);
+  std::vector<float> vertexData = {-0.5,   -0.5, +0.5,   -0.5, +0.0,   +0.5,
+                                   -0.55f, -0.5, -0.05f, +0.5, -0.55f, +0.5};
 
-  auto res = tutorial::InitializeBuffers(webgpu);
-  mypip.vertex_buffer = res.vertexBuffer;
+  uint32_t vertexCount = static_cast<uint32_t>(vertexData.size() / 2);
 
+  lab::ReadableBuffer<float> buffer("My vertex buffer", vertexData, webgpu);
+
+  lab::Pipeline mypip(buffer, shader, webgpu);
   mypip.init();
 
   window.set_resize_callback(
       [&surface](int width, int height) { surface.reconfigure(width, height); });
 
   while (lab::tick()) {
-    mypip.render_frame(surface, {res.vertexCount, 1});
+    mypip.render_frame(surface, {vertexCount, 1});
     lab::sleep(50ms);
   }
 }

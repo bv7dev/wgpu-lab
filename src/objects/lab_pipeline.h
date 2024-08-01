@@ -4,6 +4,7 @@
 #include <extra/lab_objects.h>
 #include <extra/lab_pipeline_defaults.h>
 
+#include <objects/lab_buffer.h>
 #include <objects/lab_shader.h>
 #include <objects/lab_surface.h>
 #include <objects/lab_webgpu.h>
@@ -33,6 +34,11 @@ struct Pipeline {
   Pipeline(Shader& sh, Webgpu& wg, bool configurable = false) : shader{sh}, webgpu{wg} {
     if (!configurable) init();
   }
+
+  Pipeline(ReadableBuffer<float>& bf, Shader& sh, Webgpu& wg) : Pipeline{sh, wg, true} {
+    vertex_buffer = bf.wgpu_buffer;
+  }
+
   Pipeline(const Pipeline&) = delete;
   Pipeline& operator=(const Pipeline&) = delete;
 
