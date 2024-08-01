@@ -53,4 +53,67 @@ Pipeline::~Pipeline() {
   }
 }
 
+bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
+                              const DrawCallParams& draw_params) {
+  wgpu::TextureView targetView = get_target_view(surface);
+  if (!targetView) {
+    std::cerr << "Error: Pipeline: Could not create texture view" << std::endl;
+    return false;
+  }
+
+  wgpu::CommandEncoderDescriptor encoderDesc = {{.label = "lab default command encoder"}};
+  wgpu::CommandEncoder encoder = self->webgpu.device.createCommandEncoder(encoderDesc);
+
+  self->render_config.renderPassColorAttachment.view = targetView;
+  self->render_config.renderPassDesc.colorAttachmentCount = 1;
+  self->render_config.renderPassDesc.colorAttachments =
+      &self->render_config.renderPassColorAttachment;
+
+  wgpu::RenderPassEncoder renderPass = encoder.beginRenderPass(self->render_config.renderPassDesc);
+  renderPass.setPipeline(self->wgpu_pipeline);
+
+  if (self->vertexBuffer) {
+    renderPass.setVertexBuffer(0, self->vertexBuffer, 0, self->vertexBuffer.getSize());
+  }
+
+  renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
+                  draw_params.firstInstance);
+
+  renderPass.end();
+  renderPass.release();
+
+  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {{.label = "My command buffer"}};
+  wgpu::CommandBuffer commands = encoder.finish(cmdBufferDescriptor);
+  encoder.release();
+
+  self->webgpu.queue.submit(commands);
+  commands.release();
+
+  targetView.release();
+  surface.present();
+  self->webgpu.device.tick();
+
+  return true;
+};
+
+wgpu::TextureView Pipeline::get_target_view(wgpu::Surface surface) {
+  wgpu::SurfaceTexture surfaceTexture;
+  surface.getCurrentTexture(&surfaceTexture);
+  if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
+    std::cerr << "Error: Pipeline: Could not get current render texture" << std::endl;
+    return nullptr;
+  }
+  WGPUTextureViewDescriptor viewDescriptor{
+      .label = "lab default texture view",
+      .format = wgpuTextureGetFormat(surfaceTexture.texture),
+      .dimension = WGPUTextureViewDimension_2D,
+      .baseMipLevel = 0,
+      .mipLevelCount = 1,
+      .baseArrayLayer = 0,
+      .arrayLayerCount = 1,
+      .aspect = WGPUTextureAspect_All,
+  };
+  return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+}
+
 } // namespace lab
