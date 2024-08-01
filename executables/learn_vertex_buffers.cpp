@@ -13,14 +13,18 @@ int main() {
   lab::Window window("A Window with tutorial code", 640, 400);
   lab::Surface surface(window, webgpu);
 
-  WGPURenderPipeline pip = tutorial::InitializePipeline(webgpu, shader);
+  lab::Pipeline mypip(shader, webgpu, true);
+
   auto res = tutorial::InitializeBuffers(webgpu);
+  mypip.vertex_buffer = res.vertexBuffer;
+
+  mypip.init();
 
   window.set_resize_callback(
       [&surface](int width, int height) { surface.reconfigure(width, height); });
 
   while (lab::tick()) {
-    tutorial::MainLoop(webgpu, surface.wgpu_surface, pip, res.vertexBuffer, res.vertexCount);
+    mypip.render_frame(surface, {res.vertexCount, 1});
     lab::sleep(50ms);
   }
 }

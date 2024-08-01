@@ -37,8 +37,8 @@ struct Pipeline {
   Pipeline& operator=(const Pipeline&) = delete;
 
   struct DrawCallParams {
-    int vertexCount, instanceCount;
-    int firstVertex, firstInstance;
+    uint32_t vertexCount, instanceCount;
+    uint32_t firstVertex, firstInstance;
   };
   using RenderFunction = std::function<bool(PipelineHandle self, wgpu::Surface, DrawCallParams)>;
 
@@ -98,6 +98,8 @@ struct Pipeline {
   // Can be reassigned with custom render function
   RenderFunction render_func = default_render;
 
+  wgpu::Buffer vertex_buffer;
+
   // -----------------------------------------------------------------------------------------------
   // default RenderFunction implementation details to base custom render function on ---------------
 
@@ -120,6 +122,10 @@ struct Pipeline {
     wgpu::RenderPassEncoder renderPass =
         encoder.beginRenderPass(self->render_config.renderPassDesc);
     renderPass.setPipeline(self->wgpu_pipeline);
+
+    if (self->vertex_buffer) {
+      renderPass.setVertexBuffer(0, self->vertex_buffer, 0, self->vertex_buffer.getSize());
+    }
 
     renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
                     draw_params.firstInstance);
