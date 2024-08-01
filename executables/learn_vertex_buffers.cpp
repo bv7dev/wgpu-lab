@@ -8,8 +8,7 @@
 
 int main() {
   lab::Webgpu webgpu("My Instance");
-  lab::Shader shader("My Shader", "shaders/test1.wgsl");
-  shader.source = tutorial::shaderSource; // replace by tutorial shader
+  lab::Shader shader("My Shader", "shaders/vbuf.wgsl");
 
   lab::Window window("A Window with tutorial code", 640, 400);
   lab::Surface surface(window, webgpu);
