@@ -11,16 +11,14 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
     label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
   }
 
-  if (vertex_buffer) {
-    config.vertexAttribute_0.shaderLocation = 0;
-    config.vertexAttribute_0.format = wgpu::VertexFormat::Float32x2;
+  if (config.vertexAttribute_1.format != wgpu::VertexFormat::Undefined) {
+    assert(config.vertexBufferLayout.arrayStride > 0);
 
+    // todo: make vertex attrib a vector
     config.vertexBufferLayout.attributeCount = 1;
-    config.vertexBufferLayout.attributes = &config.vertexAttribute_0;
+    config.vertexBufferLayout.attributes = &config.vertexAttribute_1;
 
-    config.vertexBufferLayout.arrayStride = 2 * sizeof(float);
-    config.vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
-
+    // todo: allow multiple buffers
     config.vertexState.bufferCount = 1;
     config.vertexState.buffers = &config.vertexBufferLayout;
   }

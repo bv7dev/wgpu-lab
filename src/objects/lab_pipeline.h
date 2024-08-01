@@ -16,28 +16,17 @@ namespace lab {
 // Is responsible to manage the process of rendering frames onto surfaces
 struct Pipeline {
   // Creates a new pipeline object
-  // - param: `configurable = false` makes pipeline init-stage non-configurable
-  //   and causes automatic call to `init()` inside constructor.
-  //
-  // If configuration is desired:
   // ```cpp
   // lab::Pipeline pip(my_shader, my_webgpu, false);
   //
-  // // explore and modify `wgpu::` config objects:
-  // // Example:
+  // // explore and modify config objects.
   // pip.config.primitiveState.topology = wgpu::PrimitiveTopology::LineStrip;
   //
   // pip.init(); // now ready to call init
   // ```
   // render_frame stage can always be configured by changing `render_config`
-  // and, if needed, by `set_custom_renderfunc`
-  Pipeline(Shader& sh, Webgpu& wg, bool configurable = false) : shader{sh}, webgpu{wg} {
-    if (!configurable) init();
-  }
-
-  Pipeline(ReadableBuffer<float>& bf, Shader& sh, Webgpu& wg) : Pipeline{sh, wg, true} {
-    vertex_buffer = bf.wgpu_buffer;
-  }
+  // and, if needed, by `set_custom_renderfunc(func)`
+  Pipeline(Shader& sh, Webgpu& wg) : shader{sh}, webgpu{wg} {}
 
   Pipeline(const Pipeline&) = delete;
   Pipeline& operator=(const Pipeline&) = delete;
@@ -54,13 +43,13 @@ struct Pipeline {
     return render_func(this, surface.wgpu_surface, draw_params);
   }
 
-  // Bundles together user_config and default_config
-  void finalize_config(wgpu::ShaderModule);
-
   // Warning! User is responsible to `.release()` the returned render pipeline
   // - be careful not to leak resources if you need to use it directly
   // - by default, it's automatically managed, see: `Pipeline::init()`
   [[nodiscard]] wgpu::RenderPipeline transfer() const;
+
+  // Bundles together user_config and default_config
+  void finalize_config(wgpu::ShaderModule);
 
   // Initializes a pipeline
   // 1. creates shader module on gpu
@@ -68,7 +57,9 @@ struct Pipeline {
   // 3. creates render pipeline on gpu
   // 4. releases shader module
   // 5. render pipeline is released later in destructor
-  void init() {
+  void init(wgpu::Buffer wgpu_buffer = nullptr) {
+    vertexBuffer = wgpu_buffer;
+
     wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
     finalize_config(shaderModule);
 
@@ -95,16 +86,16 @@ struct Pipeline {
 
   // All config fields that have not been assigned a default value other than null
   // are non-configurable and will be overwritten in `finalize_config()` to guarantee consistency
-  PipelineDefaults::InitConfig config{};
+  pipeline_defaults::InitConfig config{};
 
   // All config fields that have not been assigned a default value other than null
   // are non-configurable and will be overwritten in `finalize_config()`
-  PipelineDefaults::RenderConfig render_config{};
+  pipeline_defaults::RenderConfig render_config{};
 
   // Can be reassigned with custom render function
   RenderFunction render_func = default_render;
 
-  wgpu::Buffer vertex_buffer;
+  wgpu::Buffer vertexBuffer;
 
   // -----------------------------------------------------------------------------------------------
   // default RenderFunction implementation details to base custom render function on ---------------
@@ -129,8 +120,8 @@ struct Pipeline {
         encoder.beginRenderPass(self->render_config.renderPassDesc);
     renderPass.setPipeline(self->wgpu_pipeline);
 
-    if (self->vertex_buffer) {
-      renderPass.setVertexBuffer(0, self->vertex_buffer, 0, self->vertex_buffer.getSize());
+    if (self->vertexBuffer) {
+      renderPass.setVertexBuffer(0, self->vertexBuffer, 0, self->vertexBuffer.getSize());
     }
 
     renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,

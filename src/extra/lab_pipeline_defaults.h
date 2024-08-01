@@ -1,6 +1,6 @@
 #include <webgpu/webgpu.hpp>
 
-namespace lab::PipelineDefaults {
+namespace lab::pipeline_defaults {
 
 struct InitConfig {
   wgpu::BlendState blendState = {{
@@ -43,7 +43,7 @@ struct InitConfig {
   }};
 
   wgpu::VertexBufferLayout vertexBufferLayout{};
-  wgpu::VertexAttribute vertexAttribute_0{};
+  wgpu::VertexAttribute vertexAttribute_1{};
 };
 
 struct RenderConfig {
@@ -60,4 +60,4 @@ struct RenderConfig {
   }};
 };
 
-} // namespace lab::PipelineDefaults
+} // namespace lab::pipeline_defaults

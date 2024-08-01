@@ -16,7 +16,7 @@ int main() {
   });
 
   // Configure Render Pipeline -------------------------------------------------
-  Pipeline pipeline(shader, webgpu, true);
+  Pipeline pipeline(shader, webgpu);
 
   // draw line strip
   auto& primitive_cfg = pipeline.config.primitiveState;
