@@ -17,19 +17,10 @@ int main() {
   lab::Surface surface(window, webgpu);
   lab::Pipeline pipeline(shader, webgpu);
 
-  // todo: add methods on config to simplify this?
-  pipeline.config.vertexAttribute_1.shaderLocation = 0;
-  pipeline.config.vertexAttribute_1.format = wgpu::VertexFormat::Float32x2;
-  pipeline.config.vertexBufferLayout.arrayStride = 2 * sizeof(float);
-  pipeline.config.vertexBufferLayout.stepMode = wgpu::VertexStepMode::Vertex;
+  pipeline.add_vertex_buffer(vertex_buffer.wgpu_buffer, 0);
+  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
 
-  pipeline.init(vertex_buffer.wgpu_buffer);
-
-  // Idea: pipeline.configure(vbuf) to launch second init stages.
-  //       It will call init() first. Note the similarity to surface resize api, maybe also add
-  //       reconfigure() if it makes sense. This stage will be used to setup custom vertex attribs.
-  //
-  // Alternative: pipeline.use(vbuf) with auto configure if necessary?
+  pipeline.finalize();
 
   window.set_resize_callback(
       [&surface](int width, int height) { surface.reconfigure(width, height); });

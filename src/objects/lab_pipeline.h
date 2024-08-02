@@ -31,6 +31,23 @@ struct Pipeline {
   Pipeline(const Pipeline&) = delete;
   Pipeline& operator=(const Pipeline&) = delete;
 
+  // Initializes a pipeline
+  // 1. creates shader module on gpu
+  // 2. bundles together default + user configs
+  // 3. creates render pipeline on gpu
+  // 4. releases shader module
+  // 5. render pipeline is released later in destructor
+  void finalize() {
+    wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
+    finalize_config(shaderModule);
+
+    std::cout << "Info: WGPU: Create: " << label << std::endl;
+    assert(wgpu_pipeline == nullptr);
+    wgpu_pipeline = transfer();
+
+    shaderModule.release();
+  }
+
   struct DrawCallParams {
     uint32_t vertexCount, instanceCount;
     uint32_t firstVertex, firstInstance;
@@ -51,45 +68,14 @@ struct Pipeline {
   // Bundles together user_config and default_config
   void finalize_config(wgpu::ShaderModule);
 
-  // Initializes a pipeline
-  // 1. creates shader module on gpu
-  // 2. bundles together default + user configs
-  // 3. creates render pipeline on gpu
-  // 4. releases shader module
-  // 5. render pipeline is released later in destructor
-  void init(wgpu::Buffer wgpu_buffer = nullptr) {
-    vertexBuffer = wgpu_buffer;
-
-    wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
-    finalize_config(shaderModule);
-
-    std::cout << "Info: WGPU: Create: " << label << std::endl;
-    assert(wgpu_pipeline == nullptr);
-    wgpu_pipeline = transfer();
-
-    shaderModule.release();
-  }
-
   static wgpu::TextureView get_target_view(wgpu::Surface surface);
   static bool default_render(PipelineHandle self, wgpu::Surface surface,
                              const DrawCallParams& draw_params);
 
   ~Pipeline();
 
-  wgpu::RenderPipeline wgpu_pipeline;
-
-  // internal handle to which vertex buffer to use for rendering
-  wgpu::Buffer vertexBuffer;
-
-  // Default label: `Pipeline(shader.label, webgpu.label)`
-  // if required, can be customized by assigning before `init()`
-  std::string label;
-
-  Webgpu& webgpu;
-  Shader& shader;
-
   // -----------------------------------------------------------------------------------------------
-  // Configurable functions and structures with default values -------------------------------------
+  // Configurable structures and functions with default values -------------------------------------
 
   // All config fields that have not been assigned a default value other than null
   // are non-configurable and will be overwritten in `finalize_config()` to guarantee consistency
@@ -101,6 +87,50 @@ struct Pipeline {
 
   // Can be reassigned with custom render function
   RenderFunction render_func = default_render;
+  // -----------------------------------------------------------------------------------------------
+
+  wgpu::RenderPipeline wgpu_pipeline;
+
+  // Default label: `Pipeline(shader.label, webgpu.label)`
+  // if required, can be customized by assigning before `init()`
+  std::string label;
+
+  Webgpu& webgpu;
+  Shader& shader;
+
+  // Work in progress ------------------------------
+  struct VertexBufferConfig {
+    wgpu::Buffer buffer;
+    uint32_t slot;
+  };
+  std::vector<VertexBufferConfig> vertex_buffer_configs;
+  std::vector<wgpu::VertexBufferLayout> vb_layouts;
+
+  std::vector<wgpu::VertexAttribute> vertexAttributes;
+
+  void add_vertex_buffer(wgpu::Buffer wgpu_buffer, uint32_t slot) {
+    vertex_buffer_configs.push_back({wgpu_buffer, slot});
+  }
+  void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location,
+                            uint64_t offset = 0) {
+    vertexAttributes.push_back({{
+        .format = format,
+        .offset = offset,
+        .shaderLocation = shader_location,
+    }});
+  }
+  uint64_t get_total_stride() {
+    uint64_t totalStride = 0;
+    for (const auto& va : vertexAttributes) {
+      switch (va.format) {
+      case wgpu::VertexFormat::Float32x2:
+        totalStride += 2 * sizeof(float);
+        break;
+      }
+      // TODO: add cases for all vertex formats
+    }
+    return totalStride;
+  }
 };
 
 } // namespace lab

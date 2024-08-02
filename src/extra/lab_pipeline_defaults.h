@@ -41,9 +41,6 @@ struct InitConfig {
       .count = 1,
       .mask = ~0u,
   }};
-
-  wgpu::VertexBufferLayout vertexBufferLayout{};
-  wgpu::VertexAttribute vertexAttribute_1{};
 };
 
 struct RenderConfig {

@@ -24,7 +24,7 @@ int main() {
   primitive_cfg.stripIndexFormat = wgpu::IndexFormat::Uint32;
 
   // initialize after configuration
-  pipeline.init();
+  pipeline.finalize();
 
   // render config only affects render_frame
   auto& color_cfg = pipeline.render_config.renderPassColorAttachment;

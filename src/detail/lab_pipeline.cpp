@@ -11,17 +11,30 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
     label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
   }
 
-  if (config.vertexAttribute_1.format != wgpu::VertexFormat::Undefined) {
-    assert(config.vertexBufferLayout.arrayStride > 0);
-
-    // todo: make vertex attrib a vector
-    config.vertexBufferLayout.attributeCount = 1;
-    config.vertexBufferLayout.attributes = &config.vertexAttribute_1;
-
-    // todo: allow multiple buffers
-    config.vertexState.bufferCount = 1;
-    config.vertexState.buffers = &config.vertexBufferLayout;
+  for (int i = 0; i < vertex_buffer_configs.size(); ++i) {
+    // todo: fix arrayStride for multiple attribs
+    vb_layouts.push_back({{
+        .arrayStride = get_total_stride(),
+        .stepMode = wgpu::VertexStepMode::Vertex,
+        .attributeCount = vertexAttributes.size(),
+        .attributes = vertexAttributes.data(),
+    }});
   }
+  config.vertexState.bufferCount = vb_layouts.size();
+  config.vertexState.buffers = vb_layouts.size() > 0 ? vb_layouts.data() : nullptr;
+
+  // if (config.vertexAttributes.size() > 0) {
+  //   config.vertexBufferLayout = {{
+  //       .arrayStride = config.get_total_stride(),
+  //       .stepMode = wgpu::VertexStepMode::Vertex,
+  //       .attributeCount = config.vertexAttributes.size(),
+  //       .attributes = config.vertexAttributes.data(),
+  //   }};
+
+  //   // todo: allow multiple buffers
+  //   config.vertexState.bufferCount = 1;
+  //   config.vertexState.buffers = &config.vertexBufferLayout;
+  // }
 
   config.colorTarget.format = webgpu.capabilities.formats[0];
   config.colorTarget.blend = &config.blendState;
@@ -72,8 +85,13 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
   wgpu::RenderPassEncoder renderPass = encoder.beginRenderPass(self->render_config.renderPassDesc);
   renderPass.setPipeline(self->wgpu_pipeline);
 
-  if (self->vertexBuffer) {
-    renderPass.setVertexBuffer(0, self->vertexBuffer, 0, self->vertexBuffer.getSize());
+  // for (uint32_t slot = 0; slot < self->vertex_buffers.size(); ++slot) {
+  //   renderPass.setVertexBuffer(slot, self->vertex_buffers[slot], 0,
+  //                              self->vertex_buffers[slot].getSize());
+  // }
+  for (auto& vbc : self->vertex_buffer_configs) {
+    // todo: provide mechanism to set buffer offsets (currently always 0)
+    renderPass.setVertexBuffer(vbc.slot, vbc.buffer, 0, vbc.buffer.getSize());
   }
 
   renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
