@@ -1,4 +1,7 @@
 {
+  // https://code.visualstudio.com/docs/editor/variables-reference
+  // https://code.visualstudio.com/docs/cpp/launch-json-reference
+  // https://vector-of-bool.github.io/docs/vscode-cmake-tools/debugging.html
   "configurations": [
     {
       "name": "CMake: Configure project",

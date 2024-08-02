@@ -17,7 +17,7 @@ struct Surface {
   Surface(const Surface&) = delete;
   Surface& operator=(const Surface&) = delete;
 
-  void reconfigure(int w, int h);
+  void reconfigure(int width, int height);
   void reconfigure();
 
   ~Surface();
