@@ -8,6 +8,7 @@ int main() {
 
   Surface surface(window, webgpu);
   Pipeline pipeline(shader, webgpu);
+  pipeline.init();
 
   window.set_resize_callback(
       [&surface](int width, int height) { surface.reconfigure(width, height); });

@@ -1,0 +1,32 @@
+{
+  "configurations": [
+    {
+      "name": "CMake: Configure project",
+      "request": "launch",
+      "type": "cmake",
+      "cmakeDebugType": "configure",
+      "configureAll": false,
+      "clean": false,
+    },
+    {
+      "name": "(win) launch cmake target based on exe source file active in editor",
+      "program": "${command:cmake.launchTargetDirectory}/${fileBasenameNoExtension}.exe",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "request": "launch",
+      "type": "cppvsdbg",
+      "stopAtEntry": false,
+      "logging": {
+        "moduleLoad": false,
+        "trace": true,
+      },
+      "environment": [
+        {
+          "name": "PATH",
+          "value": "$PATH:${command:cmake.launchTargetDirectory}",
+        },
+      ],
+      "args": [],
+    },
+  ]
+}
