@@ -126,6 +126,9 @@ struct Pipeline {
       case wgpu::VertexFormat::Float32x2:
         totalStride += 2 * sizeof(float);
         break;
+      case wgpu::VertexFormat::Float32:
+        totalStride += 1 * sizeof(float);
+        break;
       }
       // TODO: add cases for all vertex formats
     }

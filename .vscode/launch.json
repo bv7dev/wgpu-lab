@@ -12,7 +12,8 @@
       "clean": false,
     },
     {
-      "name": "(win) launch cmake target based on exe source file active in editor",
+      // launch cmake target based on exe source file active in editor
+      "name": "(win) launch",
       "program": "${command:cmake.launchTargetDirectory}/${fileBasenameNoExtension}.exe",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",

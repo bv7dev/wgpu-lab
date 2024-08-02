@@ -4,13 +4,13 @@
 
 int main() {
   lab::Webgpu webgpu("My Instance");
-  lab::Shader shader("My Shader", "shaders/vbuf.wgsl");
+  lab::Shader shader("My Shader", "shaders/vbuf2.wgsl");
 
   lab::Window window("A Window with tutorial code", 640, 400);
 
-  std::vector<float> vertex_data = {-0.5,   -0.5, +0.5,   -0.5, +0.0,   +0.5,
-                                    -0.55f, -0.5, -0.05f, +0.5, -0.55f, +0.5};
-  uint32_t vertex_count = static_cast<uint32_t>(vertex_data.size() / 2);
+  std::vector<float> vertex_data = {-0.5f,  -0.5f, 1.0f, +0.5f,  -0.5f, 0.6f, +0.0f,  0.5f, 0.2f,
+                                    -0.55f, -0.5f, 1.0f, -0.05f, +0.5f, 0.6f, -0.55f, 0.5f, 0.2f};
+  uint32_t vertex_count = static_cast<uint32_t>(vertex_data.size() / 3);
 
   lab::ReadableBuffer<float> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
@@ -19,6 +19,11 @@ int main() {
 
   pipeline.add_vertex_buffer(vertex_buffer.wgpu_buffer, 0);
   pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
+
+  // todo: auto compute stride from all previous attributes
+  // ... could be non-computable if using multiple buffers,
+  // except we have buffer <-> attrib association
+  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1, 2 * sizeof(float));
 
   pipeline.finalize();
 
