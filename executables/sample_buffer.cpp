@@ -9,7 +9,7 @@ int main() {
   // Multi-threaded reading and writing onto mapped GPU memory  ----------------
   bool writing_done = false;
   cout << "\n\nWriting Buffer...\n";
-  ReadableBuffer<int> buffer("My Buffer", webgpu);
+  Buffer<int> buffer("My Buffer", webgpu);
 
   auto init_buffer = [&writing_done](MappedVRAM<int>&& vmap) {
     int start_point = 6;

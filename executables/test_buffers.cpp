@@ -9,7 +9,7 @@ int main() {
     // Init Buffer ---------------------------------------------------------------
     bool writing_done = false;
     std::cout << "\n\nWriting Buffer...\n";
-    lab::ReadableBuffer<std::string> buffer("My Buffer", webgpu);
+    lab::Buffer<std::string> buffer("My Buffer", webgpu);
 
     auto init_buffer = [&writing_done](lab::MappedVRAM<std::string>&& vmap) {
       int start_point = 6;
@@ -30,8 +30,8 @@ int main() {
     }
 
     // this buffer does nothing, it's just to see if something breaks
-    lab::ReadableBuffer<std::string> another("Stress Test",
-                                             std::vector<std::string>{"1", "2", "3", "4+"}, webgpu);
+    lab::Buffer<std::string> another("Stress Test", std::vector<std::string>{"1", "2", "3", "4+"},
+                                     webgpu);
 
     // Read buffer ---------------------------------------------------------------
     bool reading_done = false;

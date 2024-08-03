@@ -11,11 +11,11 @@
 namespace lab {
 
 template<typename T>
-struct ReadableBuffer {
-  ReadableBuffer(const char* label, Webgpu& instance) : webgpu{instance}, label{label} {}
+struct Buffer {
+  Buffer(const char* label, Webgpu& instance) : webgpu{instance}, label{label} {}
 
-  ReadableBuffer(const char* label, const std::vector<T>& data, Webgpu& instance)
-      : ReadableBuffer{label, instance} {
+  Buffer(const char* label, const std::vector<T>& data, Webgpu& instance)
+      : Buffer{label, instance} {
     to_device(data, wgpu::BufferUsage::Vertex);
   }
 
@@ -72,7 +72,7 @@ struct ReadableBuffer {
   }
   auto from_device(ReadCallback read_func) { return from_device(0, current.capacity, read_func); }
 
-  ~ReadableBuffer() {
+  ~Buffer() {
     if (wgpu_buffer) {
       wgpu_buffer.release();
       wgpu_buffer = nullptr;
@@ -83,7 +83,7 @@ struct ReadableBuffer {
   Webgpu& webgpu;
 
 private:
-  static void read_thread_func(ReadableBuffer* self) {
+  static void read_thread_func(Buffer* self) {
     ConstMappedVRAM<T> vmap{
         {reinterpret_cast<const T*>(self->wgpu_buffer.getConstMappedRange(
              sizeof(T) * self->current.offset, sizeof(T) * self->current.num_elems)),
@@ -95,7 +95,7 @@ private:
   }
 
   static void map_callback(WGPUMapAsyncStatus status, char const*, void* userdata1, void*) {
-    ReadableBuffer* self = reinterpret_cast<ReadableBuffer*>(userdata1);
+    Buffer* self = reinterpret_cast<Buffer*>(userdata1);
     std::cout << "Info: Buffer: " << self->label << ": mapped with status: " << status << std::endl;
     if (status != WGPUMapAsyncStatus_Success) {
       std::cout << "Error: Buffer: mapping failed!" << std::endl;

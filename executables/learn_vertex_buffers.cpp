@@ -12,7 +12,7 @@ int main() {
                                     -0.55f, -0.5f, 1.0f, -0.05f, +0.5f, 0.6f, -0.55f, 0.5f, 0.2f};
   uint32_t vertex_count = static_cast<uint32_t>(vertex_data.size() / 3);
 
-  lab::ReadableBuffer<float> vertex_buffer("My vertex buffer", vertex_data, webgpu);
+  lab::Buffer<float> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
   lab::Surface surface(window, webgpu);
   lab::Pipeline pipeline(shader, webgpu);
