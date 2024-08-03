@@ -5,6 +5,7 @@
 - [ ] fix bug: program crashes on minimize (tested with sample_pipeline, maybe all others affected, too) 
 - [ ] fix bug: error callback not working
 - [ ] use limits to find min/max values for number of buffers, etc.
+- [ ] fix bug: test_buffers crashes in the end (bad function call)
 
 
 ### Ideas

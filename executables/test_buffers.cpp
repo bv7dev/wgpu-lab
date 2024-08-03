@@ -21,7 +21,7 @@ int main() {
       std::cout << "\nbuffer initialized\n";
       writing_done = true;
     };
-    buffer.to_device(256, init_buffer);
+    buffer.to_device(init_buffer, 256, wgpu::BufferUsage::MapRead);
 
     std::cout << "Main thread waiting...";
     while (!writing_done) {
@@ -64,6 +64,8 @@ int main() {
     }
     // end stress test
   }
+
+  // todo: fix bug: crashes in the end
 
   // Test 2 ...
   {

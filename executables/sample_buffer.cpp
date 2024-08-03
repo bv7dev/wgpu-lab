@@ -20,7 +20,7 @@ int main() {
     cout << "\nbuffer initialized" << endl;
     writing_done = true;
   };
-  buffer.to_device(256, init_buffer);
+  buffer.to_device(init_buffer, 256, wgpu::BufferUsage::MapRead);
 
   cout << "Main thread waiting...";
   while (!writing_done)
