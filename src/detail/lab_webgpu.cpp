@@ -14,20 +14,20 @@ Webgpu::Webgpu(const char* label) : label{label} {
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
   auto window = glfwCreateWindow(64, 64, "", nullptr, nullptr);
 
-  wgpu::Surface surface = glfwGetWGPUSurface(wgpu_instance, window);
+  wgpu::Surface surface = glfwGetWGPUSurface(instance, window);
 
-  wgpu_instance = wgpu::createInstance({});
-  if (!wgpu_instance) {
+  instance = wgpu::createInstance({});
+  if (!instance) {
     std::cerr << "Error: WGPU: Could not create Instance!" << std::endl;
     return;
   }
-  std::cout << "Info: WGPU: Create: " << wgpu_instance << std::endl;
+  std::cout << "Info: WGPU: Create: " << instance << std::endl;
 
   wgpu::RequestAdapterOptions adapterOpts = {{
       .compatibleSurface = surface,
       .powerPreference = wgpu::PowerPreference::HighPerformance,
   }};
-  wgpu::Adapter adapter = wgpu_instance.requestAdapter(adapterOpts);
+  wgpu::Adapter adapter = instance.requestAdapter(adapterOpts);
   std::cout << "Info: WGPU: Request: " << adapter << std::endl;
 
   wgpu::DeviceDescriptor deviceDesc = {{
@@ -64,12 +64,12 @@ Webgpu::Webgpu(const char* label) : label{label} {
 }
 
 Webgpu::~Webgpu() {
-  if (wgpu_instance) {
-    std::cout << "Info: WGPU: Release: " << wgpu_instance << std::endl;
+  if (instance) {
+    std::cout << "Info: WGPU: Release: " << instance << std::endl;
     queue.release();
     device.release();
-    wgpu_instance.release();
-    wgpu_instance = nullptr;
+    instance.release();
+    instance = nullptr;
   }
 }
 
