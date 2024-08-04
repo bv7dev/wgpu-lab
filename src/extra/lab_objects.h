@@ -26,8 +26,11 @@ using SurfaceHandle = Surface*;
 struct Pipeline;
 using PipelineHandle = Pipeline*;
 
+template<typename T>
 struct Buffer;
-using BufferHandle = Buffer*;
+
+template<typename T>
+using BufferHandle = Buffer<T>*;
 
 } // namespace lab
 
