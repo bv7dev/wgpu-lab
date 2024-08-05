@@ -14,10 +14,10 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
   for (int i = 0; i < vertex_buffer_configs.size(); ++i) {
     // todo: fix arrayStride for multiple attribs
     vb_layouts.push_back({{
-        .arrayStride = get_total_stride(),
-        .stepMode = wgpu::VertexStepMode::Vertex,
-        .attributeCount = vertexAttributes.size(),
-        .attributes = vertexAttributes.data(),
+        .arrayStride = get_total_stride(vertex_buffer_configs[i].vertexAttributes),
+        .stepMode = vertex_buffer_configs[i].mode,
+        .attributeCount = vertex_buffer_configs[i].vertexAttributes.size(),
+        .attributes = vertex_buffer_configs[i].vertexAttributes.data(),
     }});
   }
   config.vertexState.bufferCount = vb_layouts.size();

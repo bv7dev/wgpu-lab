@@ -17,12 +17,12 @@ int main() {
   lab::Buffer<float> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer.wgpu_buffer, 0);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
+  pipeline.add_vertex_attribute(0, wgpu::VertexFormat::Float32x2, 0);
 
   // todo: auto compute stride from all previous attributes
   // ... could be non-computable if using multiple buffers,
   // except we have buffer <-> attrib association
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1, 2 * sizeof(float));
+  pipeline.add_vertex_attribute(0, wgpu::VertexFormat::Float32, 1, 2 * sizeof(float));
 
   pipeline.finalize();
 
