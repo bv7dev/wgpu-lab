@@ -11,13 +11,13 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
     label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
   }
 
-  for (int i = 0; i < vertex_buffer_configs.size(); ++i) {
+  for (int i = 0; i < vb_configs.size(); ++i) {
     // todo: fix arrayStride for multiple attribs
     vb_layouts.push_back({{
-        .arrayStride = get_total_stride(vertex_buffer_configs[i].vertexAttributes),
-        .stepMode = vertex_buffer_configs[i].mode,
-        .attributeCount = vertex_buffer_configs[i].vertexAttributes.size(),
-        .attributes = vertex_buffer_configs[i].vertexAttributes.data(),
+        .arrayStride = get_total_stride(vb_configs[i].vertexAttributes),
+        .stepMode = vb_configs[i].mode,
+        .attributeCount = vb_configs[i].vertexAttributes.size(),
+        .attributes = vb_configs[i].vertexAttributes.data(),
     }});
   }
   config.vertexState.bufferCount = vb_layouts.size();
@@ -72,9 +72,9 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
   wgpu::RenderPassEncoder renderPass = encoder.beginRenderPass(self->render_config.renderPassDesc);
   renderPass.setPipeline(self->wgpu_pipeline);
 
-  for (uint32_t i = 0; i < self->vertex_buffer_configs.size(); ++i) {
-    VertexBufferConfig& vbc = self->vertex_buffer_configs[i];
-    renderPass.setVertexBuffer(i, vbc.buffer, vbc.offset, vbc.buffer.getSize());
+  for (uint32_t i = 0; i < self->vb_configs.size(); ++i) {
+    renderPass.setVertexBuffer(i, self->vb_configs[i].buffer, self->vb_configs[i].offset,
+                               self->vb_configs[i].buffer.getSize());
   }
 
   renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,

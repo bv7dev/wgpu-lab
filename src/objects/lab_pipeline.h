@@ -105,19 +105,19 @@ struct Pipeline {
     uint64_t offset;
     std::vector<wgpu::VertexAttribute> vertexAttributes;
   };
-  std::vector<VertexBufferConfig> vertex_buffer_configs;
+  std::vector<VertexBufferConfig> vb_configs;
   std::vector<wgpu::VertexBufferLayout> vb_layouts;
 
   void add_vertex_buffer(wgpu::Buffer wgpu_buffer,
                          wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
-                         uint64_t offset = 0u) {
+                         uint64_t offset = 0) {
     assert(wgpu_buffer.getUsage() & wgpu::BufferUsage::Vertex);
-    vertex_buffer_configs.push_back({wgpu_buffer, mode, offset});
+    vb_configs.push_back({wgpu_buffer, mode, offset});
   }
 
   void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location,
-                            uint64_t offset = 0, uint32_t buffer_index = ~0u) {
-    vertex_buffer_configs.at(buffer_index == ~0 ? vertex_buffer_configs.size() - 1 : buffer_index)
+                            uint64_t offset = 0, uint32_t buffer_index = ~0) {
+    vb_configs.at(buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index)
         .vertexAttributes.push_back({{
             .format = format,
             .offset = offset,
@@ -136,7 +136,7 @@ struct Pipeline {
         totalStride += 1 * sizeof(float);
         break;
       }
-      // TODO: add cases for all vertex formats
+      // TODO: add cases for all vertex formats and move to seperate utils or something
     }
     return totalStride;
   }
