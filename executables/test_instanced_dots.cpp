@@ -21,11 +21,11 @@ int main() {
   lab::Buffer<Vertex> vertex_buffer("My vertex buffer", vertex_data, webgpu);
   lab::Buffer<Position> instance_positions("My instance positions", vertex_data, webgpu);
 
-  pipeline.add_vertex_buffer(vertex_buffer.wgpu_buffer, 0);
-  pipeline.add_vertex_attribute(0, wgpu::VertexFormat::Float32x2, 0);
+  pipeline.add_vertex_buffer(vertex_buffer.wgpu_buffer);
+  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
 
-  pipeline.add_vertex_buffer(instance_positions.wgpu_buffer, 1, wgpu::VertexStepMode::Instance);
-  pipeline.add_vertex_attribute(1, wgpu::VertexFormat::Float32x2, 1);
+  pipeline.add_vertex_buffer(instance_positions.wgpu_buffer, wgpu::VertexStepMode::Instance);
+  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
 
   pipeline.finalize();
 

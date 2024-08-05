@@ -101,27 +101,30 @@ struct Pipeline {
   // Work in progress ------------------------------
   struct VertexBufferConfig {
     wgpu::Buffer buffer;
-    uint32_t slot;
     wgpu::VertexStepMode mode;
+    uint64_t offset;
     std::vector<wgpu::VertexAttribute> vertexAttributes;
   };
   std::vector<VertexBufferConfig> vertex_buffer_configs;
   std::vector<wgpu::VertexBufferLayout> vb_layouts;
 
-  void add_vertex_buffer(wgpu::Buffer wgpu_buffer, uint32_t slot,
-                         wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex) {
+  void add_vertex_buffer(wgpu::Buffer wgpu_buffer,
+                         wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
+                         uint64_t offset = 0u) {
     assert(wgpu_buffer.getUsage() & wgpu::BufferUsage::Vertex);
-    vertex_buffer_configs.push_back({wgpu_buffer, slot, mode});
+    vertex_buffer_configs.push_back({wgpu_buffer, mode, offset});
   }
-  void add_vertex_attribute(uint32_t buffer_index, wgpu::VertexFormat format,
-                            uint32_t shader_location, uint64_t offset = 0) {
-    vertex_buffer_configs.at(buffer_index)
+
+  void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location,
+                            uint64_t offset = 0, uint32_t buffer_index = ~0u) {
+    vertex_buffer_configs.at(buffer_index == ~0 ? vertex_buffer_configs.size() - 1 : buffer_index)
         .vertexAttributes.push_back({{
             .format = format,
             .offset = offset,
             .shaderLocation = shader_location,
         }});
   }
+
   uint64_t get_total_stride(const std::vector<wgpu::VertexAttribute>& vertexAttributes) {
     uint64_t totalStride = 0;
     for (const auto& va : vertexAttributes) {

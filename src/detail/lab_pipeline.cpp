@@ -23,19 +23,6 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
   config.vertexState.bufferCount = vb_layouts.size();
   config.vertexState.buffers = vb_layouts.size() > 0 ? vb_layouts.data() : nullptr;
 
-  // if (config.vertexAttributes.size() > 0) {
-  //   config.vertexBufferLayout = {{
-  //       .arrayStride = config.get_total_stride(),
-  //       .stepMode = wgpu::VertexStepMode::Vertex,
-  //       .attributeCount = config.vertexAttributes.size(),
-  //       .attributes = config.vertexAttributes.data(),
-  //   }};
-
-  //   // todo: allow multiple buffers
-  //   config.vertexState.bufferCount = 1;
-  //   config.vertexState.buffers = &config.vertexBufferLayout;
-  // }
-
   config.colorTarget.format = webgpu.capabilities.formats[0];
   config.colorTarget.blend = &config.blendState;
 
@@ -85,13 +72,9 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
   wgpu::RenderPassEncoder renderPass = encoder.beginRenderPass(self->render_config.renderPassDesc);
   renderPass.setPipeline(self->wgpu_pipeline);
 
-  // for (uint32_t slot = 0; slot < self->vertex_buffers.size(); ++slot) {
-  //   renderPass.setVertexBuffer(slot, self->vertex_buffers[slot], 0,
-  //                              self->vertex_buffers[slot].getSize());
-  // }
-  for (auto& vbc : self->vertex_buffer_configs) {
-    // todo: provide mechanism to set buffer offsets (currently always 0)
-    renderPass.setVertexBuffer(vbc.slot, vbc.buffer, 0, vbc.buffer.getSize());
+  for (uint32_t i = 0; i < self->vertex_buffer_configs.size(); ++i) {
+    VertexBufferConfig& vbc = self->vertex_buffer_configs[i];
+    renderPass.setVertexBuffer(i, vbc.buffer, vbc.offset, vbc.buffer.getSize());
   }
 
   renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
