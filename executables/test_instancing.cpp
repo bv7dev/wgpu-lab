@@ -2,6 +2,20 @@
 
 #include <cmath>
 
+struct Position {
+  float x, y;
+};
+
+std::vector<Position> make_more(const std::vector<Position>& A, const std::vector<Position>& B) {
+  std::vector<Position> result;
+  for (auto& b : B) {
+    for (auto& a : A) {
+      result.push_back({a.x + b.x, a.y + b.y});
+    }
+  }
+  return result;
+}
+
 int main() {
   lab::Webgpu webgpu("My Instance");
   lab::Shader shader("My Shader", "shaders/test_instancing.wgsl");
@@ -10,16 +24,15 @@ int main() {
   lab::Window window("Instancing Experiment", 512, 512);
   lab::Surface surface(window, webgpu);
 
-  struct Position {
-    float x, y;
-  };
-  using Vertex = Position;
-
-  std::vector<Vertex> vertex_data{
+  std::vector<Position> vertex_data{
       {0.f, 1.f}, {-sqrtf(3.f) / 2.f, -3.f / 6.f}, {sqrtf(3.f) / 2.f, -3.f / 6.f}};
 
-  lab::Buffer<Vertex> vertex_buffer("My vertex buffer", vertex_data, webgpu);
-  lab::Buffer<Position> instance_positions("My instance positions", vertex_data, webgpu);
+  auto more = make_more(vertex_data, vertex_data);
+  auto even_more = make_more(more, vertex_data);
+  auto instance_data = make_more(even_more, vertex_data);
+
+  lab::Buffer<Position> vertex_buffer("My vertex buffer", vertex_data, webgpu);
+  lab::Buffer<Position> instance_positions("My instance positions", instance_data, webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer.wgpu_buffer);
   pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
@@ -33,7 +46,7 @@ int main() {
       [&surface](int width, int height) { surface.reconfigure(width, height); });
 
   while (lab::tick()) {
-    pipeline.render_frame(surface, {3, 3});
+    pipeline.render_frame(surface, {3, (uint32_t)instance_data.size()});
     lab::sleep(50ms);
   }
 }
