@@ -147,9 +147,6 @@ int main() {
     Surface surface{window, webgpu};
     Pipeline pipeline{shader, webgpu};
 
-    window.set_resize_callback(
-        [&surface](int width, int height) { surface.reconfigure(width, height); });
-
     window.set_key_callback([&window](const KeyEvent& event) {
       if (event.key == KeyCode::space && event.action == InputType::press) {
         window.clear_resize_callback();

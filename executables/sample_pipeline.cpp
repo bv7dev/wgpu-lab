@@ -8,8 +8,6 @@ int main() {
   Window window("pipeline tests", 640, 400);
 
   Surface surface(window, webgpu);
-  window.set_resize_callback(
-      [&surface](int width, int height) { surface.reconfigure(width, height); });
 
   window.set_key_callback([&window](const KeyEvent& event) {
     if (event.key == KeyCode::escape) window.close();

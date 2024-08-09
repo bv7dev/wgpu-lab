@@ -22,9 +22,6 @@ int main() {
 
   pipeline.finalize();
 
-  window.set_resize_callback(
-      [&surface](int width, int height) { surface.reconfigure(width, height); });
-
   while (lab::tick()) {
     pipeline.render_frame(surface, {vertex_count, 1});
     lab::sleep(50ms);

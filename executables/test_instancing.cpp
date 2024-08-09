@@ -42,9 +42,6 @@ int main() {
 
   pipeline.finalize();
 
-  window.set_resize_callback(
-      [&surface](int width, int height) { surface.reconfigure(width, height); });
-
   while (lab::tick()) {
     pipeline.render_frame(surface, {static_cast<uint32_t>(vertex_data.size()),
                                     static_cast<uint32_t>(instance_data.size())});
