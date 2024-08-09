@@ -46,7 +46,8 @@ int main() {
       [&surface](int width, int height) { surface.reconfigure(width, height); });
 
   while (lab::tick()) {
-    pipeline.render_frame(surface, {3, (uint32_t)instance_data.size()});
+    pipeline.render_frame(surface, {static_cast<uint32_t>(vertex_data.size()),
+                                    static_cast<uint32_t>(instance_data.size())});
     lab::sleep(50ms);
   }
 }

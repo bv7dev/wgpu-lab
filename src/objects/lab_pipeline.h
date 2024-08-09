@@ -38,11 +38,12 @@ struct Pipeline {
   // 4. releases shader module
   // 5. render pipeline is released later in destructor
   void finalize() {
+    assert(wgpu_pipeline == nullptr);
+
     wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
     finalize_config(shaderModule);
 
     std::cout << "Info: WGPU: Create: " << label << std::endl;
-    assert(wgpu_pipeline == nullptr);
     wgpu_pipeline = transfer();
 
     shaderModule.release();

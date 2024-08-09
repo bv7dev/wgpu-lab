@@ -12,7 +12,6 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
   }
 
   for (int i = 0; i < vb_configs.size(); ++i) {
-    // todo: fix arrayStride for multiple attribs
     vb_layouts.push_back({{
         .arrayStride = get_total_stride(vb_configs[i].vertexAttributes),
         .stepMode = vb_configs[i].mode,
