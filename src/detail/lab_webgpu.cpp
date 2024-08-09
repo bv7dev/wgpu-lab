@@ -53,7 +53,7 @@ Webgpu::Webgpu(const char* label) : label{label} {
     if (message) std::cerr << " (" << message << ")";
     std::cerr << std::endl;
   };
-  auto cb = device.setUncapturedErrorCallback(onDeviceError);
+  error_cb = device.setUncapturedErrorCallback(onDeviceError);
 
   surface.getCapabilities(adapter, &capabilities);
   adapter.release();

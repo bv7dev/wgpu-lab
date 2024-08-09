@@ -3,7 +3,7 @@
 ### Todos
 
 - [ ] fix bug: program crashes on minimize (tested with sample_pipeline, maybe all others affected, too) 
-- [ ] fix bug: error callback not working
+- [x] fix bug: error callback not working
 - [ ] use limits to find min/max values for number of buffers, etc.
 - [ ] fix bug: test_buffers crashes in the end (bad function call)
 - [x] think about: maybe get rid of use of unordered map for windows, because it is iterated in main loop, which would be

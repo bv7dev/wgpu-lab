@@ -20,6 +20,8 @@ struct Webgpu {
   wgpu::Queue queue = nullptr;
 
   const char* label;
+
+  std::unique_ptr<wgpu::ErrorCallback> error_cb;
 };
 
 } // namespace lab
