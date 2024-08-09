@@ -1,7 +1,5 @@
 #include <lab>
 
-// todo: it seems like my webgpu error callback is not working, so i don't get any error messages
-
 int main() {
   lab::Webgpu webgpu("My Instance");
   lab::Shader shader("My Shader", "shaders/vbuf2.wgsl");
