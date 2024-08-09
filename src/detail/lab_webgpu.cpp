@@ -6,6 +6,12 @@ namespace lab {
 
 bool init_lab();
 
+void onDeviceError(WGPUErrorType type, char const* message, void* instance) {
+  std::cerr << "Error: WGPU(" << instance << "): " << type;
+  if (message) std::cerr << " (" << message << ")";
+  std::cerr << std::endl;
+}
+
 Webgpu::Webgpu(const char* label) : label{label} {
   init_lab();
 
@@ -48,12 +54,7 @@ Webgpu::Webgpu(const char* label) : label{label} {
   device = adapter.requestDevice(deviceDesc);
   std::cout << "Info: WGPU: Request: " << device << std::endl;
 
-  auto onDeviceError = [](wgpu::ErrorType type, char const* message) {
-    std::cerr << "Error: WGPU: " << type;
-    if (message) std::cerr << " (" << message << ")";
-    std::cerr << std::endl;
-  };
-  error_cb = device.setUncapturedErrorCallback(onDeviceError);
+  wgpuDeviceSetUncapturedErrorCallback(device, onDeviceError, instance);
 
   surface.getCapabilities(adapter, &capabilities);
   adapter.release();
