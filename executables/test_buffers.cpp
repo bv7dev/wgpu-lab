@@ -31,13 +31,13 @@ int main() {
 
     // this buffer does nothing, it's just to see if something breaks
     lab::Buffer<std::string> another("Stress Test", std::vector<std::string>{"1", "2", "3", "4+"},
-                                     webgpu);
+                                     wgpu::BufferUsage::MapRead, webgpu);
 
     // Read buffer ---------------------------------------------------------------
     bool reading_done = false;
     std::cout << "\n\nReading Buffer...\n";
     auto read_buffer = [&reading_done](lab::ConstMappedVRAM<std::string>&& vmap) {
-      for (auto e : vmap) {
+      for (auto& e : vmap) {
         lab::sleep(50ms); // simulate slow processing of received data
         std::cout << e << " ";
       }

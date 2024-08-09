@@ -19,7 +19,13 @@ struct Buffer {
     to_device(data, wgpu::BufferUsage::Vertex);
   }
 
-  void to_device(const std::vector<T>& data, WGPUBufferUsageFlags usage) {
+  Buffer(const char* label, const std::vector<T>& data, wgpu::BufferUsageFlags usage,
+         Webgpu& instance)
+      : Buffer{label, instance} {
+    to_device(data, usage);
+  }
+
+  void to_device(const std::vector<T>& data, wgpu::BufferUsageFlags usage) {
     assert(wgpu_buffer == nullptr);
     wgpu::BufferDescriptor bufferDesc{{
         .label = label,
@@ -35,7 +41,7 @@ struct Buffer {
   }
 
   using WriteCallback = std::function<void(MappedVRAM<T>&&)>;
-  void to_device(WriteCallback write_func, size_t capacity, WGPUBufferUsageFlags usage) {
+  void to_device(WriteCallback write_func, size_t capacity, wgpu::BufferUsageFlags usage) {
     assert(wgpu_buffer == nullptr);
     wgpu::BufferDescriptor bufferDesc{{
         .label = label,
