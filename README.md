@@ -3,6 +3,9 @@
 ### Todos
 
 - [ ] use limits to find min/max values for number of buffers, etc.
+- [ ] tutorial: index buffer to be able to load models later
+- [ ] tutorial: loading file chaper important for learning to load images and gamma correction
+- [ ] tutorial: shader uniforms
 - [x] fix bug: test_buffers crashes in the end (bad function call)
 - [x] fix bug: program crashes on minimize (tested with sample_pipeline, maybe all others affected, too) 
 - [x] fix bug: error callback not working
