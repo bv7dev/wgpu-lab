@@ -1,9 +1,8 @@
 #define WEBGPU_CPP_IMPLEMENTATION
 #include <webgpu/webgpu.hpp>
 
-#include <lab>
-
 #include <extra/lab_state.h>
+#include <lab>
 
 #include <GLFW/glfw3.h>
 
@@ -30,16 +29,16 @@ bool init_lab() {
 bool tick() {
   glfwPollEvents();
 
-  std::vector<GLFWwindow*> to_erase;
+  std::vector<WindowHandle> to_erase;
   to_erase.reserve(state.window_map.size());
 
-  for (auto [wnd, _] : state.window_map) {
-    if (glfwWindowShouldClose(wnd)) {
+  for (auto [hnd, wnd] : state.window_map) {
+    if (glfwWindowShouldClose(hnd)) {
       to_erase.push_back(wnd);
     }
   }
   for (auto wnd : to_erase) {
-    state.window_map[wnd]->~Window();
+    wnd->~Window();
   }
 
   return state.window_map.size() > 0;
