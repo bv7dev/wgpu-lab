@@ -116,6 +116,13 @@ struct Pipeline {
     vb_configs.push_back({wgpu_buffer, mode, offset});
   }
 
+  template<typename T>
+  void add_vertex_buffer(const Buffer<T>& buffer,
+                         wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
+                         uint64_t offset = 0) {
+    add_vertex_buffer(buffer.wgpu_buffer, mode, offset);
+  }
+
   void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location,
                             uint64_t offset = 0, uint32_t buffer_index = ~0) {
     vb_configs.at(buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index)
@@ -150,6 +157,14 @@ struct Pipeline {
   wgpu::BindGroupEntry binding{};
   wgpu::BindGroupDescriptor bindGroupDesc{};
   wgpu::BindGroup bindGroup;
+
+  void add_uniform_buffer(wgpu::Buffer wgpu_buffer) { binding.buffer = wgpu_buffer; }
+
+  template<typename T>
+  void add_uniform_buffer(const Buffer<T>& buffer) {
+    // todo: allow multiple uniform buffers
+    add_uniform_buffer(buffer.wgpu_buffer);
+  }
 };
 
 } // namespace lab

@@ -17,19 +17,18 @@ int main() {
   lab::Buffer<float> uniform_buffer(
       "My uniform buffer", {1.0}, wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
-  float time = 0.5f;
-  webgpu.queue.writeBuffer(uniform_buffer.wgpu_buffer, 0, &time, sizeof(float));
-
-  pipeline.binding.buffer = uniform_buffer.wgpu_buffer;
-
-  pipeline.add_vertex_buffer(vertex_buffer.wgpu_buffer);
+  pipeline.add_vertex_buffer(vertex_buffer);
   pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
   pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1, 2 * sizeof(float));
 
+  pipeline.add_uniform_buffer(uniform_buffer);
+
   pipeline.finalize();
 
+  float time = 0.5f;
+
   while (lab::tick()) {
-    webgpu.queue.writeBuffer(uniform_buffer.wgpu_buffer, 0, &time, sizeof(float));
+    uniform_buffer.write(time);
     pipeline.render_frame(surface, {vertex_count, 1});
     time += 0.01f;
   }

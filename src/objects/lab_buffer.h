@@ -122,6 +122,19 @@ private:
   } current{};
 
   const char* label;
+
+  // WIP uniforms
+
+public:
+  // write a single element to an existing buffer (needs CopyDst flag)
+  void write(const T& elem, uint64_t offset = 0) {
+    webgpu.queue.writeBuffer(wgpu_buffer, offset * sizeof(T), &elem, sizeof(T));
+  }
+
+  // write a vector of elements to an existing buffer (needs CopyDst flag)
+  void write(const std::vector<T>& data, uint64_t offset = 0) {
+    webgpu.queue.writeBuffer(wgpu_buffer, offset * sizeof(T), data.data(), data.size() * sizeof(T));
+  }
 };
 
 } // namespace lab
