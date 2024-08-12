@@ -141,6 +141,15 @@ struct Pipeline {
     }
     return totalStride;
   }
+
+  // WIP 2 uniform buffer layouts
+  wgpu::BindGroupLayoutEntry bindingLayout = wgpu::Default;
+  wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc{};
+  wgpu::BindGroupLayout bindGroupLayout;
+  wgpu::PipelineLayoutDescriptor layoutDesc{};
+  wgpu::BindGroupEntry binding{};
+  wgpu::BindGroupDescriptor bindGroupDesc{};
+  wgpu::BindGroup bindGroup;
 };
 
 } // namespace lab

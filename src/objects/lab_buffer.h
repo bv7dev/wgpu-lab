@@ -1,9 +1,8 @@
 #ifndef WGPU_LAB_BUFFER_H
 #define WGPU_LAB_BUFFER_H
 
-#include <objects/lab_webgpu.h>
-
 #include <extra/lab_mapped_vram.h>
+#include <objects/lab_webgpu.h>
 
 #include <functional>
 #include <thread>
@@ -24,6 +23,9 @@ struct Buffer {
       : Buffer{label, instance} {
     to_device(data, usage);
   }
+
+  Buffer(const Buffer&) = delete;
+  Buffer& operator=(const Buffer&) = delete;
 
   void to_device(const std::vector<T>& data, wgpu::BufferUsageFlags usage) {
     assert(wgpu_buffer == nullptr);
@@ -80,6 +82,7 @@ struct Buffer {
 
   ~Buffer() {
     if (wgpu_buffer) {
+      wgpu_buffer.destroy();
       wgpu_buffer.release();
       wgpu_buffer = nullptr;
     }

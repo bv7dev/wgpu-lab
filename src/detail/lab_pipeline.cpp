@@ -31,11 +31,48 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
 
   config.vertexState.module = shaderModule;
   config.fragmentState.module = shaderModule;
+
+  // WIP: Bind layout and group for uniform buffers
+
+  // Create binding layout (don't forget to = Default)
+  bindingLayout.binding = 0;
+  bindingLayout.visibility = wgpu::ShaderStage::Vertex;
+  bindingLayout.buffer.type = wgpu::BufferBindingType::Uniform;
+  bindingLayout.buffer.minBindingSize = sizeof(float);
+
+  // Create a bind group layout
+  bindGroupLayoutDesc.entryCount = 1;
+  bindGroupLayoutDesc.entries = &bindingLayout;
+  bindGroupLayout = webgpu.device.createBindGroupLayout(bindGroupLayoutDesc);
+
+  // Create the pipeline layout
+  layoutDesc.bindGroupLayoutCount = 1;
+  layoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&bindGroupLayout;
+
+  binding.binding = 0;
+
+  // The buffer it is actually bound to
+  // binding.buffer = uniformBuffer;
+
+  // We can specify an offset within the buffer, so that a single buffer can hold
+  // multiple uniform blocks.
+  binding.offset = 0;
+
+  // And we specify again the size of the buffer.
+  binding.size = sizeof(float);
+
+  // A bind group contains one or multiple bindings
+  bindGroupDesc.layout = bindGroupLayout;
+  bindGroupDesc.entryCount = bindGroupLayoutDesc.entryCount;
+  bindGroupDesc.entries = &binding;
+
+  bindGroup = webgpu.device.createBindGroup(bindGroupDesc);
 }
 
 wgpu::RenderPipeline Pipeline::transfer() const {
   wgpu::RenderPipelineDescriptor pipelineDesc = {{
       .label = label.c_str(),
+      .layout = webgpu.device.createPipelineLayout(layoutDesc),
       .vertex = config.vertexState,
       .primitive = config.primitiveState,
       .multisample = config.multisampleState,
@@ -75,6 +112,8 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
     renderPass.setVertexBuffer(i, self->vb_configs[i].buffer, self->vb_configs[i].offset,
                                self->vb_configs[i].buffer.getSize());
   }
+
+  renderPass.setBindGroup(0, self->bindGroup, 0, nullptr);
 
   renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
                   draw_params.firstInstance);
