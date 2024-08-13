@@ -37,11 +37,13 @@ int main() {
   lab::Surface surface(window, webgpu);
 
   std::thread time_resetter{[]() {
-    std::cout << "Info: thread resets time every 7 seconds" << std::endl;
+    std::cout << "Info: spawned a thread which resets time every 7 seconds" << std::endl;
     while (true) {
       lab::reset_time();
       while (lab::elapsed_seconds() < 7.0f) {
+        lab::sleep(20ms);
       }
+      std::cout << "time reset at: " << lab::elapsed_seconds() << std::endl;
     }
   }};
 
@@ -55,6 +57,8 @@ int main() {
     // update uniform values
     uniforms.ratio[0] = window.ratio();
     uniforms.time = lab::elapsed_seconds();
+
+    lab::sleep(20ms);
   }
 
   time_resetter.join();
