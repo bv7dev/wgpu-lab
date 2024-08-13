@@ -36,10 +36,14 @@ int main() {
 
   lab::Surface surface(window, webgpu);
 
-  // const auto start = std::chrono::steady_clock::now();
-  // std::cout << std::chrono::steady_clock::time_point::period::den << std::endl;
-
-  lab::reset_time();
+  std::thread time_resetter{[]() {
+    std::cout << "Info: thread resets time every 7 seconds" << std::endl;
+    while (true) {
+      lab::reset_time();
+      while (lab::elapsed_seconds() < 7.0f) {
+      }
+    }
+  }};
 
   while (lab::tick()) {
     // send uniforms to gpu
@@ -48,15 +52,10 @@ int main() {
     // render the scene
     pipeline.render_frame(surface, {3, 1});
 
-    // std::cout << lab::elapsed_seconds() << std::endl;
-
     // update uniform values
     uniforms.ratio[0] = window.ratio();
     uniforms.time = lab::elapsed_seconds();
-
-    // const auto time = std::chrono::steady_clock::now() - start;
-    // uniforms.time =
-    // static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(time).count()) /
-    // 1'000'000;
   }
+
+  time_resetter.join();
 }
