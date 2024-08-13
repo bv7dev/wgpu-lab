@@ -6,6 +6,72 @@
 
 namespace lab {
 
+uint64_t vertex_format_size(wgpu::VertexFormat format) {
+  static const uint64_t format_sizes[32] = {
+      0,  // Undefined
+      2,  // Uint8x2
+      4,  // Uint8x4
+      2,  // Sint8x2
+      4,  // Sint8x4
+      2,  // Unorm8x2
+      4,  // Unorm8x4
+      2,  // Snorm8x2
+      4,  // Snorm8x4
+      4,  // Uint16x2
+      8,  // Uint16x4
+      4,  // Sint16x2
+      8,  // Sint16x4
+      4,  // Unorm16x2
+      8,  // Unorm16x4
+      4,  // Snorm16x2
+      8,  // Snorm16x4
+      4,  // Float16x2
+      8,  // Float16x4
+      4,  // Float32
+      8,  // Float32x2
+      12, // Float32x3
+      16, // Float32x4
+      4,  // Uint32
+      8,  // Uint32x2
+      12, // Uint32x3
+      16, // Uint32x4
+      4,  // Sint32
+      8,  // Sint32x2
+      12, // Sint32x3
+      16, // Sint32x4
+      4,  // Unorm10_10_10_2
+  };
+  return format_sizes[static_cast<size_t>(format)];
+}
+
+uint64_t vertex_attributes_stride(const std::vector<wgpu::VertexAttribute>& vertexAttributes) {
+  uint64_t totalStride = 0;
+  for (const auto& va : vertexAttributes) {
+    totalStride += vertex_format_size(va.format);
+  }
+  return totalStride;
+}
+
+wgpu::TextureView get_current_render_texture_view(wgpu::Surface surface) {
+  wgpu::SurfaceTexture surfaceTexture;
+  surface.getCurrentTexture(&surfaceTexture);
+  if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
+    std::cerr << "Error: Pipeline: Could not get current render texture" << std::endl;
+    return nullptr;
+  }
+  WGPUTextureViewDescriptor viewDescriptor{
+      .label = "lab default texture view",
+      .format = wgpuTextureGetFormat(surfaceTexture.texture),
+      .dimension = WGPUTextureViewDimension_2D,
+      .baseMipLevel = 0,
+      .mipLevelCount = 1,
+      .baseArrayLayer = 0,
+      .arrayLayerCount = 1,
+      .aspect = WGPUTextureAspect_All,
+  };
+  return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+}
+
 void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
   if (label.empty()) {
     label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
@@ -13,14 +79,14 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
 
   for (int i = 0; i < vb_configs.size(); ++i) {
     vb_layouts.push_back({{
-        .arrayStride = get_total_stride(vb_configs[i].vertexAttributes),
+        .arrayStride = vertex_attributes_stride(vb_configs[i].vertexAttributes),
         .stepMode = vb_configs[i].mode,
         .attributeCount = vb_configs[i].vertexAttributes.size(),
         .attributes = vb_configs[i].vertexAttributes.data(),
     }});
   }
   config.vertexState.bufferCount = vb_layouts.size();
-  config.vertexState.buffers = vb_layouts.size() > 0 ? vb_layouts.data() : nullptr;
+  config.vertexState.buffers = vb_layouts.data();
 
   config.colorTarget.format = webgpu.capabilities.formats[0];
   config.colorTarget.blend = &config.blendState;
@@ -33,46 +99,23 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
   config.fragmentState.module = shaderModule;
 
   // WIP: Bind layout and group for uniform buffers
-
-  // Create binding layout (don't forget to = Default)
-  bindingLayout.binding = 0;
-  bindingLayout.visibility = wgpu::ShaderStage::Vertex;
-  bindingLayout.buffer.type = wgpu::BufferBindingType::Uniform;
-  bindingLayout.buffer.minBindingSize = sizeof(float);
-
-  // Create a bind group layout
-  bindGroupLayoutDesc.entryCount = 1;
-  bindGroupLayoutDesc.entries = &bindingLayout;
-  bindGroupLayout = webgpu.device.createBindGroupLayout(bindGroupLayoutDesc);
-
-  // Create the pipeline layout
-  layoutDesc.bindGroupLayoutCount = 1;
-  layoutDesc.bindGroupLayouts = (WGPUBindGroupLayout*)&bindGroupLayout;
-
-  binding.binding = 0;
-
-  // The buffer it is actually bound to
-  // binding.buffer = uniformBuffer;
-
-  // We can specify an offset within the buffer, so that a single buffer can hold
-  // multiple uniform blocks.
-  binding.offset = 0;
-
-  // And we specify again the size of the buffer.
-  binding.size = sizeof(float);
-
-  // A bind group contains one or multiple bindings
-  bindGroupDesc.layout = bindGroupLayout;
-  bindGroupDesc.entryCount = bindGroupLayoutDesc.entryCount;
-  bindGroupDesc.entries = &binding;
-
-  bindGroup = webgpu.device.createBindGroup(bindGroupDesc);
 }
 
 wgpu::RenderPipeline Pipeline::transfer() const {
+  wgpu::PipelineLayout pipelineLayout = nullptr;
+
+  if (bindGroupLayouts.size() > 0) {
+    wgpu::PipelineLayoutDescriptor layoutDesc{};
+
+    layoutDesc.bindGroupLayoutCount = bindGroupLayouts.size();
+    layoutDesc.bindGroupLayouts = bindGroupLayouts.data();
+
+    pipelineLayout = webgpu.device.createPipelineLayout(layoutDesc);
+  }
+
   wgpu::RenderPipelineDescriptor pipelineDesc = {{
       .label = label.c_str(),
-      .layout = webgpu.device.createPipelineLayout(layoutDesc),
+      .layout = pipelineLayout,
       .vertex = config.vertexState,
       .primitive = config.primitiveState,
       .multisample = config.multisampleState,
@@ -91,7 +134,7 @@ Pipeline::~Pipeline() {
 
 bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
                               const DrawCallParams& draw_params) {
-  wgpu::TextureView targetView = get_target_view(surface);
+  wgpu::TextureView targetView = get_current_render_texture_view(surface);
   if (!targetView) {
     std::cerr << "Error: Pipeline: Could not create texture view" << std::endl;
     return false;
@@ -113,7 +156,11 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
                                self->vb_configs[i].buffer.getSize());
   }
 
-  renderPass.setBindGroup(0, self->bindGroup, 0, nullptr);
+  for (uint32_t i = 0; i < self->bindGroups.size(); ++i) {
+    // TODO: think about how to make use of dynamic offset
+    // useful for multiple drawcalls with different uniform data
+    renderPass.setBindGroup(i, self->bindGroups[i], 0, nullptr);
+  }
 
   renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
                   draw_params.firstInstance);
@@ -121,7 +168,7 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
   renderPass.end();
   renderPass.release();
 
-  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {{.label = "My command buffer"}};
+  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {{.label = "lab default command buffer"}};
   wgpu::CommandBuffer commands = encoder.finish(cmdBufferDescriptor);
   encoder.release();
 
@@ -134,25 +181,5 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
 
   return true;
 };
-
-wgpu::TextureView Pipeline::get_target_view(wgpu::Surface surface) {
-  wgpu::SurfaceTexture surfaceTexture;
-  surface.getCurrentTexture(&surfaceTexture);
-  if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
-    std::cerr << "Error: Pipeline: Could not get current render texture" << std::endl;
-    return nullptr;
-  }
-  WGPUTextureViewDescriptor viewDescriptor{
-      .label = "lab default texture view",
-      .format = wgpuTextureGetFormat(surfaceTexture.texture),
-      .dimension = WGPUTextureViewDimension_2D,
-      .baseMipLevel = 0,
-      .mipLevelCount = 1,
-      .baseArrayLayer = 0,
-      .arrayLayerCount = 1,
-      .aspect = WGPUTextureAspect_All,
-  };
-  return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
-}
 
 } // namespace lab

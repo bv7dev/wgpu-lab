@@ -69,7 +69,7 @@ struct Pipeline {
   // Bundles together user_config and default_config
   void finalize_config(wgpu::ShaderModule);
 
-  static wgpu::TextureView get_target_view(wgpu::Surface surface);
+  // static wgpu::TextureView get_current_render_texture_view(wgpu::Surface surface);
   static bool default_render(PipelineHandle self, wgpu::Surface surface,
                              const DrawCallParams& draw_params);
 
@@ -133,37 +133,53 @@ struct Pipeline {
         }});
   }
 
-  uint64_t get_total_stride(const std::vector<wgpu::VertexAttribute>& vertexAttributes) {
-    uint64_t totalStride = 0;
-    for (const auto& va : vertexAttributes) {
-      switch (va.format) {
-      case wgpu::VertexFormat::Float32x2:
-        totalStride += 2 * sizeof(float);
-        break;
-      case wgpu::VertexFormat::Float32:
-        totalStride += 1 * sizeof(float);
-        break;
-      }
-      // TODO: add cases for all vertex formats and move to seperate utils or something
-    }
-    return totalStride;
+  // WIP 2 uniform buffer layouts ==========================================================
+  std::vector<wgpu::BindGroupEntry> bindGroupEntries{};
+  void add_bind_group_entry(wgpu::Buffer wgpu_buffer, uint32_t binding, uint64_t offset,
+                            uint64_t size) {
+    wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
+    bindGroupEntry.buffer = wgpu_buffer;
+    bindGroupEntry.binding = binding;
+    bindGroupEntry.offset = offset;
+    bindGroupEntry.size = size;
+    bindGroupEntries.push_back(bindGroupEntry);
   }
 
-  // WIP 2 uniform buffer layouts
-  wgpu::BindGroupLayoutEntry bindingLayout = wgpu::Default;
-  wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc{};
-  wgpu::BindGroupLayout bindGroupLayout;
-  wgpu::PipelineLayoutDescriptor layoutDesc{};
-  wgpu::BindGroupEntry binding{};
-  wgpu::BindGroupDescriptor bindGroupDesc{};
-  wgpu::BindGroup bindGroup;
+  std::vector<wgpu::BindGroupLayoutEntry> bindGroupLayoutEntries{};
+  void add_bind_group_layout_entry(uint32_t binding, WGPUShaderStageFlags visibility,
+                                   WGPUBufferBindingType buffer_type, uint64_t min_binding_size) {
+    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry = wgpu::Default;
+    bindGroupLayoutEntry.binding = binding;
+    bindGroupLayoutEntry.visibility = visibility;
+    bindGroupLayoutEntry.buffer.type = buffer_type;
+    bindGroupLayoutEntry.buffer.minBindingSize = min_binding_size;
+    bindGroupLayoutEntries.push_back(bindGroupLayoutEntry);
+  }
 
-  void add_uniform_buffer(wgpu::Buffer wgpu_buffer) { binding.buffer = wgpu_buffer; }
+  std::vector<WGPUBindGroupLayout> bindGroupLayouts{};
+  std::vector<wgpu::BindGroup> bindGroups{};
+  void finalize_bind_group(const char* group_label = " - Default Bind Group") {
+    std::string groupLabel{label};
+    groupLabel.append(group_label);
+    groupLabel.append(" Bind Group ");
 
-  template<typename T>
-  void add_uniform_buffer(const Buffer<T>& buffer) {
-    // todo: allow multiple uniform buffers
-    add_uniform_buffer(buffer.wgpu_buffer);
+    std::string layoutLabel{groupLabel};
+    layoutLabel.append(" Layout");
+
+    wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc = wgpu::Default;
+    bindGroupLayoutDesc.entryCount = bindGroupLayoutEntries.size();
+    bindGroupLayoutDesc.entries = bindGroupLayoutEntries.data();
+    bindGroupLayoutDesc.label = layoutLabel.c_str();
+
+    bindGroupLayouts.push_back(webgpu.device.createBindGroupLayout(bindGroupLayoutDesc));
+
+    wgpu::BindGroupDescriptor bindGroupDesc = wgpu::Default;
+    bindGroupDesc.layout = bindGroupLayouts.back();
+    bindGroupDesc.entryCount = bindGroupEntries.size();
+    bindGroupDesc.entries = bindGroupEntries.data();
+    bindGroupDesc.label = groupLabel.c_str();
+
+    bindGroups.push_back(webgpu.device.createBindGroup(bindGroupDesc));
   }
 };
 
