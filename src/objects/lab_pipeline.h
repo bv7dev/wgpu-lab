@@ -13,6 +13,8 @@
 
 namespace lab {
 
+uint64_t vertex_format_size(wgpu::VertexFormat);
+
 // Is responsible to manage the process of rendering frames onto surfaces
 struct Pipeline {
   // Creates a new pipeline object
@@ -124,24 +126,38 @@ struct Pipeline {
   }
 
   void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location,
-                            uint64_t offset = 0, uint32_t buffer_index = ~0) {
-    vb_configs.at(buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index)
-        .vertexAttributes.push_back({{
-            .format = format,
-            .offset = offset,
-            .shaderLocation = shader_location,
-        }});
+                            uint64_t offset = ~0, uint64_t buffer_index = ~0) {
+    uint64_t bi = buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index;
+    if (vb_configs.at(bi).vertexAttributes.size() > 0) {
+      offset = offset == ~0 ? vertex_format_size(vb_configs.at(bi).vertexAttributes.back().format)
+                            : offset;
+    } else {
+      offset = 0;
+    }
+    vb_configs.at(bi).vertexAttributes.push_back({{
+        .format = format,
+        .offset = offset,
+        .shaderLocation = shader_location,
+    }});
   }
 
   // WIP 2 uniform buffer layouts ==========================================================
+  template<typename T>
+  void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index,
+                          wgpu::ShaderStageFlags visibility) {
+    add_bind_group_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
+    add_bind_group_layout_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
+    finalize_bind_group();
+  }
+
   std::vector<wgpu::BindGroupEntry> bindGroupEntries{};
-  void add_bind_group_entry(wgpu::Buffer wgpu_buffer, uint32_t binding, uint64_t offset,
-                            uint64_t size) {
+  void add_bind_group_entry(wgpu::Buffer wgpu_buffer, uint32_t binding_index, uint64_t size,
+                            uint64_t offset = 0) {
     wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
     bindGroupEntry.buffer = wgpu_buffer;
-    bindGroupEntry.binding = binding;
-    bindGroupEntry.offset = offset;
+    bindGroupEntry.binding = binding_index;
     bindGroupEntry.size = size;
+    bindGroupEntry.offset = offset;
     bindGroupEntries.push_back(bindGroupEntry);
   }
 
@@ -158,10 +174,10 @@ struct Pipeline {
 
   std::vector<WGPUBindGroupLayout> bindGroupLayouts{};
   std::vector<wgpu::BindGroup> bindGroups{};
-  void finalize_bind_group(const char* group_label = " - Default Bind Group") {
+  void finalize_bind_group(const char* group_label = "Default Bind Group") {
     std::string groupLabel{label};
+    groupLabel.append(" - ");
     groupLabel.append(group_label);
-    groupLabel.append(" Bind Group ");
 
     std::string layoutLabel{groupLabel};
     layoutLabel.append(" Layout");
@@ -180,6 +196,9 @@ struct Pipeline {
     bindGroupDesc.label = groupLabel.c_str();
 
     bindGroups.push_back(webgpu.device.createBindGroup(bindGroupDesc));
+
+    bindGroupEntries.clear();
+    bindGroupLayoutEntries.clear();
   }
 };
 

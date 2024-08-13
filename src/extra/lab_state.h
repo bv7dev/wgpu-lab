@@ -3,6 +3,7 @@
 
 #include <extra/lab_objects.h>
 
+#include <chrono>
 #include <unordered_map>
 
 // Note: user should not interact with state directly
@@ -15,6 +16,7 @@ using WindowMap = std::unordered_map<GlfwWindowHandle, WindowHandle>;
 extern struct State {
   WindowMap window_map{};
   bool glfw_init = false;
+  std::chrono::steady_clock::time_point start_tp = std::chrono::steady_clock::now();
 } state;
 
 } // namespace lab

@@ -36,6 +36,7 @@ struct Window {
 
   int width() const;
   int height() const;
+  float ratio() const { return (1.f / width()) * height(); }
 
   GlfwWindowHandle get_handle() const;
 

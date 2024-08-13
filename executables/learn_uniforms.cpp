@@ -1,5 +1,11 @@
 #include <lab>
 
+#pragma warning(disable : 4324)
+struct alignas(256) buffer_t {
+  float val;
+};
+#pragma warning(default : 4324)
+
 int main() {
   lab::Webgpu webgpu("My Instance");
   lab::Shader shader("My Shader", "shaders/test_uniform.wgsl");
@@ -17,42 +23,36 @@ int main() {
   lab::Buffer<float> uniform_buffer(
       "My uniform buffer", {1.0}, wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
-  struct Buf2T {
-    float val;
-    float _pad[63];
-  };
-  lab::Buffer<Buf2T> uniform_buffer2("My uniform buffer 2", {{}, {}},
-                                     wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst,
-                                     webgpu);
+  lab::Buffer<buffer_t> uniform_buffer2("My uniform buffer 2", {{}, {}},
+                                        wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst,
+                                        webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer);
   pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1, 2 * sizeof(float));
+  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1,
+                                lab::vertex_format_size(wgpu::VertexFormat::Float32x2));
 
-  // WIP: bind group layouts
-  pipeline.add_bind_group_entry(uniform_buffer.wgpu_buffer, 0, 0, sizeof(float));
+  // TODO: WIP ==========================================================================
+  pipeline.add_bind_group_entry(uniform_buffer.wgpu_buffer, 0, sizeof(float));
   pipeline.add_bind_group_layout_entry(0, wgpu::ShaderStage::Vertex,
                                        wgpu::BufferBindingType::Uniform, sizeof(float));
   pipeline.finalize_bind_group();
 
-  pipeline.bindGroupEntries.clear();
-  pipeline.bindGroupLayoutEntries.clear();
-
-  pipeline.add_bind_group_entry(uniform_buffer2.wgpu_buffer, 0, 0, sizeof(Buf2T));
+  pipeline.add_bind_group_entry(uniform_buffer2.wgpu_buffer, 0, sizeof(buffer_t));
   pipeline.add_bind_group_layout_entry(0, wgpu::ShaderStage::Vertex,
-                                       wgpu::BufferBindingType::Uniform, sizeof(Buf2T));
+                                       wgpu::BufferBindingType::Uniform, sizeof(buffer_t));
 
-  pipeline.add_bind_group_entry(uniform_buffer2.wgpu_buffer, 1, sizeof(Buf2T), sizeof(Buf2T));
+  pipeline.add_bind_group_entry(uniform_buffer2.wgpu_buffer, 1, sizeof(buffer_t), sizeof(buffer_t));
   pipeline.add_bind_group_layout_entry(1, wgpu::ShaderStage::Fragment,
-                                       wgpu::BufferBindingType::Uniform, sizeof(Buf2T));
+                                       wgpu::BufferBindingType::Uniform, sizeof(buffer_t));
 
-  pipeline.finalize_bind_group(" - Default Bind Group 2");
+  pipeline.finalize_bind_group("Bind Group 2");
 
   pipeline.finalize();
 
   float time = 0.0f;
-  Buf2T x = {0.0f};
-  Buf2T y = {0.0f};
+  buffer_t x = {0.0f};
+  buffer_t y = {0.0f};
 
   while (lab::tick()) {
     uniform_buffer.write(time);

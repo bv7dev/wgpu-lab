@@ -48,4 +48,13 @@ bool operator==(const KeyEvent& lhs, const KeyEvent& rhs) {
   return lhs.key == rhs.key && lhs.mod == rhs.mod && lhs.action == rhs.action;
 }
 
+void reset_time() { state.start_tp = std::chrono::steady_clock::now(); }
+
+// should be precise for around 2500 h program runtime
+float elapsed_seconds() {
+  return static_cast<float>(
+      static_cast<double>((std::chrono::steady_clock::now() - state.start_tp).count()) /
+      std::chrono::steady_clock::time_point::period::den);
+}
+
 } // namespace lab

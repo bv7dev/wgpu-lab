@@ -62,7 +62,7 @@ int Window::width() const {
 
 int Window::height() const {
   int height;
-  glfwGetWindowSize(handle, &height, nullptr);
+  glfwGetWindowSize(handle, nullptr, &height);
   return height;
 }
 
