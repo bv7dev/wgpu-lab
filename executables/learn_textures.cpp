@@ -2,6 +2,7 @@
 
 struct MyVertex {
   float x, y;
+  float u, v;
 };
 
 struct MyUniforms {
@@ -13,8 +14,9 @@ struct MyUniforms {
 int main() {
   lab::Window window("Vertex Buffer & Uniforms Demo", 640, 400);
 
-  std::vector<MyVertex> vertex_data = {
-      {0.f, 1.f}, {-sqrtf(3.f) / 2.f, -3.f / 6.f}, {sqrtf(3.f) / 2.f, -3.f / 6.f}};
+  std::vector<MyVertex> vertex_data = {{0.f, 1.f, .5f, 0.f},
+                                       {-sqrtf(3.f) / 2.f, -3.f / 6.f, 0.f, 1.f},
+                                       {sqrtf(3.f) / 2.f, -3.f / 6.f, 1.f, 1.f}};
 
   lab::Webgpu webgpu("My Instance");
   lab::Surface surface(window, webgpu);
@@ -74,8 +76,6 @@ int main() {
 
   // texture bind group layout -------------------------
 
-  pipeline.add_bind_group_layout_texture_entry(1, wgpu::ShaderStage::Fragment);
-
   wgpu::TextureViewDescriptor textureViewDesc;
   textureViewDesc.aspect = wgpu::TextureAspect::All;
   textureViewDesc.baseArrayLayer = 0;
@@ -86,12 +86,14 @@ int main() {
   textureViewDesc.format = textureDesc.format;
   wgpu::TextureView textureView = texture.createView(textureViewDesc);
 
+  pipeline.add_bind_group_layout_texture_entry(1, wgpu::ShaderStage::Fragment);
   pipeline.add_bind_group_texture_entry(textureView, 1);
 
   // End - WIP Texture -------------------
 
   pipeline.add_vertex_buffer(vertex_buffer);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
+  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0); // pos
+  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1); // uv
 
   pipeline.add_uniform_buffer(uniform_buffer, 0,
                               wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
