@@ -172,6 +172,27 @@ struct Pipeline {
     bindGroupLayoutEntries.push_back(bindGroupLayoutEntry);
   }
 
+  // todo: WIP textures -------------------
+  void add_bind_group_layout_texture_entry(uint32_t binding, WGPUShaderStageFlags visibility) {
+    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry = wgpu::Default;
+    bindGroupLayoutEntry.binding = binding;
+    bindGroupLayoutEntry.visibility = visibility;
+
+    bindGroupLayoutEntry.texture.multisampled = false;
+    bindGroupLayoutEntry.texture.sampleType = wgpu::TextureSampleType::Float;
+    bindGroupLayoutEntry.texture.viewDimension = wgpu::TextureViewDimension::_2D;
+
+    bindGroupLayoutEntries.push_back(bindGroupLayoutEntry);
+  }
+
+  void add_bind_group_texture_entry(wgpu::TextureView texture_view, uint32_t binding_index) {
+    wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
+    bindGroupEntry.textureView = texture_view;
+    bindGroupEntry.binding = binding_index;
+    bindGroupEntries.push_back(bindGroupEntry);
+  }
+  // END todo: WIP textures -------------------
+
   std::vector<WGPUBindGroupLayout> bindGroupLayouts{};
   std::vector<wgpu::BindGroup> bindGroups{};
   void finalize_bind_group(const char* group_label = "Default Bind Group") {

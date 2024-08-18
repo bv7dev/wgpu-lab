@@ -1,24 +1,38 @@
 #include <lab>
 
-int main() {
-  lab::Webgpu webgpu("My Instance");
-  lab::Shader shader("My Shader", "shaders/vbuf2.wgsl");
-  lab::Pipeline pipeline(shader, webgpu);
+struct MyVertex {
+  float x, y;
+};
 
-  lab::Window window("Vertex Buffer Demo", 640, 400);
+struct MyUniforms {
+  float ratio[2];
+  float time;
+  float scale;
+};
+
+int main() {
+  lab::Window window("Vertex Buffer & Uniforms Demo", 640, 400);
+
+  std::vector<MyVertex> vertex_data = {
+      {0.f, 1.f}, {-sqrtf(3.f) / 2.f, -3.f / 6.f}, {sqrtf(3.f) / 2.f, -3.f / 6.f}};
+
+  lab::Webgpu webgpu("My Instance");
   lab::Surface surface(window, webgpu);
 
-  std::vector<float> vertex_data = {-0.5f,  -0.5f, 1.0f, +0.5f,  -0.5f, 0.6f, +0.0f,  0.5f, 0.2f,
-                                    -0.55f, -0.5f, 1.0f, -0.05f, +0.5f, 0.6f, -0.55f, 0.5f, 0.2f};
-  uint32_t vertex_count = static_cast<uint32_t>(vertex_data.size() / 3);
+  lab::Buffer<MyVertex> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
-  lab::Buffer<float> vertex_buffer("My vertex buffer", vertex_data, webgpu);
+  MyUniforms uniforms{.ratio = {window.ratio(), 1.0f}, .time = 0.0f, .scale = 0.4f};
+  lab::Buffer<MyUniforms> uniform_buffer("My uniform buffer", {uniforms},
+                                         wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst,
+                                         webgpu);
 
-  // WIP -------------
+  lab::Shader shader("My Shader", "shaders/learn_textures.wgsl");
+  lab::Pipeline pipeline(shader, webgpu);
+
+  // ================================================================================
+  // WIP Textures -------------------------------------------------------------------
 
   wgpu::TextureDescriptor textureDesc;
-
-  // [...] setup descriptor
   textureDesc.dimension = wgpu::TextureDimension::_2D;
   textureDesc.size = {256, 256, 1};
   //                             ^ ignored because it is a 2D texture
@@ -58,20 +72,42 @@ int main() {
 
   webgpu.queue.writeTexture(destination, pixels.data(), pixels.size(), source, textureDesc.size);
 
-  // [...] do stuff with texture
+  // texture bind group layout -------------------------
 
-  texture.destroy();
-  texture.release();
-  // -----------------
+  pipeline.add_bind_group_layout_texture_entry(1, wgpu::ShaderStage::Fragment);
 
-  pipeline.add_vertex_buffer(vertex_buffer.wgpu_buffer);
+  wgpu::TextureViewDescriptor textureViewDesc;
+  textureViewDesc.aspect = wgpu::TextureAspect::All;
+  textureViewDesc.baseArrayLayer = 0;
+  textureViewDesc.arrayLayerCount = 1;
+  textureViewDesc.baseMipLevel = 0;
+  textureViewDesc.mipLevelCount = 1;
+  textureViewDesc.dimension = wgpu::TextureViewDimension::_2D;
+  textureViewDesc.format = textureDesc.format;
+  wgpu::TextureView textureView = texture.createView(textureViewDesc);
+
+  pipeline.add_bind_group_texture_entry(textureView, 1);
+
+  // End - WIP Texture -------------------
+
+  pipeline.add_vertex_buffer(vertex_buffer);
   pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1, 2 * sizeof(float));
 
+  pipeline.add_uniform_buffer(uniform_buffer, 0,
+                              wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
   pipeline.finalize();
 
   while (lab::tick()) {
-    pipeline.render_frame(surface, {vertex_count, 1});
-    lab::sleep(50ms);
+    uniform_buffer.write(uniforms);
+
+    pipeline.render_frame(surface, {(uint32_t)vertex_data.size(), 1});
+
+    uniforms.ratio[0] = window.ratio();
+    uniforms.time = lab::elapsed_seconds();
+
+    lab::sleep(10ms);
   }
+
+  texture.destroy();
+  texture.release();
 }
