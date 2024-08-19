@@ -45,6 +45,8 @@ struct Pipeline {
     wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
     finalize_config(shaderModule);
 
+    finalize_bind_group();
+
     std::cout << "Info: WGPU: Create: " << label << std::endl;
     wgpu_pipeline = transfer();
 
@@ -145,31 +147,36 @@ struct Pipeline {
   template<typename T>
   void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index,
                           wgpu::ShaderStageFlags visibility) {
-    add_bind_group_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
-    add_bind_group_layout_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
-    finalize_bind_group();
-  }
-
-  std::vector<wgpu::BindGroupEntry> bindGroupEntries{};
-  void add_bind_group_entry(wgpu::Buffer wgpu_buffer, uint32_t binding_index, uint64_t size,
-                            uint64_t offset = 0) {
-    wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
-    bindGroupEntry.buffer = wgpu_buffer;
-    bindGroupEntry.binding = binding_index;
-    bindGroupEntry.size = size;
-    bindGroupEntry.offset = offset;
-    bindGroupEntries.push_back(bindGroupEntry);
+    add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
+    add_bind_group_layout_buffer_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
   }
 
   std::vector<wgpu::BindGroupLayoutEntry> bindGroupLayoutEntries{};
-  void add_bind_group_layout_entry(uint32_t binding, WGPUShaderStageFlags visibility,
-                                   WGPUBufferBindingType buffer_type, uint64_t min_binding_size) {
+  std::vector<wgpu::BindGroupEntry> bindGroupEntries{};
+
+  void add_bind_group_layout_buffer_entry(uint32_t binding, WGPUShaderStageFlags visibility,
+                                          WGPUBufferBindingType buffer_type,
+                                          uint64_t min_binding_size) {
     wgpu::BindGroupLayoutEntry bindGroupLayoutEntry = wgpu::Default;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
+
     bindGroupLayoutEntry.buffer.type = buffer_type;
     bindGroupLayoutEntry.buffer.minBindingSize = min_binding_size;
+
     bindGroupLayoutEntries.push_back(bindGroupLayoutEntry);
+  }
+
+  void add_bind_group_buffer_entry(wgpu::Buffer wgpu_buffer, uint32_t binding_index, uint64_t size,
+                                   uint64_t offset = 0) {
+    wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
+    bindGroupEntry.buffer = wgpu_buffer;
+    bindGroupEntry.binding = binding_index;
+
+    bindGroupEntry.size = size;
+    bindGroupEntry.offset = offset;
+
+    bindGroupEntries.push_back(bindGroupEntry);
   }
 
   // todo: WIP textures -------------------
@@ -189,12 +196,14 @@ struct Pipeline {
     wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
     bindGroupEntry.textureView = texture_view;
     bindGroupEntry.binding = binding_index;
+
     bindGroupEntries.push_back(bindGroupEntry);
   }
   // END todo: WIP textures -------------------
 
-  std::vector<WGPUBindGroupLayout> bindGroupLayouts{};
   std::vector<wgpu::BindGroup> bindGroups{};
+  std::vector<WGPUBindGroupLayout> bindGroupLayouts{};
+
   void finalize_bind_group(const char* group_label = "Default Bind Group") {
     std::string groupLabel{label};
     groupLabel.append(" - ");
@@ -218,9 +227,11 @@ struct Pipeline {
 
     bindGroups.push_back(webgpu.device.createBindGroup(bindGroupDesc));
 
-    bindGroupEntries.clear();
     bindGroupLayoutEntries.clear();
+    bindGroupEntries.clear();
   }
+
+  // END WIP vertex buffers & uniforms
 };
 
 } // namespace lab

@@ -33,18 +33,19 @@ int main() {
                                 lab::vertex_format_size(wgpu::VertexFormat::Float32x2));
 
   // TODO: WIP ==========================================================================
-  pipeline.add_bind_group_entry(uniform_buffer.wgpu_buffer, 0, sizeof(float));
-  pipeline.add_bind_group_layout_entry(0, wgpu::ShaderStage::Vertex,
-                                       wgpu::BufferBindingType::Uniform, sizeof(float));
+  pipeline.add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, 0, sizeof(float));
+  pipeline.add_bind_group_layout_buffer_entry(0, wgpu::ShaderStage::Vertex,
+                                              wgpu::BufferBindingType::Uniform, sizeof(float));
   pipeline.finalize_bind_group();
 
-  pipeline.add_bind_group_entry(uniform_buffer2.wgpu_buffer, 0, sizeof(buffer_t));
-  pipeline.add_bind_group_layout_entry(0, wgpu::ShaderStage::Vertex,
-                                       wgpu::BufferBindingType::Uniform, sizeof(buffer_t));
+  pipeline.add_bind_group_buffer_entry(uniform_buffer2.wgpu_buffer, 0, sizeof(buffer_t));
+  pipeline.add_bind_group_layout_buffer_entry(0, wgpu::ShaderStage::Vertex,
+                                              wgpu::BufferBindingType::Uniform, sizeof(buffer_t));
 
-  pipeline.add_bind_group_entry(uniform_buffer2.wgpu_buffer, 1, sizeof(buffer_t), sizeof(buffer_t));
-  pipeline.add_bind_group_layout_entry(1, wgpu::ShaderStage::Fragment,
-                                       wgpu::BufferBindingType::Uniform, sizeof(buffer_t));
+  pipeline.add_bind_group_buffer_entry(uniform_buffer2.wgpu_buffer, 1, sizeof(buffer_t),
+                                       sizeof(buffer_t));
+  pipeline.add_bind_group_layout_buffer_entry(1, wgpu::ShaderStage::Fragment,
+                                              wgpu::BufferBindingType::Uniform, sizeof(buffer_t));
 
   pipeline.finalize_bind_group("Bind Group 2");
 

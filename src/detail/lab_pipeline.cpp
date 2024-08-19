@@ -97,8 +97,6 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
 
   config.vertexState.module = shaderModule;
   config.fragmentState.module = shaderModule;
-
-  // WIP: Bind layout and group for uniform buffers
 }
 
 wgpu::RenderPipeline Pipeline::transfer() const {
