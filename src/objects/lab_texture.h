@@ -5,6 +5,11 @@
 
 namespace lab {
 
+// WIP todos:
+// - allow multi-threaded (read/write) mapping like lab::Buffer (reuse MappedVRAM)
+// - support all `wgpu::TextureFormat` formats
+// - support 3d textures
+// - support texture arrays
 struct Texture {
   Webgpu& webgpu;
 
@@ -53,7 +58,7 @@ struct Texture {
   inline uint32_t width() const noexcept { return descriptor.size.width; }
   inline uint32_t height() const noexcept { return descriptor.size.height; }
 
-  WGPUTextureViewDescriptor textureViewDesc = {
+  mutable WGPUTextureViewDescriptor textureViewDesc = {
       .label = "lab default texture view",
       .dimension = wgpu::TextureViewDimension::_2D,
       .baseMipLevel = 0,
@@ -63,10 +68,11 @@ struct Texture {
       .aspect = wgpu::TextureAspect::All,
   };
 
-  [[nodiscard]] wgpu::TextureView create_view() {
+  [[nodiscard]] wgpu::TextureView create_view() const {
     assert(wgpu_texture != nullptr);
     textureViewDesc.format = descriptor.format;
-    return wgpu_texture.createView(textureViewDesc);
+    return wgpuTextureCreateView(wgpu_texture,
+                                 const_cast<WGPUTextureViewDescriptor*>(&textureViewDesc));
   }
 
   ~Texture() {

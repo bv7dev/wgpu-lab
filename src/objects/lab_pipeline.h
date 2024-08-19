@@ -7,6 +7,7 @@
 #include <objects/lab_buffer.h>
 #include <objects/lab_shader.h>
 #include <objects/lab_surface.h>
+#include <objects/lab_texture.h>
 #include <objects/lab_webgpu.h>
 
 #include <webgpu/webgpu.hpp>
@@ -149,6 +150,11 @@ struct Pipeline {
                           wgpu::ShaderStageFlags visibility) {
     add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
     add_bind_group_layout_buffer_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
+  }
+
+  void add_texture(const Texture& texture) {
+    add_bind_group_layout_texture_entry(1, wgpu::ShaderStage::Fragment);
+    add_bind_group_texture_entry(texture.create_view(), 1);
   }
 
   std::vector<wgpu::BindGroupLayoutEntry> bindGroupLayoutEntries{};
