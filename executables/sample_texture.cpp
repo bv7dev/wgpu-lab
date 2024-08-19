@@ -26,22 +26,27 @@ int main() {
 
   lab::Texture texture(webgpu, wgpu::TextureFormat::RGBA8Unorm, 256, 256);
 
+  // ---------------------------------------------------------------------------
   // create procedural texture and upload to gpu
   std::vector<MyPixelFormat> pixel_data;
+
+  auto u8 = [](float s) { return static_cast<uint8_t>(s); };
+  auto transform = [&u8](int v, float s = 1.f) {
+    return u8(s * (20.f + u8(sinf(static_cast<float>(v) / 255.f * 20.f) + 1.f) * 40.f));
+  };
+
   pixel_data.reserve(texture.width() * texture.height());
   for (int y = 0; y < texture.height(); ++y) {
     for (int x = 0; x < texture.width(); ++x) {
-      auto u8 = [](float s) { return static_cast<uint8_t>(s); };
-      auto transform = [&u8](int v, float s = 1.f) {
-        return u8(s * (20.f + u8(sinf(static_cast<float>(v) / 255.f * 20.f) + 1.f) * 40.f));
-      };
-      pixel_data.emplace_back(transform(y + x, .6f), transform(x, .4f), transform(y, 1.2f),
+      pixel_data.emplace_back(transform(x + y, .6f), transform(x, .4f), transform(y, 1.2f),
                               u8(255));
     }
   }
+
   texture.to_device(pixel_data);
   pipeline.add_texture(texture);
 
+  // ---------------------------------------------------------------------------
   // 3 vertices - equilateral triangle   x    y    u    v
   std::vector<MyVertex> vertex_data = {{0.f, 1.f, 0.f, 0.f},
                                        {-sqrtf(3.f) / 2.f, -3.f / 6.f, 0.f, 1.f},
