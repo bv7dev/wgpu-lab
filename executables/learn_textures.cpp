@@ -14,7 +14,7 @@ struct MyUniforms {
 };
 
 int main() {
-  lab::Window window("Vertex Buffer & Uniforms Demo", 640, 400);
+  lab::Window window("Texture Demo", 640, 400);
 
   lab::Webgpu webgpu("My Instance");
   lab::Surface surface(window, webgpu);
