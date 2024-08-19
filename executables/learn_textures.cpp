@@ -36,19 +36,6 @@ int main() {
   // ================================================================================
   // WIP Textures -------------------------------------------------------------------
 
-  // wgpu::TextureDescriptor textureDesc;
-  // textureDesc.dimension = wgpu::TextureDimension::_2D;
-  // textureDesc.size = {256, 256, 1};
-  // //                             ^ ignored because it is a 2D texture
-  // textureDesc.mipLevelCount = 1;
-  // textureDesc.sampleCount = 1;
-  // textureDesc.format = wgpu::TextureFormat::RGBA8Unorm;
-  // textureDesc.usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst;
-  // textureDesc.viewFormatCount = 0;
-  // textureDesc.viewFormats = nullptr;
-
-  // wgpu::Texture texture = webgpu.device.createTexture(textureDesc);
-
   lab::Texture texture({256, 256}, webgpu);
 
   // Create image data
@@ -64,21 +51,6 @@ int main() {
   }
 
   texture.to_device(pixels);
-  // Arguments telling which part of the texture we upload to
-  // (together with the last argument of writeTexture)
-  // wgpu::ImageCopyTexture destination;
-  // destination.texture = texture;
-  // destination.mipLevel = 0;
-  // destination.origin = {0, 0, 0}; // equivalent of the offset argument of Queue::writeBuffer
-  // destination.aspect = wgpu::TextureAspect::All; // only relevant for depth/Stencil textures
-
-  // // Arguments telling how the C++ side pixel memory is laid out
-  // wgpu::TextureDataLayout source;
-  // source.offset = 0;
-  // source.bytesPerRow = 4 * textureDesc.size.width;
-  // source.rowsPerImage = textureDesc.size.height;
-
-  // webgpu.queue.writeTexture(destination, pixels.data(), pixels.size(), source, textureDesc.size);
 
   // texture bind group layout -------------------------
 
