@@ -29,15 +29,15 @@ bool init_lab() {
 bool tick() {
   glfwPollEvents();
 
-  std::vector<WindowHandle> to_erase;
-  to_erase.reserve(state.window_map.size());
+  std::vector<WindowHandle> to_close;
+  to_close.reserve(state.window_map.size());
 
   for (auto [hnd, wnd] : state.window_map) {
     if (glfwWindowShouldClose(hnd)) {
-      to_erase.push_back(wnd);
+      to_close.push_back(wnd);
     }
   }
-  for (auto wnd : to_erase) {
+  for (auto wnd : to_close) {
     wnd->close();
   }
 
