@@ -38,13 +38,12 @@ int main() {
 
   for (int y = 0; y < texture.height(); ++y) {
     for (int x = 0; x < texture.width(); ++x) {
-      pixel_data.emplace_back(transform(x + y, .6f), transform(x, .4f), transform(y, 1.2f),
-                              u8(255));
+      pixel_data.emplace_back(transform(x + y, .6f), transform(x, .3f), transform(y, .2f), u8(255));
     }
   }
 
   texture.to_device(pixel_data);
-  pipeline.add_texture(texture);
+  pipeline.add_texture(texture, 1, wgpu::ShaderStage::Fragment);
 
   // ---------------------------------------------------------------------------
   // 3 vertices - equilateral triangle   x    y    u    v

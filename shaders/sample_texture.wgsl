@@ -30,5 +30,5 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
   let color: vec3f = textureLoad(gradientTexture, vec2i(in.uv*256), 0).rgb;
-	return vec4f(color*((sin(uniforms.time)+1.0)*0.5), 1.0);
+	return vec4f(color*((sin(uniforms.time)+1.0)*2.5), 1.0);
 }

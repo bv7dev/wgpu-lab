@@ -123,20 +123,20 @@ wgpu::RenderPipeline Pipeline::transfer() const {
   return webgpu.device.createRenderPipeline(pipelineDesc);
 }
 
-Pipeline::~Pipeline() {
+void Pipeline::reset() {
   if (wgpu_pipeline) {
     wgpu_pipeline.release();
     wgpu_pipeline = nullptr;
   }
 }
 
+Pipeline::~Pipeline() { reset(); }
+
 bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
                               const DrawCallParams& draw_params) {
+  assert(self->wgpu_pipeline != nullptr);
+
   wgpu::TextureView targetView = get_current_render_texture_view(surface);
-  if (!targetView) {
-    std::cerr << "Error: Pipeline: Could not create texture view" << std::endl;
-    return false;
-  }
 
   wgpu::CommandEncoderDescriptor encoderDesc = {{.label = "lab default command encoder"}};
   wgpu::CommandEncoder encoder = self->webgpu.device.createCommandEncoder(encoderDesc);

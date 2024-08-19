@@ -19,8 +19,8 @@ int main() {
     lab::Surface surface_1{window_1, webgpu};
     lab::Surface surface_2{window_2, webgpu};
 
-    lab::Pipeline pipeline_1{shader_1, webgpu};
-    lab::Pipeline pipeline_2{shader_2, webgpu};
+    lab::Pipeline pipeline_1{shader_1, webgpu, true};
+    lab::Pipeline pipeline_2{shader_2, webgpu, true};
 
     bool toggle_pipeline = false;
 
@@ -52,7 +52,7 @@ int main() {
     Shader shader{"My Shader", "shaders/test1.wgsl"};
 
     Surface surface{window, webgpu};
-    Pipeline pipeline{shader, webgpu};
+    Pipeline pipeline{shader, webgpu, true};
 
     std::unique_ptr<Window> sometimes_open;
     std::unique_ptr<Surface> sometimes_surf;
@@ -99,7 +99,7 @@ int main() {
 
     lab::Webgpu webgpu{"My instance"};
     lab::Shader shader{"My shader", "shaders/test1.wgsl"};
-    lab::Pipeline pipeline{shader, webgpu};
+    lab::Pipeline pipeline{shader, webgpu, true};
 
     lab::Surface first_surface{first_window, webgpu};
     lab::Surface second_surface{second_window, webgpu};
@@ -122,8 +122,8 @@ int main() {
     lab::Webgpu webgpu1{"Inst 1"};
     lab::Webgpu webgpu2{"Inst 2"};
 
-    lab::Pipeline pipe1{shader, webgpu1};
-    lab::Pipeline pipe2{shader, webgpu2};
+    lab::Pipeline pipe1{shader, webgpu1, true};
+    lab::Pipeline pipe2{shader, webgpu2, true};
 
     lab::Surface first_surface{first_window, webgpu1};
     lab::Surface second_surface{second_window, webgpu2};
@@ -145,7 +145,7 @@ int main() {
     Shader shader{"My Shader", "shaders/test1.wgsl"};
 
     Surface surface{window, webgpu};
-    Pipeline pipeline{shader, webgpu};
+    Pipeline pipeline{shader, webgpu, true};
 
     window.set_key_callback([&window](const KeyEvent& event) {
       if (event.key == KeyCode::space && event.action == InputType::press) {

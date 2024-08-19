@@ -30,7 +30,9 @@ struct Pipeline {
   // ```
   // render_frame stage can always be configured by changing `render_config`
   // and, if needed, by `set_custom_renderfunc(func)`
-  Pipeline(Shader& sh, Webgpu& wg) : shader{sh}, webgpu{wg} {}
+  Pipeline(Shader& sh, Webgpu& wg, bool final = false) : shader{sh}, webgpu{wg} {
+    if (final) finalize();
+  }
 
   Pipeline(const Pipeline&) = delete;
   Pipeline& operator=(const Pipeline&) = delete;
@@ -42,16 +44,11 @@ struct Pipeline {
   // 4. creates render pipeline on gpu
   // 5. releases shader module
   void finalize() {
-    assert(wgpu_pipeline == nullptr);
-
+    reset();
     wgpu::ShaderModule shaderModule = shader.transfer(webgpu.device);
     finalize_config(shaderModule);
-
     finalize_bind_group();
-
-    std::cout << "Info: WGPU: Create: " << label << std::endl;
     wgpu_pipeline = transfer();
-
     shaderModule.release();
   }
 
@@ -91,6 +88,7 @@ struct Pipeline {
   static bool default_render(PipelineHandle self, wgpu::Surface surface,
                              const DrawCallParams& draw_params);
 
+  void reset();
   ~Pipeline();
 
   // -----------------------------------------------------------------------------------------------
@@ -157,7 +155,6 @@ struct Pipeline {
     }});
   }
 
-  // WIP 2 uniform buffer layouts ==========================================================
   template<typename T>
   void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index,
                           wgpu::ShaderStageFlags visibility) {
@@ -165,9 +162,10 @@ struct Pipeline {
     add_bind_group_layout_buffer_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
   }
 
-  void add_texture(const Texture& texture) {
-    add_bind_group_layout_texture_entry(1, wgpu::ShaderStage::Fragment);
-    add_bind_group_texture_entry(texture.create_view(), 1);
+  void add_texture(const Texture& texture, uint32_t binding,
+                   wgpu::ShaderStageFlags visibility = wgpu::ShaderStage::Fragment) {
+    add_bind_group_layout_texture_entry(binding, visibility);
+    add_bind_group_texture_entry(texture.create_view(), binding);
   }
 
   std::vector<wgpu::BindGroupLayoutEntry> bindGroupLayoutEntries{};
@@ -198,12 +196,12 @@ struct Pipeline {
     bindGroupEntries.push_back(bindGroupEntry);
   }
 
-  // todo: WIP textures -------------------
   void add_bind_group_layout_texture_entry(uint32_t binding, WGPUShaderStageFlags visibility) {
     wgpu::BindGroupLayoutEntry bindGroupLayoutEntry = wgpu::Default;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
 
+    // TODO: make configurable
     bindGroupLayoutEntry.texture.multisampled = false;
     bindGroupLayoutEntry.texture.sampleType = wgpu::TextureSampleType::Float;
     bindGroupLayoutEntry.texture.viewDimension = wgpu::TextureViewDimension::_2D;
@@ -218,7 +216,6 @@ struct Pipeline {
 
     bindGroupEntries.push_back(bindGroupEntry);
   }
-  // END todo: WIP textures -------------------
 
   std::vector<wgpu::BindGroup> bindGroups{};
   std::vector<WGPUBindGroupLayout> bindGroupLayouts{};
@@ -249,8 +246,6 @@ struct Pipeline {
     bindGroupLayoutEntries.clear();
     bindGroupEntries.clear();
   }
-
-  // END WIP vertex buffers & uniforms
 };
 
 } // namespace lab
