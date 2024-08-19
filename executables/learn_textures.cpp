@@ -1,5 +1,7 @@
 #include <lab>
 
+#include <objects/lab_texture.h>
+
 struct MyVertex {
   float x, y;
   float u, v;
@@ -34,58 +36,53 @@ int main() {
   // ================================================================================
   // WIP Textures -------------------------------------------------------------------
 
-  wgpu::TextureDescriptor textureDesc;
-  textureDesc.dimension = wgpu::TextureDimension::_2D;
-  textureDesc.size = {256, 256, 1};
-  //                             ^ ignored because it is a 2D texture
-  textureDesc.mipLevelCount = 1;
-  textureDesc.sampleCount = 1;
-  textureDesc.format = wgpu::TextureFormat::RGBA8Unorm;
-  textureDesc.usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst;
-  textureDesc.viewFormatCount = 0;
-  textureDesc.viewFormats = nullptr;
+  // wgpu::TextureDescriptor textureDesc;
+  // textureDesc.dimension = wgpu::TextureDimension::_2D;
+  // textureDesc.size = {256, 256, 1};
+  // //                             ^ ignored because it is a 2D texture
+  // textureDesc.mipLevelCount = 1;
+  // textureDesc.sampleCount = 1;
+  // textureDesc.format = wgpu::TextureFormat::RGBA8Unorm;
+  // textureDesc.usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst;
+  // textureDesc.viewFormatCount = 0;
+  // textureDesc.viewFormats = nullptr;
 
-  wgpu::Texture texture = webgpu.device.createTexture(textureDesc);
+  // wgpu::Texture texture = webgpu.device.createTexture(textureDesc);
+
+  lab::Texture texture({256, 256}, webgpu);
 
   // Create image data
-  std::vector<uint8_t> pixels(4 * textureDesc.size.width * textureDesc.size.height);
-  for (uint32_t i = 0; i < textureDesc.size.width; ++i) {
-    for (uint32_t j = 0; j < textureDesc.size.height; ++j) {
-      uint8_t* p = &pixels[4 * (j * textureDesc.size.width + i)];
+  std::vector<uint8_t> pixels(4 * texture.width() * texture.height());
+  for (uint32_t i = 0; i < texture.width(); ++i) {
+    for (uint32_t j = 0; j < texture.height(); ++j) {
+      uint8_t* p = &pixels[4 * (j * texture.width() + i)];
       p[0] = (uint8_t)i; // r
       p[1] = (uint8_t)j; // g
       p[2] = 128;        // b
       p[3] = 255;        // a
     }
   }
+
+  texture.to_device(pixels);
   // Arguments telling which part of the texture we upload to
   // (together with the last argument of writeTexture)
-  wgpu::ImageCopyTexture destination;
-  destination.texture = texture;
-  destination.mipLevel = 0;
-  destination.origin = {0, 0, 0}; // equivalent of the offset argument of Queue::writeBuffer
-  destination.aspect = wgpu::TextureAspect::All; // only relevant for depth/Stencil textures
+  // wgpu::ImageCopyTexture destination;
+  // destination.texture = texture;
+  // destination.mipLevel = 0;
+  // destination.origin = {0, 0, 0}; // equivalent of the offset argument of Queue::writeBuffer
+  // destination.aspect = wgpu::TextureAspect::All; // only relevant for depth/Stencil textures
 
-  // Arguments telling how the C++ side pixel memory is laid out
-  wgpu::TextureDataLayout source;
-  source.offset = 0;
-  source.bytesPerRow = 4 * textureDesc.size.width;
-  source.rowsPerImage = textureDesc.size.height;
+  // // Arguments telling how the C++ side pixel memory is laid out
+  // wgpu::TextureDataLayout source;
+  // source.offset = 0;
+  // source.bytesPerRow = 4 * textureDesc.size.width;
+  // source.rowsPerImage = textureDesc.size.height;
 
-  webgpu.queue.writeTexture(destination, pixels.data(), pixels.size(), source, textureDesc.size);
+  // webgpu.queue.writeTexture(destination, pixels.data(), pixels.size(), source, textureDesc.size);
 
   // texture bind group layout -------------------------
 
-  wgpu::TextureViewDescriptor textureViewDesc;
-  textureViewDesc.aspect = wgpu::TextureAspect::All;
-  textureViewDesc.baseArrayLayer = 0;
-  textureViewDesc.arrayLayerCount = 1;
-  textureViewDesc.baseMipLevel = 0;
-  textureViewDesc.mipLevelCount = 1;
-  textureViewDesc.dimension = wgpu::TextureViewDimension::_2D;
-  textureViewDesc.format = textureDesc.format;
-  wgpu::TextureView textureView = texture.createView(textureViewDesc);
-
+  wgpu::TextureView textureView = texture.create_view();
   pipeline.add_bind_group_layout_texture_entry(1, wgpu::ShaderStage::Fragment);
   pipeline.add_bind_group_texture_entry(textureView, 1);
 
@@ -109,7 +106,4 @@ int main() {
 
     lab::sleep(10ms);
   }
-
-  texture.destroy();
-  texture.release();
 }
