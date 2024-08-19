@@ -7,7 +7,6 @@ namespace lab {
 
 // WIP todos:
 // - allow multi-threaded (read/write) mapping like lab::Buffer (reuse MappedVRAM)
-// - support all `wgpu::TextureFormat` formats
 // - support 3d textures
 // - support texture arrays
 struct Texture {
@@ -16,17 +15,24 @@ struct Texture {
   WGPUTextureDescriptor descriptor = {
       .label = "lab default texture",
       .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
-      .size = {0, 0, 0},
-      .format = wgpu::TextureFormat::RGBA8Unorm,
       .mipLevelCount = 1,
       .sampleCount = 1,
       .viewFormatCount = 0,
       .viewFormats = nullptr,
   };
 
-  Texture(WGPUExtent2D size, Webgpu& instance) : webgpu{instance} {
-    descriptor.dimension = wgpu::TextureDimension::_2D;
-    descriptor.size = {size.width, size.height, 1};
+  Texture(Webgpu& instance, wgpu::TextureFormat format, uint32_t width, uint32_t height = 1,
+          uint32_t depthOrArrayLayers = 1)
+      : webgpu{instance} {
+    if (height > 1 && depthOrArrayLayers > 1) {
+      descriptor.dimension = wgpu::TextureDimension::_3D;
+    } else if (height > 1 && depthOrArrayLayers == 1) {
+      descriptor.dimension = wgpu::TextureDimension::_2D;
+    } else if (height == 1 && depthOrArrayLayers == 1) {
+      descriptor.dimension = wgpu::TextureDimension::_1D;
+    }
+    descriptor.size = {width, height, depthOrArrayLayers};
+    descriptor.format = format;
   }
 
   Texture(const Texture&) = delete;
@@ -42,21 +48,23 @@ struct Texture {
 
   wgpu::Texture wgpu_texture = nullptr;
 
-  void to_device(const std::vector<uint8_t>& pixels) {
+  template<typename T>
+  void to_device(const std::vector<T>& pixels) {
     wgpu_texture = transfer();
     target.texture = wgpu_texture;
 
     WGPUTextureDataLayout layout = {
         .offset = 0,
-        .bytesPerRow = 4 * descriptor.size.width,
+        .bytesPerRow = sizeof(T) * descriptor.size.width,
         .rowsPerImage = descriptor.size.height,
     };
 
-    webgpu.queue.writeTexture(target, pixels.data(), pixels.size(), layout, descriptor.size);
+    webgpu.queue.writeTexture(target, pixels.data(), pixels.size() * sizeof(T), layout,
+                              descriptor.size);
   }
 
-  inline uint32_t width() const noexcept { return descriptor.size.width; }
-  inline uint32_t height() const noexcept { return descriptor.size.height; }
+  inline int width() const noexcept { return static_cast<int>(descriptor.size.width); }
+  inline int height() const noexcept { return static_cast<int>(descriptor.size.height); }
 
   mutable WGPUTextureViewDescriptor textureViewDesc = {
       .label = "lab default texture view",
@@ -71,8 +79,7 @@ struct Texture {
   [[nodiscard]] wgpu::TextureView create_view() const {
     assert(wgpu_texture != nullptr);
     textureViewDesc.format = descriptor.format;
-    return wgpuTextureCreateView(wgpu_texture,
-                                 const_cast<WGPUTextureViewDescriptor*>(&textureViewDesc));
+    return wgpuTextureCreateView(wgpu_texture, &textureViewDesc);
   }
 
   ~Texture() {

@@ -3,7 +3,9 @@
 
 // STL dependencies ------------------------------
 
+#include <cassert>
 #include <chrono>
+#include <cmath>
 #include <concepts>
 #include <fstream>
 #include <functional>
@@ -24,6 +26,7 @@ using namespace std::chrono_literals;
 #include <objects/lab_pipeline.h>
 #include <objects/lab_shader.h>
 #include <objects/lab_surface.h>
+#include <objects/lab_texture.h>
 #include <objects/lab_webgpu.h>
 #include <objects/lab_window.h>
 
