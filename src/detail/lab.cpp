@@ -38,7 +38,7 @@ bool tick() {
     }
   }
   for (auto wnd : to_erase) {
-    wnd->~Window();
+    wnd->close();
   }
 
   return state.window_map.size() > 0;
