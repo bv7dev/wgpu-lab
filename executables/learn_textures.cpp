@@ -42,7 +42,7 @@ int main() {
   // 3 vertices - equilateral triangle   x    y    u    v
   std::vector<MyVertex> vertex_data = {{0.f, 1.f, .5f, 0.f},
                                        {-sqrtf(3.f) / 2.f, -3.f / 6.f, 0.f, 1.f},
-                                       {sqrtf(3.f) / 2.f, -3.f / 6.f, 1.f, 1.f}};
+                                       {+sqrtf(3.f) / 2.f, -3.f / 6.f, 1.f, 1.f}};
   lab::Buffer<MyVertex> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer);
