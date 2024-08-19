@@ -25,6 +25,14 @@ namespace lab {
 // ```
 bool tick();
 
+// Does what tick() does and additionally calls webgpu.device.tick()
+// ```cpp
+// while(lab::tick(webgpu)) {
+//   pipeline.render_frame(surface); // render artworks
+// }
+// ```
+bool tick(Webgpu&);
+
 // Automatically called by Window and Webgpu constructors
 //  - returns `true` if init was successfully performed
 //  - only inits once per program invocation

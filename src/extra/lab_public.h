@@ -20,6 +20,9 @@
 using namespace std::chrono_literals;
 #endif
 
+// Dawn dependencies
+#include <webgpu/webgpu.hpp>
+
 // Lab objects and enums -------------------------
 
 #include <objects/lab_buffer.h>

@@ -88,7 +88,6 @@ struct Pipeline {
   // Bundles together user_config and default_config
   void finalize_config(wgpu::ShaderModule);
 
-  // static wgpu::TextureView get_current_render_texture_view(wgpu::Surface surface);
   static bool default_render(PipelineHandle self, wgpu::Surface surface,
                              const DrawCallParams& draw_params);
 

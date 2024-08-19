@@ -175,7 +175,6 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
 
   targetView.release();
   surface.present();
-  self->webgpu.device.tick();
 
   return true;
 };

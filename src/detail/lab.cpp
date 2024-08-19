@@ -44,6 +44,13 @@ bool tick() {
   return state.window_map.size() > 0;
 }
 
+// todo: figure out what device.tick() actually does,
+//       and when it should be called.
+bool tick(Webgpu& webgpu) {
+  webgpu.device.tick();
+  return tick();
+}
+
 bool operator==(const KeyEvent& lhs, const KeyEvent& rhs) {
   return lhs.key == rhs.key && lhs.mod == rhs.mod && lhs.action == rhs.action;
 }
