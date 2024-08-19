@@ -30,6 +30,9 @@ struct Pipeline {
   // ```
   // render_frame stage can always be configured by changing `render_config`
   // and, if needed, by `set_custom_renderfunc(func)`
+  //
+  // set param `final = true` if there is no need to configure anything -
+  // this makes the pipeline ready to use.
   Pipeline(Shader& sh, Webgpu& wg, bool final = false) : shader{sh}, webgpu{wg} {
     if (final) finalize();
   }
