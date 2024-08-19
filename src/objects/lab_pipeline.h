@@ -14,18 +14,19 @@
 
 namespace lab {
 
+// returns size in bytes of given wgpu::VertexFormat
 uint64_t vertex_format_size(wgpu::VertexFormat);
 
 // Is responsible to manage the process of rendering frames onto surfaces
 struct Pipeline {
   // Creates a new pipeline object
   // ```cpp
-  // lab::Pipeline pip(my_shader, my_webgpu, false);
+  // lab::Pipeline pip(my_shader, my_webgpu);
   //
   // // explore and modify config objects.
   // pip.config.primitiveState.topology = wgpu::PrimitiveTopology::LineStrip;
   //
-  // pip.init(); // now ready to call init
+  // pip.finalize(); // now ready to use for rendering
   // ```
   // render_frame stage can always be configured by changing `render_config`
   // and, if needed, by `set_custom_renderfunc(func)`
@@ -36,10 +37,10 @@ struct Pipeline {
 
   // Initializes a pipeline
   // 1. creates shader module on gpu
-  // 2. bundles together default + user configs
-  // 3. creates render pipeline on gpu
-  // 4. releases shader module
-  // 5. render pipeline is released later in destructor
+  // 2. combines default + user configs
+  // 3. creates texture and buffer bindings
+  // 4. creates render pipeline on gpu
+  // 5. releases shader module
   void finalize() {
     assert(wgpu_pipeline == nullptr);
 
@@ -58,12 +59,25 @@ struct Pipeline {
     uint32_t vertexCount, instanceCount;
     uint32_t firstVertex, firstInstance;
   };
-  using RenderFunction = std::function<bool(PipelineHandle self, wgpu::Surface, DrawCallParams)>;
+  using RenderFunction =
+      std::function<bool(PipelineHandle self, wgpu::Surface, const DrawCallParams&)>;
 
-  // Render onto surface
-  // - param: `draw_params` is `{vertexCount, instanceCount, firstVertex, firstInstance}`
-  bool render_frame(Surface& surface, const DrawCallParams& draw_params = {3, 1}) {
-    return render_func(this, surface.wgpu_surface, draw_params);
+  // Render onto surface (DrawCallParams{vertexCount, instanceCount, firstVertex, firstInstance})
+  bool render_frame(Surface& surface, const DrawCallParams& params) {
+    return render_func(this, surface.wgpu_surface, params);
+  }
+
+  // Render `vertex_count` vertices onto a surface
+  bool render_frame(Surface& surface, std::integral auto vertex_count) {
+    return render_func(this, surface.wgpu_surface, {static_cast<uint32_t>(vertex_count), 1, 0, 0});
+  }
+
+  // Render `vertex_count` vertices onto a surface `instance_count` times
+  bool render_frame(Surface& surface, std::integral auto vertex_count,
+                    std::integral auto instance_count) {
+    return render_func(
+        this, surface.wgpu_surface,
+        {static_cast<uint32_t>(vertex_count), static_cast<uint32_t>(instance_count), 0, 0});
   }
 
   // Warning! User is responsible to `.release()` the returned render pipeline

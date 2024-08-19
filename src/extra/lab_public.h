@@ -4,6 +4,7 @@
 // STL dependencies ------------------------------
 
 #include <chrono>
+#include <concepts>
 #include <fstream>
 #include <functional>
 #include <iostream>

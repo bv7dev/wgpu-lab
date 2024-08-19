@@ -61,7 +61,7 @@ int main() {
   while (lab::tick()) {
     uniform_buffer.write(uniforms);
 
-    pipeline.render_frame(surface, {(uint32_t)vertex_data.size(), 1});
+    pipeline.render_frame(surface, vertex_data.size(), 1);
 
     uniforms.ratio[0] = window.ratio();
     uniforms.time = lab::elapsed_seconds();
