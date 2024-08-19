@@ -32,7 +32,6 @@ int main() {
   pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1,
                                 lab::vertex_format_size(wgpu::VertexFormat::Float32x2));
 
-  // TODO: WIP ==========================================================================
   pipeline.add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, 0, sizeof(float));
   pipeline.add_bind_group_layout_buffer_entry(0, wgpu::ShaderStage::Vertex,
                                               wgpu::BufferBindingType::Uniform, sizeof(float));
