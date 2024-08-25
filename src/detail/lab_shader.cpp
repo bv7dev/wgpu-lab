@@ -7,6 +7,8 @@
 
 namespace lab {
 
+Shader::Shader(const std::string& lbl) : label{lbl} {}
+
 Shader::Shader(const std::string& lbl, const std::string& path) : label{lbl} {
   std::ifstream file(path);
   if (!file.is_open()) {

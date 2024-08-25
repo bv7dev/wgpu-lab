@@ -8,6 +8,8 @@ namespace lab {
 struct Shader {
   std::string label, source;
 
+  Shader(const std::string& label);
+
   Shader(const std::string& label, const std::string& path);
 
   // Warning! User is responsible to `.release()` the returned shader module
