@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.4...3.28 FATAL_ERROR)
 project(
-  WGPU_LAB
+  wgpu-lab
   VERSION 0.1.0
   LANGUAGES CXX C
 )
@@ -36,19 +36,17 @@ add_library(wgpu-lab
 target_include_directories(wgpu-lab PUBLIC src)
 target_link_libraries(wgpu-lab glfw webgpu glfw3webgpu)
 
-
 # sample executables -------------------------------------------------------------
-file(GLOB SAMPLE_FILES exes/*.cpp)
+file(GLOB SAMPLE_FILES samples/*.cpp)
 set(SAMPLE_TARGETS)
 foreach(SAMPLE_FILE IN LISTS SAMPLE_FILES)
   get_filename_component(SAMPLE_FILENAME ${SAMPLE_FILE} NAME_WE)
   list(APPEND SAMPLE_TARGETS ${SAMPLE_FILENAME})
   add_executable(${SAMPLE_FILENAME}
-    exes/${SAMPLE_FILENAME}.cpp
+    samples/${SAMPLE_FILENAME}.cpp
   )
   target_link_libraries(${SAMPLE_FILENAME} wgpu-lab)
 endforeach(SAMPLE_FILE)
-
 
 # copy shader files to binary dir ----------------------------------------------
 file(GLOB SHADER_FILES shaders/*.wgsl)
@@ -58,19 +56,9 @@ foreach(SHADER_FILE IN LISTS SHADER_FILES)
     ${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER_FILENAME} COPYONLY)
 endforeach(SHADER_FILE)
 
-
-# tutorial ---------------------------------------------------------------------
-add_executable(tutorial
-  tutorial/webgpu-utils.h
-  tutorial/webgpu-utils.cpp
-  tutorial/main.cpp
-)
-target_link_libraries(tutorial glfw webgpu glfw3webgpu)
-
-
 # set properties and compile options for all targets ---------------------------
 set(ALL_TARGETS
-  wgpu-lab tutorial ${SAMPLE_TARGETS}
+  wgpu-lab ${SAMPLE_TARGETS}
 )
 foreach(LAB_TARGET IN LISTS ALL_TARGETS)
   set_target_properties(${LAB_TARGET} PROPERTIES
