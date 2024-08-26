@@ -28,8 +28,8 @@ fn vs_main(in: VertexInput, @builtin(vertex_index) vert_id: u32, @builtin(instan
   var vertex_rotated: vec2f = in.position*mat2x2<f32>(cos_t, -sin_t, sin_t, cos_t);
 
   var out: VertexOutput;
-  out.position = vec4f(in.instance_position+(vertex_rotated*uniforms.scale +
-                       vec2f(cos_t, sin_t)*uniforms.scale*0.5) *
+  out.position = vec4f((in.instance_position+(vertex_rotated*uniforms.scale +
+                       vec2f(cos_t, sin_t)*uniforms.scale*0.5)) *
                        uniforms.ratio, 0.0, 1.0);
 
   // shift some vertices to change per instance texture appearance

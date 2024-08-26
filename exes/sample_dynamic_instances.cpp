@@ -1,12 +1,12 @@
 #include <lab>
 
+struct MyInstance {
+  float x, y;
+};
+
 struct MyVertex {
   float x, y;
   float u, v;
-};
-
-struct MyInstance {
-  float x, y;
 };
 
 struct MyPixel {
@@ -20,8 +20,27 @@ struct MyUniform {
 };
 
 int main() {
-  lab::Window window("Dynamic Instances Demo", 640, 400);
+  // ---------------------------------------------------------------------------
+  // Window and controls -------------------------------------------------------
+  lab::Window window("Dynamic Instances Demo - Use arrow keys to move", 640, 400);
 
+  bool arrow_keys[4] = {};
+  float input_axis_x = 0.f, input_axis_y = 0.f;
+
+  window.set_key_callback([&arrow_keys, &input_axis_x, &input_axis_y](lab::KeyEvent event) {
+    if (event.action != lab::InputType::repeat) {
+      if (event.key >= lab::KeyCode::right && event.key <= lab::KeyCode::up) {
+        bool keydown = event.action == lab::InputType::press;
+        auto i32 = [](auto s) { return static_cast<int>(s); };
+        arrow_keys[i32(event.key) - i32(lab::KeyCode::right)] = keydown;
+        input_axis_x = static_cast<float>(arrow_keys[0] - arrow_keys[1]);
+        input_axis_y = static_cast<float>(arrow_keys[3] - arrow_keys[2]);
+      }
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Webgpu Setup --------------------------------------------------------------
   lab::Webgpu webgpu("My Instance");
   lab::Surface surface(window, webgpu);
 
@@ -30,14 +49,14 @@ int main() {
 
   lab::Texture texture(webgpu, wgpu::TextureFormat::RGBA8Unorm, 256, 256);
 
-  // ---------------------------------------------------------------------------
   // create procedural texture and upload to gpu
   std::vector<MyPixel> pixel_data;
   pixel_data.reserve(texture.width() * texture.height());
 
-  auto u8 = [](float s) { return static_cast<uint8_t>(s); };
-  auto transform = [&u8](int v, float s = 1.f) {
-    return u8(s * (20.f + u8(sinf(static_cast<float>(v) / 255.f * 20.f) + 1.f) * 40.f));
+  auto u8 = [](auto s) { return static_cast<uint8_t>(s); };
+  auto f32 = [](auto s) { return static_cast<float>(s); };
+  auto transform = [&u8, &f32](int v, float s = 1.f) {
+    return u8(s * (20.f + u8(sin(f32(v) / 255.f * 20.f) + 1.f) * 40.f));
   };
 
   for (int y = 0; y < texture.height(); ++y) {
@@ -49,19 +68,19 @@ int main() {
   texture.to_device(pixel_data);
   pipeline.add_texture(texture, 1, wgpu::ShaderStage::Fragment);
 
-  // ---------------------------------------------------------------------------
-  // 3 vertices - equilateral triangle   x    y    u    v
+  // 3 vertices of equilateral triangle  x    y    u    v
   std::vector<MyVertex> vertex_data = {{0.f, 1.f, 0.f, 0.f},
                                        {-sqrtf(3.f) / 2.f, -3.f / 6.f, 0.f, 1.f},
                                        {+sqrtf(3.f) / 2.f, -3.f / 6.f, 1.f, 1.f}};
 
   lab::Buffer<MyVertex> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
-  // 5 (triangle-)model instances             x     y      x     y
+  // 5 triangle instance positions            x     y      x     y
   std::vector<MyInstance> instance_data = {
-      {0.f, 0.f}, {.5f, .5f}, {-.2f, .4f}, {-.7f, -.2f}, {.5f, -.6f},
-  };
-  lab::Buffer<MyInstance> instance_buffer("My instance buffer", instance_data, webgpu);
+      {0.f, 0.f}, {.5f, .5f}, {-.2f, .4f}, {-.7f, -.2f}, {.5f, -.6f}};
+  lab::Buffer<MyInstance> instance_buffer("My instance buffer", instance_data,
+                                          wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst,
+                                          webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer);
   pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0); // pos
@@ -77,17 +96,32 @@ int main() {
 
   pipeline.add_uniform_buffer(uniform_buffer, 0,
                               wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
-
   pipeline.finalize();
 
+  float delta_t = 0.f;
+  float vel_x = 0.f, vel_y = 0.f;
+  float force = .04f, friction = .01f;
+
+  // ---------------------------------------------------------------------------
+  // Main loop -----------------------------------------------------------------
   while (lab::tick(webgpu)) {
-    uniform_buffer.write(uniforms);
+    float t0 = lab::elapsed_seconds();
 
     pipeline.render_frame(surface, vertex_data.size(), instance_data.size());
 
-    uniforms.ratio[0] = window.ratio();
-    uniforms.time = lab::elapsed_seconds();
+    vel_x += input_axis_x * force, vel_y += input_axis_y * force;
+    instance_data[0].x += vel_x * delta_t;
+    instance_data[0].y += vel_y * delta_t;
+    instance_buffer.write(instance_data[0]);
 
-    lab::sleep(20ms);
+    vel_x *= 1.f - friction;
+    vel_y *= 1.f - friction;
+
+    uniform_buffer.write(uniforms);
+    uniforms.ratio[0] = window.ratio();
+
+    float t1 = lab::elapsed_seconds();
+    uniforms.time = t1;
+    delta_t = t1 - t0;
   }
 }
