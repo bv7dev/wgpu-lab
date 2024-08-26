@@ -10,7 +10,7 @@
 #include <objects/lab_texture.h>
 #include <objects/lab_webgpu.h>
 
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 namespace lab {
 
@@ -52,7 +52,7 @@ struct Pipeline {
     finalize_config(shaderModule);
     finalize_bind_group();
     wgpu_pipeline = transfer();
-    shaderModule.release();
+    // shaderModule.release();
   }
 
   struct DrawCallParams {
@@ -131,7 +131,7 @@ struct Pipeline {
   void add_vertex_buffer(wgpu::Buffer wgpu_buffer,
                          wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
                          uint64_t offset = 0) {
-    assert(wgpu_buffer.getUsage() & wgpu::BufferUsage::Vertex);
+    assert(wgpu_buffer.GetUsage() & wgpu::BufferUsage::Vertex);
     vb_configs.push_back({wgpu_buffer, mode, offset});
   }
 
@@ -151,22 +151,22 @@ struct Pipeline {
     } else {
       offset = 0;
     }
-    vb_configs.at(bi).vertexAttributes.push_back({{
+    vb_configs.at(bi).vertexAttributes.push_back({
         .format = format,
         .offset = offset,
         .shaderLocation = shader_location,
-    }});
+    });
   }
 
   template<typename T>
   void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index,
-                          wgpu::ShaderStageFlags visibility) {
+                          wgpu::ShaderStage visibility) {
     add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
     add_bind_group_layout_buffer_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
   }
 
   void add_texture(const Texture& texture, uint32_t binding,
-                   wgpu::ShaderStageFlags visibility = wgpu::ShaderStage::Fragment) {
+                   wgpu::ShaderStage visibility = wgpu::ShaderStage::Fragment) {
     add_bind_group_layout_texture_entry(binding, visibility);
     add_bind_group_texture_entry(texture.create_view(), binding);
   }
@@ -174,10 +174,10 @@ struct Pipeline {
   std::vector<wgpu::BindGroupLayoutEntry> bindGroupLayoutEntries{};
   std::vector<wgpu::BindGroupEntry> bindGroupEntries{};
 
-  void add_bind_group_layout_buffer_entry(uint32_t binding, WGPUShaderStageFlags visibility,
-                                          WGPUBufferBindingType buffer_type,
+  void add_bind_group_layout_buffer_entry(uint32_t binding, wgpu::ShaderStage visibility,
+                                          wgpu::BufferBindingType buffer_type,
                                           uint64_t min_binding_size) {
-    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry = wgpu::Default;
+    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry; // = wgpu::Default;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
 
@@ -189,7 +189,7 @@ struct Pipeline {
 
   void add_bind_group_buffer_entry(wgpu::Buffer wgpu_buffer, uint32_t binding_index, uint64_t size,
                                    uint64_t offset = 0) {
-    wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
+    wgpu::BindGroupEntry bindGroupEntry; // = wgpu::Default;
     bindGroupEntry.buffer = wgpu_buffer;
     bindGroupEntry.binding = binding_index;
 
@@ -199,21 +199,21 @@ struct Pipeline {
     bindGroupEntries.push_back(bindGroupEntry);
   }
 
-  void add_bind_group_layout_texture_entry(uint32_t binding, WGPUShaderStageFlags visibility) {
-    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry = wgpu::Default;
+  void add_bind_group_layout_texture_entry(uint32_t binding, wgpu::ShaderStage visibility) {
+    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry; // = wgpu::Default;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
 
     // TODO: make configurable
     bindGroupLayoutEntry.texture.multisampled = false;
     bindGroupLayoutEntry.texture.sampleType = wgpu::TextureSampleType::Float;
-    bindGroupLayoutEntry.texture.viewDimension = wgpu::TextureViewDimension::_2D;
+    bindGroupLayoutEntry.texture.viewDimension = wgpu::TextureViewDimension::e2D;
 
     bindGroupLayoutEntries.push_back(bindGroupLayoutEntry);
   }
 
   void add_bind_group_texture_entry(wgpu::TextureView texture_view, uint32_t binding_index) {
-    wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
+    wgpu::BindGroupEntry bindGroupEntry; // = wgpu::Default;
     bindGroupEntry.textureView = texture_view;
     bindGroupEntry.binding = binding_index;
 
@@ -221,7 +221,7 @@ struct Pipeline {
   }
 
   std::vector<wgpu::BindGroup> bindGroups{};
-  std::vector<WGPUBindGroupLayout> bindGroupLayouts{};
+  std::vector<wgpu::BindGroupLayout> bindGroupLayouts{};
 
   void finalize_bind_group(const char* group_label = "Default Bind Group") {
     std::string groupLabel{label};
@@ -231,20 +231,22 @@ struct Pipeline {
     std::string layoutLabel{groupLabel};
     layoutLabel.append(" Layout");
 
-    wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc = wgpu::Default;
+    wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc; // = wgpu::Default;
     bindGroupLayoutDesc.entryCount = bindGroupLayoutEntries.size();
     bindGroupLayoutDesc.entries = bindGroupLayoutEntries.data();
     bindGroupLayoutDesc.label = layoutLabel.c_str();
 
-    bindGroupLayouts.push_back(webgpu.device.createBindGroupLayout(bindGroupLayoutDesc));
+    // bindGroupLayouts.push_back(webgpu.device.createBindGroupLayout(bindGroupLayoutDesc));
+    bindGroupLayouts.push_back(webgpu.device.CreateBindGroupLayout(&bindGroupLayoutDesc));
 
-    wgpu::BindGroupDescriptor bindGroupDesc = wgpu::Default;
+    wgpu::BindGroupDescriptor bindGroupDesc; // = wgpu::Default;
     bindGroupDesc.layout = bindGroupLayouts.back();
     bindGroupDesc.entryCount = bindGroupEntries.size();
     bindGroupDesc.entries = bindGroupEntries.data();
     bindGroupDesc.label = groupLabel.c_str();
 
-    bindGroups.push_back(webgpu.device.createBindGroup(bindGroupDesc));
+    // bindGroups.push_back(webgpu.device.createBindGroup(bindGroupDesc));
+    bindGroups.push_back(webgpu.device.CreateBindGroup(&bindGroupDesc));
 
     bindGroupLayoutEntries.clear();
     bindGroupEntries.clear();

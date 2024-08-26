@@ -54,22 +54,23 @@ uint64_t vertex_attributes_stride(const std::vector<wgpu::VertexAttribute>& vert
 
 wgpu::TextureView get_current_render_texture_view(wgpu::Surface surface) {
   wgpu::SurfaceTexture surfaceTexture;
-  surface.getCurrentTexture(&surfaceTexture);
-  if (surfaceTexture.status != WGPUSurfaceGetCurrentTextureStatus_Success) {
+  surface.GetCurrentTexture(&surfaceTexture);
+  if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::Success) {
     std::cerr << "Error: Pipeline: Could not get current render texture" << std::endl;
     return nullptr;
   }
-  WGPUTextureViewDescriptor viewDescriptor{
+  wgpu::TextureViewDescriptor viewDescriptor{
       .label = "lab default texture view",
-      .format = wgpuTextureGetFormat(surfaceTexture.texture),
-      .dimension = WGPUTextureViewDimension_2D,
+      .format = surfaceTexture.texture.GetFormat(),
+      .dimension = wgpu::TextureViewDimension::e2D,
       .baseMipLevel = 0,
       .mipLevelCount = 1,
       .baseArrayLayer = 0,
       .arrayLayerCount = 1,
-      .aspect = WGPUTextureAspect_All,
+      .aspect = wgpu::TextureAspect::All,
   };
-  return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+  // return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
+  return surfaceTexture.texture.CreateView(&viewDescriptor);
 }
 
 void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
@@ -78,12 +79,12 @@ void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
   }
 
   for (int i = 0; i < vb_configs.size(); ++i) {
-    vb_layouts.push_back({{
+    vb_layouts.push_back({
         .arrayStride = vertex_attributes_stride(vb_configs[i].vertexAttributes),
         .stepMode = vb_configs[i].mode,
         .attributeCount = vb_configs[i].vertexAttributes.size(),
         .attributes = vb_configs[i].vertexAttributes.data(),
-    }});
+    });
   }
   config.vertexState.bufferCount = vb_layouts.size();
   config.vertexState.buffers = vb_layouts.data();
@@ -108,24 +109,24 @@ wgpu::RenderPipeline Pipeline::transfer() const {
     layoutDesc.bindGroupLayoutCount = bindGroupLayouts.size();
     layoutDesc.bindGroupLayouts = bindGroupLayouts.data();
 
-    pipelineLayout = webgpu.device.createPipelineLayout(layoutDesc);
+    pipelineLayout = webgpu.device.CreatePipelineLayout(&layoutDesc);
   }
 
-  wgpu::RenderPipelineDescriptor pipelineDesc = {{
+  wgpu::RenderPipelineDescriptor pipelineDesc = {
       .label = label.c_str(),
       .layout = pipelineLayout,
       .vertex = config.vertexState,
       .primitive = config.primitiveState,
       .multisample = config.multisampleState,
       .fragment = &config.fragmentState,
-  }};
+  };
 
-  return webgpu.device.createRenderPipeline(pipelineDesc);
+  return webgpu.device.CreateRenderPipeline(&pipelineDesc);
 }
 
 void Pipeline::reset() {
   if (wgpu_pipeline) {
-    wgpu_pipeline.release();
+    // wgpu_pipeline.release();
     wgpu_pipeline = nullptr;
   }
 }
@@ -138,43 +139,43 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
 
   wgpu::TextureView targetView = get_current_render_texture_view(surface);
 
-  wgpu::CommandEncoderDescriptor encoderDesc = {{.label = "lab default command encoder"}};
-  wgpu::CommandEncoder encoder = self->webgpu.device.createCommandEncoder(encoderDesc);
+  wgpu::CommandEncoderDescriptor encoderDesc = {.label = "lab default command encoder"};
+  wgpu::CommandEncoder encoder = self->webgpu.device.CreateCommandEncoder(&encoderDesc);
 
   self->render_config.renderPassColorAttachment.view = targetView;
   self->render_config.renderPassDesc.colorAttachmentCount = 1;
   self->render_config.renderPassDesc.colorAttachments =
       &self->render_config.renderPassColorAttachment;
 
-  wgpu::RenderPassEncoder renderPass = encoder.beginRenderPass(self->render_config.renderPassDesc);
-  renderPass.setPipeline(self->wgpu_pipeline);
+  wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&self->render_config.renderPassDesc);
+  renderPass.SetPipeline(self->wgpu_pipeline);
 
   for (uint32_t i = 0; i < self->vb_configs.size(); ++i) {
-    renderPass.setVertexBuffer(i, self->vb_configs[i].buffer, self->vb_configs[i].offset,
-                               self->vb_configs[i].buffer.getSize());
+    renderPass.SetVertexBuffer(i, self->vb_configs[i].buffer, self->vb_configs[i].offset,
+                               self->vb_configs[i].buffer.GetSize());
   }
 
   for (uint32_t i = 0; i < self->bindGroups.size(); ++i) {
     // TODO: think about how to make use of dynamic offset
     // useful for multiple drawcalls with different uniform data
-    renderPass.setBindGroup(i, self->bindGroups[i], 0, nullptr);
+    renderPass.SetBindGroup(i, self->bindGroups[i], 0, nullptr);
   }
 
-  renderPass.draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
+  renderPass.Draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
                   draw_params.firstInstance);
 
-  renderPass.end();
-  renderPass.release();
+  renderPass.End();
+  // renderPass.Release();
 
-  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {{.label = "lab default command buffer"}};
-  wgpu::CommandBuffer commands = encoder.finish(cmdBufferDescriptor);
-  encoder.release();
+  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {.label = "lab default command buffer"};
+  wgpu::CommandBuffer commands = encoder.Finish(&cmdBufferDescriptor);
+  // encoder.release();
 
-  self->webgpu.queue.submit(commands);
-  commands.release();
+  self->webgpu.queue.Submit(1, &commands);
+  // commands.release();
 
-  targetView.release();
-  surface.present();
+  // targetView.release();
+  surface.Present();
 
   return true;
 };

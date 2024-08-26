@@ -1,5 +1,4 @@
-#define WEBGPU_CPP_IMPLEMENTATION
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 #include <extra/lab_state.h>
 #include <lab>
@@ -47,7 +46,7 @@ bool tick() {
 // todo: figure out what device.tick() actually does,
 //       and when it should be called.
 bool tick(Webgpu& webgpu) {
-  webgpu.device.tick();
+  // webgpu.device.tick();
   return tick();
 }
 

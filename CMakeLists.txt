@@ -1,13 +1,12 @@
-cmake_minimum_required(VERSION 3.4...3.28 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13)
 project(
   wgpu-lab
   VERSION 0.1.0
   LANGUAGES CXX C
 )
-add_subdirectory(libs/glfw-3.4)
-add_subdirectory(libs/webgpu-dawn)
-add_subdirectory(libs/glfw3webgpu)
 
+set(DAWN_FETCH_DEPENDENCIES ON)
+add_subdirectory(libs/dawn)
 
 # wgpu-lab library -------------------------------------------------------------
 add_library(wgpu-lab
@@ -34,7 +33,7 @@ add_library(wgpu-lab
   src/lab
 )
 target_include_directories(wgpu-lab PUBLIC src)
-target_link_libraries(wgpu-lab glfw webgpu glfw3webgpu)
+target_link_libraries(wgpu-lab dawn::webgpu_dawn dawn::dawn_glfw glfw)
 
 # sample executables -------------------------------------------------------------
 file(GLOB SAMPLE_FILES samples/*.cpp)

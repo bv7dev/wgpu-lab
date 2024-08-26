@@ -1,9 +1,9 @@
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 namespace lab::pipeline_defaults {
 
 struct InitConfig {
-  wgpu::BlendState blendState = {{
+  wgpu::BlendState blendState = {
       .color =
           {
               .operation = wgpu::BlendOperation::Add,
@@ -16,45 +16,45 @@ struct InitConfig {
               .srcFactor = wgpu::BlendFactor::Zero,
               .dstFactor = wgpu::BlendFactor::One,
           },
-  }};
+  };
 
-  wgpu::ColorTargetState colorTarget = {{
+  wgpu::ColorTargetState colorTarget = {
       .writeMask = wgpu::ColorWriteMask::All,
-  }};
+  };
 
-  wgpu::FragmentState fragmentState = {{
+  wgpu::FragmentState fragmentState = {
       .entryPoint = "fs_main",
-  }};
+  };
 
-  wgpu::VertexState vertexState = {{
+  wgpu::VertexState vertexState = {
       .entryPoint = "vs_main",
-  }};
+  };
 
-  wgpu::PrimitiveState primitiveState = {{
+  wgpu::PrimitiveState primitiveState = {
       .topology = wgpu::PrimitiveTopology::TriangleList,
       .stripIndexFormat = wgpu::IndexFormat::Undefined,
       .frontFace = wgpu::FrontFace::CCW,
       .cullMode = wgpu::CullMode::None,
-  }};
+  };
 
-  wgpu::MultisampleState multisampleState = {{
+  wgpu::MultisampleState multisampleState = {
       .count = 1,
       .mask = ~0u,
-  }};
+  };
 };
 
 struct RenderConfig {
-  wgpu::RenderPassColorAttachment renderPassColorAttachment = {{
+  wgpu::RenderPassColorAttachment renderPassColorAttachment = {
       .depthSlice = WGPU_DEPTH_SLICE_UNDEFINED,
       .loadOp = wgpu::LoadOp::Clear,
       .storeOp = wgpu::StoreOp::Store,
-      .clearValue = WGPUColor{0.08, 0.08, 0.085, 1.0},
-  }};
+      .clearValue = wgpu::Color{0.08, 0.08, 0.085, 1.0},
+  };
 
-  wgpu::RenderPassDescriptor renderPassDesc = {{
+  wgpu::RenderPassDescriptor renderPassDesc = {
       .label = "Default Render Pass",
       .colorAttachmentCount = 1,
-  }};
+  };
 };
 
 } // namespace lab::pipeline_defaults

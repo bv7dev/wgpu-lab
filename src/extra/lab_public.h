@@ -21,7 +21,7 @@ using namespace std::chrono_literals;
 #endif
 
 // Dawn dependencies
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 // Lab objects and enums -------------------------
 

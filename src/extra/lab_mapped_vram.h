@@ -1,7 +1,7 @@
 #ifndef WGPU_LAB_MAPPED_VRAM
 #define WGPU_LAB_MAPPED_VRAM
 
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 #include <ranges>
 
@@ -76,7 +76,7 @@ struct MappedVRAM {
   bool is_mapped() { return buffer != nullptr; }
   void unmap() const {
     if (buffer) {
-      buffer.unmap();
+      buffer.Unmap();
       buffer = nullptr;
       view_size = 0;
       view = {};

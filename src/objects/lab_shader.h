@@ -1,7 +1,7 @@
 #ifndef WGPU_LAB_SHADER_H
 #define WGPU_LAB_SHADER_H
 
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 namespace lab {
 

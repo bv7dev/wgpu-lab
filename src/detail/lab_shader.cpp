@@ -21,14 +21,13 @@ Shader::Shader(const std::string& lbl, const std::string& path) : label{lbl} {
 }
 
 wgpu::ShaderModule Shader::transfer(wgpu::Device device) const {
-  wgpu::ShaderModuleWGSLDescriptor wgslDesc = {{
-      .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
-      .code = source.c_str(),
-  }};
+  wgpu::ShaderModuleWGSLDescriptor wgslDesc;
+  wgslDesc.sType = wgpu::SType::ShaderModuleWGSLDescriptor;
+  wgslDesc.code = source.c_str();
   wgpu::ShaderModuleDescriptor shaderDesc;
-  shaderDesc.nextInChain = &wgslDesc.chain;
+  shaderDesc.nextInChain = &wgslDesc;
   shaderDesc.label = "My shader module";
-  return device.createShaderModule(shaderDesc);
+  return device.CreateShaderModule(&shaderDesc);
 }
 
 } // namespace lab
