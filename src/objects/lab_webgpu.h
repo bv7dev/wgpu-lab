@@ -16,6 +16,7 @@ struct Webgpu {
   wgpu::SurfaceCapabilities capabilities;
 
   wgpu::Instance instance = nullptr;
+  wgpu::Adapter adapter = nullptr;
   wgpu::Device device = nullptr;
   wgpu::Queue queue = nullptr;
 
