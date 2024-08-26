@@ -104,9 +104,8 @@ int main() {
 
   // ---------------------------------------------------------------------------
   // Main loop -----------------------------------------------------------------
+  float t0 = lab::elapsed_seconds();
   while (lab::tick(webgpu)) {
-    float t0 = lab::elapsed_seconds();
-
     pipeline.render_frame(surface, vertex_data.size(), instance_data.size());
 
     vel_x += input_axis_x * force, vel_y += input_axis_y * force;
@@ -123,5 +122,6 @@ int main() {
     float t1 = lab::elapsed_seconds();
     uniforms.time = t1;
     delta_t = t1 - t0;
+    t0 = t1;
   }
 }
