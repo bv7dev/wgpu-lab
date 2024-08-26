@@ -45,7 +45,9 @@ Webgpu::Webgpu(const char* label) : label{label} {
       &adapterOpts,
       [](WGPURequestAdapterStatus status, WGPUAdapter adapter, char const* message,
          void* userdata) {
-        std::cout << "Request Adapter Cb: " << message << std::endl;
+        if (message) {
+          std::cout << "Request Adapter Cb: " << message << std::endl;
+        }
         *(WGPUAdapter*)userdata = adapter;
       },
       &adapter);
@@ -79,7 +81,9 @@ Webgpu::Webgpu(const char* label) : label{label} {
   adapter.RequestDevice(
       &deviceDesc,
       [](WGPURequestDeviceStatus status, WGPUDevice device, char const* message, void* userdata) {
-        std::cout << "WGPU: Request Device Callback: " << message << std::endl;
+        if (message) {
+          std::cout << "WGPU: Request Device Callback: " << message << std::endl;
+        }
         *(WGPUDevice*)userdata = device;
       },
       &device);
