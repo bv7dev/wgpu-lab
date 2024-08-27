@@ -45,10 +45,11 @@ Webgpu::Webgpu(const char* label) : label{label} {
         [](wgpu::RequestAdapterStatus status, wgpu::Adapter adapter, const char* message,
            wgpu::Adapter* userdata) {
           if (status == wgpu::RequestAdapterStatus::Success) {
-            std::cout << "Info: WGPU: Successfully got adapter!";
+            std::cout << "Info: WGPU: Successfully got adapter!" << std::endl;
           } else {
             std::cerr << "Error: WGPU: Failed to get adapter: ";
-            if (message) std::cerr << message << std::endl;
+            if (message) std::cerr << message;
+            std::cerr << std::endl;
           }
           *userdata = std::move(adapter);
         },
@@ -84,7 +85,6 @@ Webgpu::Webgpu(const char* label) : label{label} {
         &device);
     instance.WaitAny(future, UINT64_MAX);
   }
-
   device.SetUncapturedErrorCallback(onDeviceError, nullptr);
 
   surface.GetCapabilities(adapter, &capabilities);
