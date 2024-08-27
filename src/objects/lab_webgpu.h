@@ -13,7 +13,7 @@ struct Webgpu {
 
   ~Webgpu();
 
-  wgpu::SurfaceCapabilities capabilities;
+  wgpu::SurfaceCapabilities capabilities{};
 
   wgpu::Instance instance = nullptr;
   wgpu::Adapter adapter = nullptr;
