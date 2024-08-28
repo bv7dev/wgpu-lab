@@ -80,7 +80,7 @@ int main() {
       {0.f, 1.f, 0.f, 0.f}, {-sqrtf(3.f) / 2.f, -3.f / 6.f, 0.f, 1.f}, {+sqrtf(3.f) / 2.f, -3.f / 6.f, 1.f, 1.f}};
   lab::Buffer<MyVertexFormat> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
-  // triangle instance positions               x    y      x    y
+  // triangle instance positions                x    y      x    y
   std::vector<MyInstancePos> instance_data = {{0.f, 0.f}, {.5f, .5f}, {-.2f, .4f}, {-.7f, -.2f}, {.5f, -.6f}};
   lab::Buffer<MyInstancePos> instance_buffer("My instance buffer", instance_data,
                                              wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst, webgpu);
