@@ -24,7 +24,6 @@ Webgpu::Webgpu(const char* label) : label{label} {
   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
   auto window = glfwCreateWindow(64, 64, "", nullptr, nullptr);
-
   wgpu::Surface surface = wgpu::glfw::CreateSurfaceForWindow(instance, window);
 
   wgpu::InstanceDescriptor instanceDesc{.features{.timedWaitAnyEnable{true}}};
@@ -39,23 +38,21 @@ Webgpu::Webgpu(const char* label) : label{label} {
       .powerPreference = wgpu::PowerPreference::HighPerformance,
   };
 
-  {
-    wgpu::Future future = instance.RequestAdapter(
-        &adapterOpts, wgpu::CallbackMode::WaitAnyOnly,
-        [](wgpu::RequestAdapterStatus status, wgpu::Adapter adapter, const char* message,
-           wgpu::Adapter* userdata) {
-          if (status == wgpu::RequestAdapterStatus::Success) {
-            std::cout << "Info: WGPU: Successfully got adapter!" << std::endl;
-          } else {
-            std::cerr << "Error: WGPU: Failed to get adapter: ";
-            if (message) std::cerr << message;
-            std::cerr << std::endl;
-          }
-          *userdata = std::move(adapter);
-        },
-        &adapter);
-    instance.WaitAny(future, UINT64_MAX);
-  }
+  wgpu::Future future = instance.RequestAdapter(
+      &adapterOpts, wgpu::CallbackMode::WaitAnyOnly,
+      [](wgpu::RequestAdapterStatus status, wgpu::Adapter adapter, const char* message,
+         wgpu::Adapter* userdata) {
+        if (status == wgpu::RequestAdapterStatus::Success) {
+          std::cout << "Info: WGPU: Successfully got adapter!" << std::endl;
+        } else {
+          std::cerr << "Error: WGPU: Failed to get adapter: ";
+          if (message) std::cerr << message;
+          std::cerr << std::endl;
+        }
+        *userdata = std::move(adapter);
+      },
+      &adapter);
+  instance.WaitAny(future, UINT64_MAX);
 
   wgpu::DeviceDescriptor deviceDesc;
   deviceDesc.label = "lab default device";
@@ -68,23 +65,22 @@ Webgpu::Webgpu(const char* label) : label{label} {
         std::cout << std::endl;
       };
 
-  {
-    wgpu::Future future = adapter.RequestDevice(
-        &deviceDesc, wgpu::CallbackMode::WaitAnyOnly,
-        [](wgpu::RequestDeviceStatus status, wgpu::Device device, char const* message,
-           wgpu::Device* userdata) {
-          if (status == wgpu::RequestDeviceStatus::Success) {
-            std::cout << "Info: WGPU: Successfully got device!" << std::endl;
-          } else {
-            std::cerr << "Error: WGPU: Failed to get device: ";
-            if (message) std::cerr << message;
-            std::cerr << std::endl;
-          }
-          *userdata = std::move(device);
-        },
-        &device);
-    instance.WaitAny(future, UINT64_MAX);
-  }
+  future = adapter.RequestDevice(
+      &deviceDesc, wgpu::CallbackMode::WaitAnyOnly,
+      [](wgpu::RequestDeviceStatus status, wgpu::Device device, char const* message,
+         wgpu::Device* userdata) {
+        if (status == wgpu::RequestDeviceStatus::Success) {
+          std::cout << "Info: WGPU: Successfully got device!" << std::endl;
+        } else {
+          std::cerr << "Error: WGPU: Failed to get device: ";
+          if (message) std::cerr << message;
+          std::cerr << std::endl;
+        }
+        *userdata = std::move(device);
+      },
+      &device);
+  instance.WaitAny(future, UINT64_MAX);
+
   device.SetUncapturedErrorCallback(onDeviceError, nullptr);
 
   surface.GetCapabilities(adapter, &capabilities);

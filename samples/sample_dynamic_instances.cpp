@@ -30,9 +30,8 @@ int main() {
   window.set_key_callback([&arrow_keys, &input_axis_x, &input_axis_y](lab::KeyEvent event) {
     if (event.action != lab::InputType::repeat) {
       if (event.key >= lab::KeyCode::right && event.key <= lab::KeyCode::up) {
-        bool keydown = event.action == lab::InputType::press;
-        auto i32 = [](auto s) { return static_cast<int>(s); };
-        arrow_keys[i32(event.key) - i32(lab::KeyCode::right)] = keydown;
+        const bool keydown = event.action == lab::InputType::press;
+        arrow_keys[static_cast<uint32_t>(event.key) - static_cast<uint32_t>(lab::KeyCode::right)] = keydown;
         input_axis_x = static_cast<float>(arrow_keys[0] - arrow_keys[1]);
         input_axis_y = static_cast<float>(arrow_keys[3] - arrow_keys[2]);
       }
@@ -68,19 +67,16 @@ int main() {
   texture.to_device(pixel_data);
   pipeline.add_texture(texture, 1, wgpu::ShaderStage::Fragment);
 
-  // 3 vertices of equilateral triangle  x    y    u    v
-  std::vector<MyVertex> vertex_data = {{0.f, 1.f, 0.f, 0.f},
-                                       {-sqrtf(3.f) / 2.f, -3.f / 6.f, 0.f, 1.f},
-                                       {+sqrtf(3.f) / 2.f, -3.f / 6.f, 1.f, 1.f}};
+  // 3 vertices of equilateral triangle     x        y       u    v
+  std::vector<MyVertex> vertex_data = {
+      {0.f, 1.f, 0.f, 0.f}, {-sqrtf(3.f) / 2.f, -3.f / 6.f, 0.f, 1.f}, {+sqrtf(3.f) / 2.f, -3.f / 6.f, 1.f, 1.f}};
 
   lab::Buffer<MyVertex> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
-  // 5 triangle instance positions            x     y      x     y
-  std::vector<MyInstance> instance_data = {
-      {0.f, 0.f}, {.5f, .5f}, {-.2f, .4f}, {-.7f, -.2f}, {.5f, -.6f}};
+  // 5 triangle instance positions           x    y      x    y
+  std::vector<MyInstance> instance_data = {{0.f, 0.f}, {.5f, .5f}, {-.2f, .4f}, {-.7f, -.2f}, {.5f, -.6f}};
   lab::Buffer<MyInstance> instance_buffer("My instance buffer", instance_data,
-                                          wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst,
-                                          webgpu);
+                                          wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst, webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer);
   pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0); // pos
@@ -91,11 +87,9 @@ int main() {
 
   MyUniform uniforms{.ratio = {window.ratio(), 1.0f}, .time = 0.0f, .scale = 0.2f};
   lab::Buffer<MyUniform> uniform_buffer("My uniform buffer", {uniforms},
-                                        wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst,
-                                        webgpu);
+                                        wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
-  pipeline.add_uniform_buffer(uniform_buffer, 0,
-                              wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
+  pipeline.add_uniform_buffer(uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
   pipeline.finalize();
 
   float delta_t = 0.f;
