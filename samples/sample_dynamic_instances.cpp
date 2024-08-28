@@ -121,6 +121,7 @@ int main() {
 
     uniforms.ratio[0] = window.ratio();
     uniform_buffer.write(uniforms);
+
     uniforms.time = lab::elapsed_seconds();
     delta_t = uniforms.time - t0;
     t0 = uniforms.time;
