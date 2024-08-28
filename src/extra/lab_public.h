@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cmath>
 #include <concepts>
+#include <cstdint>
 #include <fstream>
 #include <functional>
 #include <iostream>

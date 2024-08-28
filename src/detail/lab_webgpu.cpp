@@ -40,8 +40,7 @@ Webgpu::Webgpu(const char* label) : label{label} {
 
   wgpu::Future future = instance.RequestAdapter(
       &adapterOpts, wgpu::CallbackMode::WaitAnyOnly,
-      [](wgpu::RequestAdapterStatus status, wgpu::Adapter adapter, const char* message,
-         wgpu::Adapter* userdata) {
+      [](wgpu::RequestAdapterStatus status, wgpu::Adapter adapter, const char* message, wgpu::Adapter* userdata) {
         if (status == wgpu::RequestAdapterStatus::Success) {
           std::cout << "Info: WGPU: Successfully got adapter!" << std::endl;
         } else {
@@ -58,17 +57,21 @@ Webgpu::Webgpu(const char* label) : label{label} {
   deviceDesc.label = "lab default device";
   deviceDesc.defaultQueue.label = "lab default queue";
   deviceDesc.deviceLostCallbackInfo.mode = wgpu::CallbackMode::AllowSpontaneous;
-  deviceDesc.deviceLostCallbackInfo.callback =
-      [](const WGPUDevice* device, WGPUDeviceLostReason reason, char const* message, void*) {
-        std::cout << "Info: WGPU: Device " << device << " lost: reason " << reason;
-        if (message) std::cout << " (" << message << ")";
-        std::cout << std::endl;
-      };
+  deviceDesc.deviceLostCallbackInfo.callback = [](const WGPUDevice* device, WGPUDeviceLostReason reason,
+                                                  char const* message, void*) {
+    std::cout << "Info: WGPU: Device " << device << " lost: reason " << reason;
+    if (message) std::cout << " (" << message << ")";
+    std::cout << std::endl;
+  };
+  deviceDesc.uncapturedErrorCallbackInfo.callback = [](WGPUErrorType type, char const* message, void* instance) {
+    std::cerr << "Error: WGPU(" << instance << "): " << type;
+    if (message) std::cerr << " (" << message << ")";
+    std::cerr << std::endl;
+  };
 
   future = adapter.RequestDevice(
       &deviceDesc, wgpu::CallbackMode::WaitAnyOnly,
-      [](wgpu::RequestDeviceStatus status, wgpu::Device device, char const* message,
-         wgpu::Device* userdata) {
+      [](wgpu::RequestDeviceStatus status, wgpu::Device device, char const* message, wgpu::Device* userdata) {
         if (status == wgpu::RequestDeviceStatus::Success) {
           std::cout << "Info: WGPU: Successfully got device!" << std::endl;
         } else {
@@ -81,7 +84,7 @@ Webgpu::Webgpu(const char* label) : label{label} {
       &device);
   instance.WaitAny(future, UINT64_MAX);
 
-  device.SetUncapturedErrorCallback(onDeviceError, nullptr);
+  // device.SetUncapturedErrorCallback(onDeviceError, nullptr);
 
   surface.GetCapabilities(adapter, &capabilities);
   glfwDestroyWindow(window);

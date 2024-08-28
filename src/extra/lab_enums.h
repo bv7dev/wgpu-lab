@@ -11,7 +11,7 @@
 
 namespace lab {
 
-enum class InputType {
+enum class KeyAction {
   none = ~0,
   release = 0,
   press = 1,

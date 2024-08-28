@@ -21,25 +21,22 @@ Window::Window(const char* title, int width, int height) {
     std::cerr << "Error: GLFW: Failed to create Window!" << std::endl;
     return;
   }
-  std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(handle) << " - " << handle
-            << ") created!" << std::endl;
+  std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(handle) << " - " << handle << ") created!" << std::endl;
   state.window_map[handle] = this;
 }
 
 void Window::set_key_callback(KeyCallback kcb) {
   user_key_callback = kcb;
   glfwSetKeyCallback(handle, [](GLFWwindow* wnd, int key, int scancode, int action, int mod) {
-    state.window_map[wnd]->user_key_callback({static_cast<KeyCode>(key),
-                                              static_cast<InputType>(action),
-                                              static_cast<ModKey>(mod), scancode});
+    state.window_map[wnd]->user_key_callback(
+        {static_cast<KeyCode>(key), static_cast<KeyAction>(action), static_cast<ModKey>(mod), scancode});
   });
 }
 
 void Window::set_resize_callback(std::function<void(int width, int height)> rcb) {
   user_resize_callback = rcb;
-  glfwSetWindowSizeCallback(handle, [](GLFWwindow* wnd, int w, int h) {
-    state.window_map[wnd]->user_resize_callback(w, h);
-  });
+  glfwSetWindowSizeCallback(handle,
+                            [](GLFWwindow* wnd, int w, int h) { state.window_map[wnd]->user_resize_callback(w, h); });
 }
 
 void Window::clear_key_callback() {
@@ -72,8 +69,7 @@ bool Window::is_open() const { return handle != nullptr; }
 
 void Window::close() {
   if (handle) {
-    std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(handle) << " - " << handle
-              << ") destroyed!" << std::endl;
+    std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(handle) << " - " << handle << ") destroyed!" << std::endl;
     glfwDestroyWindow(handle);
     state.window_map.erase(handle);
     handle = nullptr;
