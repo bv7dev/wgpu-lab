@@ -21,27 +21,27 @@ int main() {
     float time, scale;
   };
 
-  struct MyInputMap {
+  struct MyInputState {
     bool arrows[4];
     glm::vec2 axis;
-    void update(lab::KeyCode key, bool state) {
+    uint32_t current_instance;
+    void update_axis(lab::KeyCode key, bool state) {
       arrows[static_cast<int>(key) - 262u] = state;
       axis.x = static_cast<float>(arrows[0] - arrows[1]);
       axis.y = static_cast<float>(arrows[3] - arrows[2]);
     }
-  } input{};
+  };
 
   // ---------------------------------------------------------------------------
   // Window and controls -------------------------------------------------------
+  MyInputState input{};
   lab::Window window("Press arrow keys to move and space to cycle through", 640, 400);
-
-  int current_instance_index = 0;
-  window.set_key_callback([&window, &input, &current_instance_index](lab::KeyEvent event) {
+  window.set_key_callback([&window, &input](lab::KeyEvent event) {
     if (event.action != lab::KeyAction::repeat) {
       if (event.key >= lab::KeyCode::right && event.key <= lab::KeyCode::up) {
-        input.update(event.key, event.action == lab::KeyAction::press);
+        input.update_axis(event.key, event.action == lab::KeyAction::press);
       } else if (event.key == lab::KeyCode::space && event.action == lab::KeyAction::release) {
-        ++current_instance_index;
+        ++input.current_instance;
       } else if (event.key == lab::KeyCode::escape) {
         window.close();
       }
@@ -101,8 +101,8 @@ int main() {
 
   // ---------------------------------------------------------------------------
   // Main loop -----------------------------------------------------------------
-  const float force = .04f, friction = .01f;
-  glm::vec2 velocity{0.f, 0.f};
+  const float force = 4.f, friction = 1.f;
+  glm::vec2 velocity = {0.f, 0.f};
   float deltatime = 0.f;
 
   float t0 = lab::elapsed_seconds();
@@ -111,13 +111,12 @@ int main() {
   while (lab::tick()) {
     pipeline.render_frame(surface, vertex_data.size(), instance_data.size());
 
-    velocity = velocity * (1.f - friction) + input.axis * force;
-
-    int i = current_instance_index % instance_data.size();
+    const int i = input.current_instance % instance_data.size();
+    velocity = velocity * (1.f - friction * deltatime) + input.axis * force * deltatime;
     instance_data[i].pos += velocity * deltatime;
     instance_buffer.write(instance_data[i], i);
 
-    uniforms.ratio[0] = window.ratio();
+    uniforms.ratio = {window.ratio(), 1.f};
     uniform_buffer.write(uniforms);
 
     uniforms.time = lab::elapsed_seconds();
