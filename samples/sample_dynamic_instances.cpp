@@ -1,13 +1,15 @@
 #include <lab>
 
+#include <glm/glm.hpp>
+
 int main() {
   struct MyInstancePos {
-    float x, y;
+    glm::vec2 pos;
   };
 
   struct MyVertexFormat {
-    float x, y;
-    float u, v;
+    glm::vec2 pos;
+    glm::vec2 uv;
   };
 
   struct MyPixelFormat {
@@ -15,18 +17,17 @@ int main() {
   };
 
   struct MyUniformData {
-    float ratio[2];
-    float time;
-    float scale;
+    glm::vec2 ratio;
+    float time, scale;
   };
 
   struct MyInputMap {
     bool arrows[4];
-    float axis_x, axis_y;
+    glm::vec2 axis;
     void update(lab::KeyCode key, bool state) {
       arrows[static_cast<int>(key) - 262u] = state;
-      axis_x = static_cast<float>(arrows[0] - arrows[1]);
-      axis_y = static_cast<float>(arrows[3] - arrows[2]);
+      axis.x = static_cast<float>(arrows[0] - arrows[1]);
+      axis.y = static_cast<float>(arrows[3] - arrows[2]);
     }
   } input{};
 
@@ -74,13 +75,13 @@ int main() {
   pipeline.add_texture(texture, 1, wgpu::ShaderStage::Fragment);
 
   // create vertex buffer with 3 vertices which form an equilateral triangle
-  //    x    y    u    v                 x           y       u    v
-  std::vector<MyVertexFormat> vertex_data = {
-      {0.f, 1.f, 0.f, 0.f}, {-sqrtf(3.f) / 2.f, -3.f / 6.f, 0.f, 1.f}, {+sqrtf(3.f) / 2.f, -3.f / 6.f, 1.f, 1.f}};
+  std::vector<MyVertexFormat> vertex_data = {{.pos{0.f, 1.f}, .uv{0.f, 0.f}},
+                                             {.pos{-sqrtf(3.f) / 2.f, -3.f / 6.f}, .uv{0.f, 1.f}},
+                                             {.pos{+sqrtf(3.f) / 2.f, -3.f / 6.f}, .uv{1.f, 1.f}}};
   lab::Buffer<MyVertexFormat> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
-  // triangle instance positions                x    y      x    y
-  std::vector<MyInstancePos> instance_data = {{0.f, 0.f}, {.5f, .5f}, {-.2f, .4f}, {-.7f, -.2f}, {.5f, -.6f}};
+  // positions of triangle instances
+  std::vector<MyInstancePos> instance_data = {{{0.f, 0.f}}, {{.5f, .5f}}, {{-.2f, .4f}}, {{-.7f, -.2f}}, {{.5f, -.6f}}};
   lab::Buffer<MyInstancePos> instance_buffer("My instance buffer", instance_data,
                                              wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst, webgpu);
 
@@ -101,7 +102,8 @@ int main() {
   // ---------------------------------------------------------------------------
   // Main loop -----------------------------------------------------------------
   const float force = .04f, friction = .01f;
-  float velocity_x = 0.f, velocity_y = 0.f, delta_t = 0.f;
+  glm::vec2 velocity{0.f, 0.f};
+  float deltatime = 0.f;
 
   float t0 = lab::elapsed_seconds();
   uniforms.time = t0;
@@ -109,21 +111,17 @@ int main() {
   while (lab::tick()) {
     pipeline.render_frame(surface, vertex_data.size(), instance_data.size());
 
-    velocity_x *= 1.f - friction;
-    velocity_y *= 1.f - friction;
-    velocity_x += input.axis_x * force;
-    velocity_y += input.axis_y * force;
+    velocity = velocity * (1.f - friction) + input.axis * force;
 
     int i = current_instance_index % instance_data.size();
-    instance_data[i].x += velocity_x * delta_t;
-    instance_data[i].y += velocity_y * delta_t;
+    instance_data[i].pos += velocity * deltatime;
     instance_buffer.write(instance_data[i], i);
 
     uniforms.ratio[0] = window.ratio();
     uniform_buffer.write(uniforms);
 
     uniforms.time = lab::elapsed_seconds();
-    delta_t = uniforms.time - t0;
+    deltatime = uniforms.time - t0;
     t0 = uniforms.time;
   }
 }

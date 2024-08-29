@@ -8,6 +8,9 @@ project(
 set(DAWN_FETCH_DEPENDENCIES ON)
 add_subdirectory(libs/dawn)
 
+set(GLM_ENABLE_CXX_20 ON)
+add_subdirectory(libs/glm)
+
 # wgpu-lab library -------------------------------------------------------------
 add_library(wgpu-lab
   src/detail/lab_pipeline.cpp
@@ -44,7 +47,7 @@ foreach(SAMPLE_FILE IN LISTS SAMPLE_FILES)
   add_executable(${SAMPLE_FILENAME}
     samples/${SAMPLE_FILENAME}.cpp
   )
-  target_link_libraries(${SAMPLE_FILENAME} wgpu-lab)
+  target_link_libraries(${SAMPLE_FILENAME} wgpu-lab glm::glm)
 endforeach(SAMPLE_FILE)
 
 # copy shader files to binary dir ----------------------------------------------
