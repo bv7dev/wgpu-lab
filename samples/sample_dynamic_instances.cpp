@@ -32,12 +32,15 @@ int main() {
 
   // ---------------------------------------------------------------------------
   // Window and controls -------------------------------------------------------
-  lab::Window window("Dynamic Instances Demo - Use arrow keys to move", 640, 400);
+  lab::Window window("Press arrow keys to move and space to cycle through", 640, 400);
 
-  window.set_key_callback([&window, &input](lab::KeyEvent event) {
+  int current_instance_index = 0;
+  window.set_key_callback([&window, &input, &current_instance_index](lab::KeyEvent event) {
     if (event.action != lab::KeyAction::repeat) {
       if (event.key >= lab::KeyCode::right && event.key <= lab::KeyCode::up) {
         input.update(event.key, event.action == lab::KeyAction::press);
+      } else if (event.key == lab::KeyCode::space && event.action == lab::KeyAction::release) {
+        ++current_instance_index;
       } else if (event.key == lab::KeyCode::escape) {
         window.close();
       }
@@ -111,9 +114,10 @@ int main() {
     velocity_x += input.axis_x * force;
     velocity_y += input.axis_y * force;
 
-    instance_data[0].x += velocity_x * delta_t;
-    instance_data[0].y += velocity_y * delta_t;
-    instance_buffer.write(instance_data[0]);
+    int i = current_instance_index % instance_data.size();
+    instance_data[i].x += velocity_x * delta_t;
+    instance_data[i].y += velocity_y * delta_t;
+    instance_buffer.write(instance_data[i], i);
 
     uniforms.ratio[0] = window.ratio();
     uniform_buffer.write(uniforms);
