@@ -22,11 +22,8 @@ namespace lab {
 // ```
 template<typename T>
 struct MappedVRAM {
-  MappedVRAM(std::span<T> view, size_t size, wgpu::Buffer buffer)
-      : view{view}, view_size{size}, buffer{buffer} {}
-  MappedVRAM(MappedVRAM&& rhs) : view{rhs.view}, view_size{rhs.view_size}, buffer{rhs.buffer} {
-    rhs.buffer = nullptr;
-  }
+  MappedVRAM(std::span<T> view, size_t size, wgpu::Buffer buffer) : view{view}, view_size{size}, buffer{buffer} {}
+  MappedVRAM(MappedVRAM&& rhs) : view{rhs.view}, view_size{rhs.view_size}, buffer{rhs.buffer} { rhs.buffer = nullptr; }
   MappedVRAM& operator=(MappedVRAM&& rhs) {
     view = std::move(rhs.view);
     view_size = std::move(rhs.view_size);
@@ -94,7 +91,7 @@ private:
 // Constant version of `MappedVRAM<T>`
 // Example:
 // ```cpp
-// auto write_func = [](ConstMappedVRAM&& vmap) {
+// auto read_func = [](ConstMappedVRAM&& vmap) {
 //   for (auto& e : vmap) {
 //     std::cout << e << ' '; // read data from vmap
 //   }

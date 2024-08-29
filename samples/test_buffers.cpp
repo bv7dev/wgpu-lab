@@ -64,11 +64,4 @@ int main() {
     }
     // end stress test
   }
-
-  // todo: fix bug: crashes in the end
-
-  // Test 2 ...
-  {
-    // ...
-  }
 }
