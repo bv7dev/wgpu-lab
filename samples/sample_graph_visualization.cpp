@@ -5,7 +5,6 @@
 struct NodeInstance {
   glm::vec2 pos;
   float scale;
-  uint8_t r, g, b, a;
 };
 
 struct NodeMeshVertex {
@@ -18,28 +17,10 @@ struct alignas(16) NodeUniformParams {
 };
 
 int main() {
-  lab::Window window("graph visualizer", 900, 600);
-  window.set_key_callback([&window](auto event) {
-    if (event.key == lab::KeyCode::escape) window.close();
-  });
-
   lab::Webgpu webgpu("wgpu context");
-  lab::Surface surface(window, webgpu);
 
   lab::Shader node_shader("node shader", "shaders/sample_graph.wgsl");
   lab::Pipeline node_pipeline(node_shader, webgpu);
-
-  NodeUniformParams node_uniform_params{.ratio{window.ratio(), 1.0}};
-  lab::Buffer<NodeUniformParams> node_uniform_buffer("node uniform buffer", {node_uniform_params},
-                                                     wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
-
-  node_pipeline.add_uniform_buffer(node_uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
-
-  window.set_resize_callback([&node_uniform_params, &node_uniform_buffer, &window](int w, int h) {
-    std::cout << "window resized to: " << w << "x" << h << "\n";
-    node_uniform_params.ratio.x = static_cast<float>(h) / w;
-    node_uniform_buffer.write(node_uniform_params);
-  });
 
   // todo: add index buffer
   float h = sqrt(3.0f) / 2.0f;
@@ -51,23 +32,51 @@ int main() {
       {{0.0f, 0.0f}}, {{0.5f, -h}},    {{-0.5f, -h}}, // bottom-center
       {{0.0f, 0.0f}}, {{-1.0f, 0.0f}}, {{-0.5f, -h}}, // bottom-left
   };
-  lab::Buffer<NodeMeshVertex> node_vertex_buffer("node vertex buffer", webgpu);
-  node_vertex_buffer.to_device(
-      [&node_mesh](auto vmap) {
-        for (int i = 0; i < node_mesh.size(); ++i) {
-          vmap.push(node_mesh[i]);
-        }
-      },
-      node_mesh.size(), wgpu::BufferUsage::Vertex);
+  lab::Buffer<NodeMeshVertex> node_vertex_buffer("node vertex buffer", node_mesh, webgpu);
+  // node_vertex_buffer.to_device(
+  //     [&node_mesh](auto&& vmap) {
+  //       for (const NodeMeshVertex& v : node_mesh) {
+  //         vmap.push(v);
+  //       }
+  //     },
+  //     64, wgpu::BufferUsage::Vertex);
+  // TODO: to_device seems to sometimes cause crashes
 
   node_pipeline.add_vertex_buffer(node_vertex_buffer);
   node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
 
-  lab::Buffer<glm::vec2> node_instance_buffer("node instance buffer", webgpu);
+  std::vector<NodeInstance> node_instances = {{.pos = {0.0f, 0.0f}, .scale = 0.04f},
+                                              {.pos = {0.5f, 0.0f}, .scale = 0.08f},
+                                              {.pos = {-0.3f, 0.4f}, .scale = 0.12f}};
+  lab::Buffer<NodeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
 
+  node_pipeline.add_vertex_buffer(node_instance_buffer, wgpu::VertexStepMode::Instance);
+  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
+  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 2);
+
+  lab::Window window("graph visualizer", 900, 600);
+
+  NodeUniformParams node_uniform_params{.ratio{window.ratio(), 1.0}};
+  lab::Buffer<NodeUniformParams> node_uniform_buffer("node uniform buffer", {node_uniform_params},
+                                                     wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
+
+  node_pipeline.add_uniform_buffer(node_uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
   node_pipeline.finalize();
 
+  window.set_key_callback([&window](auto event) {
+    if (event.key == lab::KeyCode::escape) window.close();
+  });
+
+  lab::Surface surface(window, webgpu);
+
+  window.set_resize_callback([&node_uniform_params, &node_uniform_buffer, &window, &surface](int w, int h) {
+    std::cout << "window resized to: " << w << "x" << h << "\n";
+    node_uniform_params.ratio.x = static_cast<float>(h) / w;
+    node_uniform_buffer.write(node_uniform_params);
+    surface.reconfigure(w, h);
+  });
+
   while (lab::tick()) {
-    node_pipeline.render_frame(surface, node_mesh.size(), 1);
+    node_pipeline.render_frame(surface, node_mesh.size(), node_instances.size());
   }
 }

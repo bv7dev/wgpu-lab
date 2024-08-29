@@ -5,7 +5,8 @@ struct Uniforms {
 
 struct VsInput {
   @location(0) vertex_pos: vec2f,
-  // @location(1) instance_pos: vec2f,
+  @location(1) pos: vec2f,
+  @location(2) scale: f32,
 };
 
 struct VsOutput {
@@ -18,13 +19,13 @@ struct VsOutput {
 @vertex
 fn vs_main(in: VsInput) -> VsOutput {
   var out: VsOutput;
-  out.position = vec4f(in.vertex_pos*uniforms.ratio, 0.0, 1.0);
+  out.position = vec4f((in.pos + in.vertex_pos*in.scale)*uniforms.ratio, 0.0, 1.0);
   out.pos = in.vertex_pos;
 	return out;
 }
 
 @fragment
 fn fs_main(in: VsOutput) -> @location(0) vec4f {
-  let intensity = pow(1.0 - length(in.pos), 2.0);
+  let intensity = pow(1.0 - length(in.pos), 2.2);
 	return vec4f(intensity);
 }
