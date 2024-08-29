@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include <random>
+
 struct NodeInstance {
   glm::vec2 pos;
   float scale;
@@ -37,9 +39,15 @@ int main() {
   node_pipeline.add_vertex_buffer(node_vertex_buffer);
   node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
 
-  std::vector<NodeInstance> node_instances = {{.pos = {0.0f, 0.0f}, .scale = 0.04f},
-                                              {.pos = {0.5f, 0.0f}, .scale = 0.08f},
-                                              {.pos = {-0.3f, 0.4f}, .scale = 0.12f}};
+  std::vector<NodeInstance> node_instances;
+  node_instances.reserve(1000);
+
+  std::default_random_engine prng{0};
+  for (int i = 0; i < node_instances.capacity(); ++i) {
+    std::normal_distribution<float> dst_pos{0.0f, 0.2f};
+    std::normal_distribution<float> dst_scl{0.02f, 0.005f};
+    node_instances.push_back({.pos = {dst_pos(prng), dst_pos(prng)}, .scale = dst_scl(prng)});
+  }
   lab::Buffer<NodeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
 
   node_pipeline.add_vertex_buffer(node_instance_buffer, wgpu::VertexStepMode::Instance);
