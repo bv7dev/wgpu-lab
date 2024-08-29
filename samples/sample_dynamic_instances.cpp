@@ -10,7 +10,7 @@ int main() {
     float u, v;
   };
 
-  struct MyPixelColor {
+  struct MyPixelFormat {
     uint8_t r, g, b, a;
   };
 
@@ -24,15 +24,11 @@ int main() {
     bool arrows[4];
     float axis_x, axis_y;
     void update(lab::KeyCode key, bool state) {
-      arrows[static_cast<int>(key) - static_cast<int>(lab::KeyCode::right)] = state;
+      arrows[static_cast<int>(key) - 262u] = state;
       axis_x = static_cast<float>(arrows[0] - arrows[1]);
       axis_y = static_cast<float>(arrows[3] - arrows[2]);
     }
   } input{};
-
-  auto f32 = [](auto s) { return static_cast<float>(s); };
-  auto u32 = [](auto s) { return static_cast<uint32_t>(s); };
-  auto u8 = [](auto s) { return static_cast<uint8_t>(s); };
 
   // ---------------------------------------------------------------------------
   // Window and controls -------------------------------------------------------
@@ -59,23 +55,23 @@ int main() {
   lab::Texture texture(webgpu, wgpu::TextureFormat::RGBA8Unorm, 256, 256);
 
   // create procedural texture and upload to gpu
-  std::vector<MyPixelColor> pixel_data;
+  std::vector<MyPixelFormat> pixel_data;
   pixel_data.reserve(texture.width() * texture.height());
 
-  auto transform = [&u8, &f32](int v, float s = 1.f) {
-    return u8(s * (20.f + u8(sin(f32(v) / 255.f * 20.f) + 1.f) * 40.f));
+  auto transform = [](int v, float s = 1.f) {
+    return uint8_t(s * (20.f + uint8_t(sin(float(v) / 255.f * 20.f) + 1.f) * 40.f));
   };
 
   for (int y = 0; y < texture.height(); ++y) {
     for (int x = 0; x < texture.width(); ++x) {
-      pixel_data.emplace_back(transform(x + y, .6f), transform(x, .3f), transform(y, .2f), u8(255));
+      pixel_data.emplace_back(transform(x + y, .6f), transform(x, .3f), transform(y, .2f), uint8_t(255u));
     }
   }
   texture.to_device(pixel_data);
   pipeline.add_texture(texture, 1, wgpu::ShaderStage::Fragment);
 
-  // vertices of equilateral triangle
-  //    x    y    u    v
+  // create vertex buffer with 3 vertices which form an equilateral triangle
+  //    x    y    u    v                 x           y       u    v
   std::vector<MyVertexFormat> vertex_data = {
       {0.f, 1.f, 0.f, 0.f}, {-sqrtf(3.f) / 2.f, -3.f / 6.f, 0.f, 1.f}, {+sqrtf(3.f) / 2.f, -3.f / 6.f, 1.f, 1.f}};
   lab::Buffer<MyVertexFormat> vertex_buffer("My vertex buffer", vertex_data, webgpu);

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <concepts>
 #include <cstdint>
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iostream>
