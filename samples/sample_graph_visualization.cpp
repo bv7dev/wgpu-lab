@@ -33,14 +33,6 @@ int main() {
       {{0.0f, 0.0f}}, {{-1.0f, 0.0f}}, {{-0.5f, -h}}, // bottom-left
   };
   lab::Buffer<NodeMeshVertex> node_vertex_buffer("node vertex buffer", node_mesh, webgpu);
-  // node_vertex_buffer.to_device(
-  //     [&node_mesh](auto&& vmap) {
-  //       for (const NodeMeshVertex& v : node_mesh) {
-  //         vmap.push(v);
-  //       }
-  //     },
-  //     64, wgpu::BufferUsage::Vertex);
-  // TODO: to_device seems to sometimes cause crashes
 
   node_pipeline.add_vertex_buffer(node_vertex_buffer);
   node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
