@@ -1,6 +1,5 @@
-#include <lab>
-
 #include <glm/glm.hpp>
+#include <lab>
 
 int main() {
   struct MyInstancePos {
