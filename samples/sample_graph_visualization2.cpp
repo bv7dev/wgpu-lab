@@ -47,10 +47,10 @@ int main() {
 
   edge_pipeline.add_index_buffer(edge_mesh_index_buffer, wgpu::IndexFormat::Uint16);
 
-  std::vector<EdgeInstance> node_instances;
-  node_instances.push_back({.pos_a = {0.2f, 0.3f}, .pos_b = {0.8f, 0.5f}, .scale = 0.2f});
+  std::vector<EdgeInstance> edge_instance;
+  edge_instance.push_back({.pos_a = {0.2f, 0.3f}, .pos_b = {0.8f, 0.5f}, .scale = 0.2f});
 
-  lab::Buffer<EdgeInstance> edge_instance_buffer("edge instance buffer", node_instances, webgpu);
+  lab::Buffer<EdgeInstance> edge_instance_buffer("edge instance buffer", edge_instance, webgpu);
 
   edge_pipeline.add_vertex_buffer(edge_instance_buffer, wgpu::VertexStepMode::Instance);
   edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
@@ -79,6 +79,6 @@ int main() {
   });
 
   while (lab::tick()) {
-    edge_pipeline.render_frame(surface, edge_mesh_indices.size(), node_instances.size());
+    edge_pipeline.render_frame(surface, edge_mesh_indices.size(), edge_instance.size());
   }
 }

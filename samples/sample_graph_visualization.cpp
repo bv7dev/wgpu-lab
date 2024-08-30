@@ -4,15 +4,18 @@
 
 #include <random>
 
-#include <tiny_gltf.h>
+struct Vertex {
+  glm::vec2 pos;
+};
 
 struct NodeInstance {
   glm::vec2 pos;
   float scale;
 };
 
-struct Vertex {
-  glm::vec2 pos;
+struct EdgeInstance {
+  glm::vec2 pos_a, pos_b;
+  float scale;
 };
 
 struct alignas(16) UniformParams {
@@ -49,6 +52,13 @@ int main() {
 
   node_pipeline.add_index_buffer(mesh_index_buffer, wgpu::IndexFormat::Uint16);
 
+  edge_pipeline.add_vertex_buffer(mesh_vertex_buffer);
+  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
+
+  edge_pipeline.add_index_buffer(mesh_index_buffer, wgpu::IndexFormat::Uint16);
+  // TODO: add mechanism to avoid duplicate setups like above:
+  // idea: add_vertex_buffer({node_pipe, edge_pipe}, mesh_vertex_buffer);
+
   std::vector<NodeInstance> node_instances;
   node_instances.reserve(1000);
 
@@ -64,14 +74,27 @@ int main() {
   node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
   node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 2);
 
+  std::vector<EdgeInstance> edge_instances;
+  edge_instances.push_back({.pos_a = {0.2f, 0.3f}, .pos_b = {0.8f, 0.5f}, .scale = 0.2f});
+
+  lab::Buffer<EdgeInstance> edge_instance_buffer("edge instance buffer", edge_instances, webgpu);
+
+  edge_pipeline.add_vertex_buffer(edge_instance_buffer, wgpu::VertexStepMode::Instance);
+  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
+  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 2);
+  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 3);
+
   lab::Window window("graph visualizer", 900, 600);
 
-  UniformParams node_uniform_params{.ratio{window.ratio(), 1.0}};
-  lab::Buffer<UniformParams> node_uniform_buffer("node uniform buffer", {node_uniform_params},
+  UniformParams uniform_buffer{.ratio{window.ratio(), 1.0}};
+  lab::Buffer<UniformParams> node_uniform_buffer("node uniform buffer", {uniform_buffer},
                                                  wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
   node_pipeline.add_uniform_buffer(node_uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
   node_pipeline.finalize();
+
+  edge_pipeline.add_uniform_buffer(node_uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
+  edge_pipeline.finalize();
 
   window.set_key_callback([&window](auto event) {
     if (event.key == lab::KeyCode::escape) window.close();
@@ -79,14 +102,15 @@ int main() {
 
   lab::Surface surface(window, webgpu);
 
-  window.set_resize_callback([&node_uniform_params, &node_uniform_buffer, &window, &surface](int w, int h) {
+  window.set_resize_callback([&uniform_buffer, &node_uniform_buffer, &window, &surface](int w, int h) {
     std::cout << "window resized to: " << w << "x" << h << "\n";
-    node_uniform_params.ratio.x = static_cast<float>(h) / w;
-    node_uniform_buffer.write(node_uniform_params);
+    uniform_buffer.ratio.x = static_cast<float>(h) / w;
+    node_uniform_buffer.write(uniform_buffer);
     surface.reconfigure(w, h);
   });
 
   while (lab::tick()) {
+    edge_pipeline.render_frame(surface, mesh_indices.size(), edge_instances.size());
     node_pipeline.render_frame(surface, mesh_indices.size(), node_instances.size());
   }
 }
