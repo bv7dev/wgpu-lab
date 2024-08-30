@@ -6,16 +6,16 @@
 
 #include <tiny_gltf.h>
 
-struct NodeInstance {
+struct EdgeInstance {
   glm::vec2 pos;
   float scale;
 };
 
-struct NodeMeshVertex {
+struct EdgeVertex {
   glm::vec2 pos;
 };
 
-struct alignas(16) NodeUniformParams {
+struct alignas(16) EdgeUniformParams {
   glm::vec2 ratio;
   float time;
 };
@@ -28,7 +28,7 @@ int main() {
 
   // todo: add index buffer
   float h = sqrt(3.0f) / 2.0f;
-  std::vector<NodeMeshVertex> node_mesh{
+  std::vector<EdgeVertex> node_mesh{
       {{0.0f, 0.0f}}, {{1.0f, 0.0f}},  {{0.5f, h}},   // top-right
       {{0.0f, 0.0f}}, {{0.5f, h}},     {{-0.5f, h}},  // top-center
       {{0.0f, 0.0f}}, {{-1.0f, 0.0f}}, {{-0.5f, h}},  // top-left
@@ -36,12 +36,12 @@ int main() {
       {{0.0f, 0.0f}}, {{0.5f, -h}},    {{-0.5f, -h}}, // bottom-center
       {{0.0f, 0.0f}}, {{-1.0f, 0.0f}}, {{-0.5f, -h}}, // bottom-left
   };
-  lab::Buffer<NodeMeshVertex> node_vertex_buffer("node vertex buffer", node_mesh, webgpu);
+  lab::Buffer<EdgeVertex> node_vertex_buffer("node vertex buffer", node_mesh, webgpu);
 
   node_pipeline.add_vertex_buffer(node_vertex_buffer);
   node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
 
-  std::vector<NodeInstance> node_instances;
+  std::vector<EdgeInstance> node_instances;
   node_instances.reserve(1000);
 
   std::default_random_engine prng{0};
@@ -50,7 +50,7 @@ int main() {
     std::normal_distribution<float> dst_scl{0.02f, 0.005f};
     node_instances.push_back({.pos = {dst_pos(prng), dst_pos(prng)}, .scale = dst_scl(prng)});
   }
-  lab::Buffer<NodeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
+  lab::Buffer<EdgeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
 
   node_pipeline.add_vertex_buffer(node_instance_buffer, wgpu::VertexStepMode::Instance);
   node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
@@ -58,8 +58,8 @@ int main() {
 
   lab::Window window("graph visualizer", 900, 600);
 
-  NodeUniformParams node_uniform_params{.ratio{window.ratio(), 1.0}};
-  lab::Buffer<NodeUniformParams> node_uniform_buffer("node uniform buffer", {node_uniform_params},
+  EdgeUniformParams node_uniform_params{.ratio{window.ratio(), 1.0}};
+  lab::Buffer<EdgeUniformParams> node_uniform_buffer("node uniform buffer", {node_uniform_params},
                                                      wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
   node_pipeline.add_uniform_buffer(node_uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);

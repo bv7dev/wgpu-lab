@@ -10,12 +10,6 @@ namespace lab {
 
 bool init_lab();
 
-void onDeviceError(WGPUErrorType type, char const* message, void* instance) {
-  std::cerr << "Error: WGPU(" << instance << "): " << type;
-  if (message) std::cerr << " (" << message << ")";
-  std::cerr << std::endl;
-}
-
 Webgpu::Webgpu(const char* label) : label{label} {
   init_lab();
 
