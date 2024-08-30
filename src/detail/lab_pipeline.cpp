@@ -133,8 +133,7 @@ void Pipeline::reset() {
 
 Pipeline::~Pipeline() { reset(); }
 
-bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
-                              const DrawCallParams& draw_params) {
+bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface, const DrawCallParams& draw_params) {
   assert(self->wgpu_pipeline != nullptr);
 
   wgpu::TextureView targetView = get_current_render_texture_view(surface);
@@ -144,8 +143,7 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
 
   self->render_config.renderPassColorAttachment.view = targetView;
   self->render_config.renderPassDesc.colorAttachmentCount = 1;
-  self->render_config.renderPassDesc.colorAttachments =
-      &self->render_config.renderPassColorAttachment;
+  self->render_config.renderPassDesc.colorAttachments = &self->render_config.renderPassColorAttachment;
 
   wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&self->render_config.renderPassDesc);
   renderPass.SetPipeline(self->wgpu_pipeline);
@@ -161,8 +159,14 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface,
     renderPass.SetBindGroup(i, self->bindGroups[i], 0, nullptr);
   }
 
-  renderPass.Draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
-                  draw_params.firstInstance);
+  for (uint32_t i = 0; i < self->ib_configs.size(); ++i) {
+    const auto& ibc = self->ib_configs[i];
+    renderPass.SetIndexBuffer(ibc.buffer, ibc.format, ibc.offset, ibc.buffer.GetSize());
+  }
+
+  // renderPass.Draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
+  //                 draw_params.firstInstance);
+  renderPass.DrawIndexed(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex);
 
   renderPass.End();
   // renderPass.Release();

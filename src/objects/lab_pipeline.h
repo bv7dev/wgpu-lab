@@ -59,8 +59,7 @@ struct Pipeline {
     uint32_t vertexCount, instanceCount;
     uint32_t firstVertex, firstInstance;
   };
-  using RenderFunction =
-      std::function<bool(PipelineHandle self, wgpu::Surface, const DrawCallParams&)>;
+  using RenderFunction = std::function<bool(PipelineHandle self, wgpu::Surface, const DrawCallParams&)>;
 
   // Render onto surface (DrawCallParams{vertexCount, instanceCount, firstVertex, firstInstance})
   bool render_frame(Surface& surface, const DrawCallParams& params) {
@@ -73,11 +72,9 @@ struct Pipeline {
   }
 
   // Render `vertex_count` vertices onto a surface `instance_count` times
-  bool render_frame(Surface& surface, std::integral auto vertex_count,
-                    std::integral auto instance_count) {
-    return render_func(
-        this, surface.wgpu_surface,
-        {static_cast<uint32_t>(vertex_count), static_cast<uint32_t>(instance_count), 0, 0});
+  bool render_frame(Surface& surface, std::integral auto vertex_count, std::integral auto instance_count) {
+    return render_func(this, surface.wgpu_surface,
+                       {static_cast<uint32_t>(vertex_count), static_cast<uint32_t>(instance_count), 0, 0});
   }
 
   // Warning! User is responsible to `.release()` the returned render pipeline
@@ -88,8 +85,7 @@ struct Pipeline {
   // Bundles together user_config and default_config
   void finalize_config(wgpu::ShaderModule);
 
-  static bool default_render(PipelineHandle self, wgpu::Surface surface,
-                             const DrawCallParams& draw_params);
+  static bool default_render(PipelineHandle self, wgpu::Surface surface, const DrawCallParams& draw_params);
 
   void reset();
   ~Pipeline();
@@ -128,26 +124,23 @@ struct Pipeline {
   std::vector<VertexBufferConfig> vb_configs;
   std::vector<wgpu::VertexBufferLayout> vb_layouts;
 
-  void add_vertex_buffer(wgpu::Buffer wgpu_buffer,
-                         wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
+  void add_vertex_buffer(wgpu::Buffer wgpu_buffer, wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
                          uint64_t offset = 0) {
     assert(wgpu_buffer.GetUsage() & wgpu::BufferUsage::Vertex);
     vb_configs.push_back({wgpu_buffer, mode, offset});
   }
 
   template<typename T>
-  void add_vertex_buffer(const Buffer<T>& buffer,
-                         wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
+  void add_vertex_buffer(const Buffer<T>& buffer, wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
                          uint64_t offset = 0) {
     add_vertex_buffer(buffer.wgpu_buffer, mode, offset);
   }
 
-  void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location,
-                            uint64_t offset = ~0, uint64_t buffer_index = ~0) {
+  void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location, uint64_t offset = ~0,
+                            uint64_t buffer_index = ~0) {
     uint64_t bi = buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index;
     if (vb_configs.at(bi).vertexAttributes.size() > 0) {
-      offset = offset == ~0 ? vertex_format_size(vb_configs.at(bi).vertexAttributes.back().format)
-                            : offset;
+      offset = offset == ~0 ? vertex_format_size(vb_configs.at(bi).vertexAttributes.back().format) : offset;
     } else {
       offset = 0;
     }
@@ -158,9 +151,25 @@ struct Pipeline {
     });
   }
 
+  struct IndexBufferConfig {
+    wgpu::Buffer buffer;
+    wgpu::IndexFormat format;
+    uint64_t offset;
+  };
+
+  std::vector<IndexBufferConfig> ib_configs;
+
+  void add_index_buffer(wgpu::Buffer buffer, wgpu::IndexFormat format, uint64_t offset = 0) {
+    ib_configs.push_back({buffer, format, offset});
+  }
+
   template<typename T>
-  void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index,
-                          wgpu::ShaderStage visibility) {
+  void add_index_buffer(const Buffer<T>& buffer, wgpu::IndexFormat format, uint64_t offset = 0) {
+    add_index_buffer(buffer.wgpu_buffer, format, offset);
+  }
+
+  template<typename T>
+  void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index, wgpu::ShaderStage visibility) {
     add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
     add_bind_group_layout_buffer_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
   }
@@ -175,8 +184,7 @@ struct Pipeline {
   std::vector<wgpu::BindGroupEntry> bindGroupEntries{};
 
   void add_bind_group_layout_buffer_entry(uint32_t binding, wgpu::ShaderStage visibility,
-                                          wgpu::BufferBindingType buffer_type,
-                                          uint64_t min_binding_size) {
+                                          wgpu::BufferBindingType buffer_type, uint64_t min_binding_size) {
     wgpu::BindGroupLayoutEntry bindGroupLayoutEntry; // = wgpu::Default;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
