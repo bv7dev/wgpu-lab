@@ -58,9 +58,10 @@ int main() {
   edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 3); // todo: scale not working
 
   lab::Window window("graph visualizer", 900, 600);
+  lab::Surface surface(window, webgpu);
 
-  EdgeUniformParams node_uniform_params{.ratio{window.ratio(), 1.0}};
-  lab::Buffer<EdgeUniformParams> edge_uniform_buffer("edge uniform buffer", {node_uniform_params},
+  EdgeUniformParams edge_uniform_params{.ratio{window.ratio(), 1.0}};
+  lab::Buffer<EdgeUniformParams> edge_uniform_buffer("edge uniform buffer", {edge_uniform_params},
                                                      wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
   edge_pipeline.add_uniform_buffer(edge_uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
@@ -70,12 +71,10 @@ int main() {
     if (event.key == lab::KeyCode::escape) window.close();
   });
 
-  lab::Surface surface(window, webgpu);
-
-  window.set_resize_callback([&node_uniform_params, &edge_uniform_buffer, &window, &surface](int w, int h) {
+  window.set_resize_callback([&edge_uniform_params, &edge_uniform_buffer, &window, &surface](int w, int h) {
     std::cout << "window resized to: " << w << "x" << h << "\n";
-    node_uniform_params.ratio.x = static_cast<float>(h) / w;
-    edge_uniform_buffer.write(node_uniform_params);
+    edge_uniform_params.ratio.x = static_cast<float>(h) / w;
+    edge_uniform_buffer.write(edge_uniform_params);
     surface.reconfigure(w, h);
   });
 
