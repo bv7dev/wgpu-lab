@@ -4,6 +4,8 @@
 
 #include <random>
 
+#include <tiny_gltf.h>
+
 struct NodeInstance {
   glm::vec2 pos;
   float scale;
