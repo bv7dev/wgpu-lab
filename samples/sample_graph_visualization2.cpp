@@ -27,16 +27,20 @@ int main() {
   // todo: add index buffer
   const float h = sqrt(3.0f) / 2.0f;
   std::vector<NodeMeshVertex> node_mesh{
-      {{0.0f, 0.0f}}, {{1.0f, 0.0f}},  {{0.5f, h}},   // top-right
-      {{0.0f, 0.0f}}, {{0.5f, h}},     {{-0.5f, h}},  // top-center
-      {{0.0f, 0.0f}}, {{-1.0f, 0.0f}}, {{-0.5f, h}},  // top-left
-      {{0.0f, 0.0f}}, {{1.0f, 0.0f}},  {{0.5f, -h}},  // bottom-right
-      {{0.0f, 0.0f}}, {{0.5f, -h}},    {{-0.5f, -h}}, // bottom-center
-      {{0.0f, 0.0f}}, {{-1.0f, 0.0f}}, {{-0.5f, -h}}, // bottom-left
+      // {{0.0f, 0.0f}}, {{1.0f, 0.0f}},  {{0.5f, h}},   // top-right
+      // {{0.0f, 0.0f}}, {{0.5f, h}},     {{-0.5f, h}},  // top-center
+      // {{0.0f, 0.0f}}, {{-1.0f, 0.0f}}, {{-0.5f, h}},  // top-left
+      // {{0.0f, 0.0f}}, {{1.0f, 0.0f}},  {{0.5f, -h}},  // bottom-right
+      // {{0.0f, 0.0f}}, {{0.5f, -h}},    {{-0.5f, -h}}, // bottom-center
+      // {{0.0f, 0.0f}}, {{-1.0f, 0.0f}}, {{-0.5f, -h}}, // bottom-left
+
+      {{-0.5f, h}}, {{-1.0f, 0.0f}}, {{-0.5f, -h}},
+
+      {{0.5f, -h}}, {{1.0f, 0.0f}},  {{0.5f, h}},
   };
   lab::Buffer<NodeMeshVertex> node_vertex_buffer("node vertex buffer", node_mesh, webgpu);
 
-  std::vector<uint16_t> node_mesh_indices{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  std::vector<uint16_t> node_mesh_indices{0, 1, 2, 0, 2, 3, 3, 5, 0, 3, 4, 5};
   lab::Buffer<uint16_t> node_mesh_index_buffer("node mesh index buffer", node_mesh_indices, wgpu::BufferUsage::Index,
                                                webgpu);
 
