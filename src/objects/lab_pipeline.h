@@ -139,11 +139,13 @@ struct Pipeline {
   void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location, uint64_t offset = ~0,
                             uint64_t buffer_index = ~0) {
     uint64_t bi = buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index;
-    if (vb_configs.at(bi).vertexAttributes.size() > 0) {
-      offset = offset == ~0 ? vertex_format_size(vb_configs.at(bi).vertexAttributes.back().format) : offset;
-    } else {
+    if (offset == ~0) {
       offset = 0;
+      for (const auto& attr : vb_configs.at(bi).vertexAttributes) {
+        offset += vertex_format_size(attr.format);
+      }
     }
+
     vb_configs.at(bi).vertexAttributes.push_back({
         .format = format,
         .offset = offset,

@@ -30,7 +30,7 @@ fn vs_main(@builtin(vertex_index) index: u32, in: VSInput) -> VSOutput {
   var ext: vec2f = vec2f(0.0);
   if (index > 2){ ext.x = length(ab); }
 
-  out.position = vec4f((in.pos_a + (in.v_pos*0.05+ext)*rot)*uniforms.ratio, 0.0, 1.0);
+  out.position = vec4f((in.pos_a + (in.v_pos*in.scale+ext)*rot)*uniforms.ratio, 0.0, 1.0);
   out.modelspace = in.v_pos;
 
 	return out;

@@ -48,14 +48,14 @@ int main() {
   edge_pipeline.add_index_buffer(edge_mesh_index_buffer, wgpu::IndexFormat::Uint16);
 
   std::vector<EdgeInstance> node_instances;
-  node_instances.push_back({.pos_a = {0.2f, 0.3f}, .pos_b = {0.8f, 0.5f}, .scale = 0.05f});
+  node_instances.push_back({.pos_a = {0.2f, 0.3f}, .pos_b = {0.8f, 0.5f}, .scale = 0.2f});
 
   lab::Buffer<EdgeInstance> edge_instance_buffer("edge instance buffer", node_instances, webgpu);
 
   edge_pipeline.add_vertex_buffer(edge_instance_buffer, wgpu::VertexStepMode::Instance);
   edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
   edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 2);
-  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 3); // todo: scale not working
+  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 3);
 
   lab::Window window("graph visualizer", 900, 600);
   lab::Surface surface(window, webgpu);
