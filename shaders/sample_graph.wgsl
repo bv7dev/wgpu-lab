@@ -26,6 +26,7 @@ fn vs_main(in: VsInput) -> VsOutput {
 
 @fragment
 fn fs_main(in: VsOutput) -> @location(0) vec4f {
-  let intensity = pow(1.0 - length(in.pos), 2.2);
-	return vec4f(intensity);
+  // let intensity = pow(1.0 - length(in.pos), 2.2);
+  let intensity = pow(1.0 - length(in.pos), 1.0);
+	return vec4f(0.3+intensity*0.7);
 }

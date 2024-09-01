@@ -17,6 +17,9 @@ namespace lab {
 // returns size in bytes of given wgpu::VertexFormat
 uint64_t vertex_format_size(wgpu::VertexFormat);
 
+// todo: remove ?
+wgpu::TextureView get_current_render_texture_view(wgpu::Surface surface);
+
 // Is responsible to manage the process of rendering frames onto surfaces
 struct Pipeline {
   // Creates a new pipeline object

@@ -23,6 +23,8 @@ struct alignas(16) UniformParams {
   float time;
 };
 
+void render_frame(lab::PipelineHandle self, wgpu::Surface surface, const lab::Pipeline::DrawCallParams& draw_params);
+
 int main() {
   lab::Webgpu webgpu("wgpu context");
 
@@ -60,14 +62,15 @@ int main() {
   // idea: add_vertex_buffer({node_pipe, edge_pipe}, mesh_vertex_buffer);
 
   std::vector<NodeInstance> node_instances;
-  node_instances.reserve(1000);
+  // node_instances.reserve(1000);
 
-  std::default_random_engine prng{0};
-  for (int i = 0; i < node_instances.capacity(); ++i) {
-    std::normal_distribution<float> dst_pos{0.0f, 0.2f};
-    std::normal_distribution<float> dst_scl{0.02f, 0.005f};
-    node_instances.push_back({.pos = {dst_pos(prng), dst_pos(prng)}, .scale = dst_scl(prng)});
-  }
+  // std::default_random_engine prng{0};
+  // for (int i = 0; i < node_instances.capacity(); ++i) {
+  //   std::normal_distribution<float> dst_pos{0.0f, 0.2f};
+  //   std::normal_distribution<float> dst_scl{0.02f, 0.005f};
+  //   node_instances.push_back({.pos = {dst_pos(prng), dst_pos(prng)}, .scale = dst_scl(prng)});
+  // }
+  node_instances.push_back({.pos = {0.0f, 0.0f}, .scale = 1.0f});
   lab::Buffer<NodeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
 
   node_pipeline.add_vertex_buffer(node_instance_buffer, wgpu::VertexStepMode::Instance);
@@ -85,6 +88,7 @@ int main() {
   edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 3);
 
   lab::Window window("graph visualizer", 900, 600);
+  lab::Surface surface(window, webgpu);
 
   UniformParams uniform_buffer{.ratio{window.ratio(), 1.0}};
   lab::Buffer<UniformParams> node_uniform_buffer("node uniform buffer", {uniform_buffer},
@@ -100,8 +104,6 @@ int main() {
     if (event.key == lab::KeyCode::escape) window.close();
   });
 
-  lab::Surface surface(window, webgpu);
-
   window.set_resize_callback([&uniform_buffer, &node_uniform_buffer, &window, &surface](int w, int h) {
     std::cout << "window resized to: " << w << "x" << h << "\n";
     uniform_buffer.ratio.x = static_cast<float>(h) / w;
@@ -110,7 +112,50 @@ int main() {
   });
 
   while (lab::tick()) {
-    edge_pipeline.render_frame(surface, mesh_indices.size(), edge_instances.size());
-    node_pipeline.render_frame(surface, mesh_indices.size(), node_instances.size());
+    // render_frame(surface, mesh_indices.size(), edge_instances.size());
+    // render_frame(surface, mesh_indices.size(), node_instances.size());
+    render_frame(&node_pipeline, surface.wgpu_surface,
+                 {.vertexCount = uint32_t(mesh_indices.size()), .instanceCount = uint32_t(node_instances.size())});
   }
+}
+
+void render_frame(lab::PipelineHandle self, wgpu::Surface surface, const lab::Pipeline::DrawCallParams& draw_params) {
+  assert(self->wgpu_pipeline != nullptr);
+
+  wgpu::TextureView targetView = lab::get_current_render_texture_view(surface);
+
+  wgpu::CommandEncoderDescriptor encoderDesc = {.label = "lab default command encoder"};
+  wgpu::CommandEncoder encoder = self->webgpu.device.CreateCommandEncoder(&encoderDesc);
+
+  self->render_config.renderPassColorAttachment.view = targetView;
+  self->render_config.renderPassDesc.colorAttachmentCount = 1;
+  self->render_config.renderPassDesc.colorAttachments = &self->render_config.renderPassColorAttachment;
+
+  wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&self->render_config.renderPassDesc);
+  renderPass.SetPipeline(self->wgpu_pipeline);
+
+  for (uint32_t i = 0; i < self->vb_configs.size(); ++i) {
+    renderPass.SetVertexBuffer(i, self->vb_configs[i].buffer, self->vb_configs[i].offset,
+                               self->vb_configs[i].buffer.GetSize());
+  }
+
+  for (uint32_t i = 0; i < self->bindGroups.size(); ++i) {
+    renderPass.SetBindGroup(i, self->bindGroups[i], 0, nullptr);
+  }
+
+  for (uint32_t i = 0; i < self->ib_configs.size(); ++i) {
+    const auto& ibc = self->ib_configs[i];
+    renderPass.SetIndexBuffer(ibc.buffer, ibc.format, ibc.offset, ibc.buffer.GetSize());
+  }
+
+  renderPass.DrawIndexed(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex);
+
+  renderPass.End();
+
+  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {.label = "lab default command buffer"};
+  wgpu::CommandBuffer commands = encoder.Finish(&cmdBufferDescriptor);
+
+  self->webgpu.queue.Submit(1, &commands);
+
+  surface.Present();
 }
