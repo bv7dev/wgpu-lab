@@ -139,13 +139,13 @@ void render_frame(lab::PipelineHandle self, wgpu::Surface surface, const lab::Pi
                                self->vb_configs[i].buffer.GetSize());
   }
 
-  for (uint32_t i = 0; i < self->bindGroups.size(); ++i) {
-    renderPass.SetBindGroup(i, self->bindGroups[i], 0, nullptr);
-  }
-
   for (uint32_t i = 0; i < self->ib_configs.size(); ++i) {
     const auto& ibc = self->ib_configs[i];
     renderPass.SetIndexBuffer(ibc.buffer, ibc.format, ibc.offset, ibc.buffer.GetSize());
+  }
+
+  for (uint32_t i = 0; i < self->bindGroups.size(); ++i) {
+    renderPass.SetBindGroup(i, self->bindGroups[i], 0, nullptr);
   }
 
   renderPass.DrawIndexed(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex);

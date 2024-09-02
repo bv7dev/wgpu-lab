@@ -15,7 +15,10 @@
 namespace lab {
 
 // returns size in bytes of given wgpu::VertexFormat
-uint64_t vertex_format_size(wgpu::VertexFormat);
+constexpr uint64_t vertex_format_size(const wgpu::VertexFormat& format);
+
+// returns the total stride of a given vector of wgpu::VertexAttribute objects
+uint64_t vertex_attributes_stride(const std::vector<wgpu::VertexAttribute>& vertexAttributes);
 
 // todo: remove ?
 wgpu::TextureView get_current_render_texture_view(wgpu::Surface surface);
@@ -142,13 +145,7 @@ struct Pipeline {
   void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location, uint64_t offset = ~0,
                             uint64_t buffer_index = ~0) {
     uint64_t bi = buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index;
-    if (offset == ~0) {
-      offset = 0;
-      for (const auto& attr : vb_configs.at(bi).vertexAttributes) {
-        offset += vertex_format_size(attr.format);
-      }
-    }
-
+    offset = offset == ~0 ? vertex_attributes_stride(vb_configs.at(bi).vertexAttributes) : offset;
     vb_configs.at(bi).vertexAttributes.push_back({
         .format = format,
         .offset = offset,

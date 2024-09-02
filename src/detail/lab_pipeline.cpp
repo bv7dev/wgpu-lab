@@ -6,42 +6,43 @@
 
 namespace lab {
 
-uint64_t vertex_format_size(wgpu::VertexFormat format) {
-  static const uint64_t format_sizes[32] = {
-      0,  // Undefined
-      2,  // Uint8x2
-      4,  // Uint8x4
-      2,  // Sint8x2
-      4,  // Sint8x4
-      2,  // Unorm8x2
-      4,  // Unorm8x4
-      2,  // Snorm8x2
-      4,  // Snorm8x4
-      4,  // Uint16x2
-      8,  // Uint16x4
-      4,  // Sint16x2
-      8,  // Sint16x4
-      4,  // Unorm16x2
-      8,  // Unorm16x4
-      4,  // Snorm16x2
-      8,  // Snorm16x4
-      4,  // Float16x2
-      8,  // Float16x4
-      4,  // Float32
-      8,  // Float32x2
-      12, // Float32x3
-      16, // Float32x4
-      4,  // Uint32
-      8,  // Uint32x2
-      12, // Uint32x3
-      16, // Uint32x4
-      4,  // Sint32
-      8,  // Sint32x2
-      12, // Sint32x3
-      16, // Sint32x4
-      4,  // Unorm10_10_10_2
-  };
-  return format_sizes[static_cast<size_t>(format)];
+static constexpr uint64_t vertex_format_sizes[32] = {
+    0,  // Undefined
+    2,  // Uint8x2
+    4,  // Uint8x4
+    2,  // Sint8x2
+    4,  // Sint8x4
+    2,  // Unorm8x2
+    4,  // Unorm8x4
+    2,  // Snorm8x2
+    4,  // Snorm8x4
+    4,  // Uint16x2
+    8,  // Uint16x4
+    4,  // Sint16x2
+    8,  // Sint16x4
+    4,  // Unorm16x2
+    8,  // Unorm16x4
+    4,  // Snorm16x2
+    8,  // Snorm16x4
+    4,  // Float16x2
+    8,  // Float16x4
+    4,  // Float32
+    8,  // Float32x2
+    12, // Float32x3
+    16, // Float32x4
+    4,  // Uint32
+    8,  // Uint32x2
+    12, // Uint32x3
+    16, // Uint32x4
+    4,  // Sint32
+    8,  // Sint32x2
+    12, // Sint32x3
+    16, // Sint32x4
+    4,  // Unorm10_10_10_2
+};
+
+constexpr uint64_t vertex_format_size(const wgpu::VertexFormat& format) {
+  return vertex_format_sizes[static_cast<size_t>(format)];
 }
 
 uint64_t vertex_attributes_stride(const std::vector<wgpu::VertexAttribute>& vertexAttributes) {
