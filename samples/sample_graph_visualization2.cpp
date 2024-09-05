@@ -1,17 +1,20 @@
-#include <glm/glm.hpp>
 #include <lab>
+
+#include <glm/glm.hpp>
+
 #include <random>
 
-struct EdgeVertex {
+struct Vertex {
   glm::vec2 pos;
+  float side;
 };
 
-struct EdgeInstance {
-  glm::vec2 pos_a, pos_b;
+struct NodeInstance {
+  glm::vec2 pos;
   float scale;
 };
 
-struct alignas(16) EdgeUniformParams {
+struct alignas(16) UniformParams {
   glm::vec2 ratio;
   float time;
 };
@@ -19,66 +22,131 @@ struct alignas(16) EdgeUniformParams {
 int main() {
   lab::Webgpu webgpu("wgpu context");
 
-  wgpu::SupportedLimits supportedLimits;
-
-  webgpu.adapter.GetLimits(&supportedLimits);
-  std::cout << "adapter.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
-
-  webgpu.device.GetLimits(&supportedLimits);
-  std::cout << "device.maxVertexAttributes: " << supportedLimits.limits.maxVertexAttributes << std::endl;
-
-  lab::Shader edge_shader("edge shader", "shaders/sample_graph_edge_shader.wgsl");
-  lab::Pipeline edge_pipeline(edge_shader, webgpu);
-
-  // todo: add index buffer
-  const float h = sqrt(3.0f) / 2.0f;
-  std::vector<EdgeVertex> node_mesh{
-      {{-0.5f, h}}, {{-1.0f, 0.0f}}, {{-0.5f, -h}}, // left
-      {{0.5f, -h}}, {{1.0f, 0.0f}},  {{0.5f, h}},   // right
+  lab::Shader node_shader("node shader");
+  node_shader.source = R"(
+  struct Uniforms {
+    ratio : vec2f, time : f32,
   };
-  lab::Buffer<EdgeVertex> edge_vertex_buffer("edge vertex buffer", node_mesh, webgpu);
 
-  std::vector<uint16_t> edge_mesh_indices{0, 1, 2, 0, 2, 3, 3, 5, 0, 3, 4, 5};
-  lab::Buffer<uint16_t> edge_mesh_index_buffer("edge mesh index buffer", edge_mesh_indices, wgpu::BufferUsage::Index,
-                                               webgpu);
+  struct VsInput {
+    @location(0) vertex_pos : vec2f, @location(1) vertex_side : f32, @location(2) pos : vec2f, @location(3) scale : f32,
+  };
 
-  edge_pipeline.add_vertex_buffer(edge_vertex_buffer);
-  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
+  struct VsOutput {
+    @builtin(position) position : vec4f, @location(0) pos : vec2f,
+  };
 
-  edge_pipeline.add_index_buffer(edge_mesh_index_buffer, wgpu::IndexFormat::Uint16);
+  @group(0) @binding(0) var<uniform> uniforms : Uniforms;
 
-  std::vector<EdgeInstance> edge_instance;
-  edge_instance.push_back({.pos_a = {0.2f, 0.3f}, .pos_b = {0.8f, 0.5f}, .scale = 0.2f});
+  @vertex fn vs_main(in : VsInput) -> VsOutput {
+    var out : VsOutput;
+    var vpos = in.vertex_pos;
+    if (in.vertex_side > 0.0) {
+      vpos.x += 0.4;
+    }
+    out.position = vec4f((in.pos + vpos * in.scale) * uniforms.ratio, 0.0, 1.0);
+    out.pos = in.vertex_pos;
+    return out;
+  }
 
-  lab::Buffer<EdgeInstance> edge_instance_buffer("edge instance buffer", edge_instance, webgpu);
+  @fragment fn fs_main(in : VsOutput) -> @location(0) vec4f {
+    let intensity = pow(1.0 - length(in.pos), 1.0);
+    if (intensity <= 0.0) {
+      return vec4f(0.2, 0.0, 0.0, 0.2);
+    }
+    return vec4f(0.2 + intensity * 0.8);
+  }
+  )";
 
-  edge_pipeline.add_vertex_buffer(edge_instance_buffer, wgpu::VertexStepMode::Instance);
-  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
-  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 2);
-  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 3);
+  lab::Pipeline node_pipeline(node_shader, webgpu);
+
+  const float k = sqrt(3.0f) / 3.0f;
+  std::vector<Vertex> mesh{
+      {{-1.0f, k}, -1.0},   {{-1.0f, -k}, -1.0},   {{0.0f, -2 * k}, -1.0}, {{0.0f, 2 * k}, -1.0}, // left quad
+      {{0.0f, 2 * k}, 1.0}, {{0.0f, -2 * k}, 1.0}, {{1.0f, -k}, 1.0},      {{1.0f, k}, 1.0},      // right quad
+  };
+
+  std::vector<uint16_t> mesh_indices{
+      0, 1, 2, 2, 3, 0, // left quad
+      3, 2, 5, 5, 4, 3, // central degenerate quad
+      4, 5, 6, 6, 7, 4, // right quad
+  };
+
+  lab::Buffer mesh_vertex_buffer("mesh vertex buffer", mesh, webgpu);
+  lab::Buffer mesh_index_buffer("mesh index buffer", mesh_indices, wgpu::BufferUsage::Index, webgpu);
+
+  node_pipeline.add_vertex_buffer(mesh_vertex_buffer);
+  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
+  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1);
+
+  node_pipeline.add_index_buffer(mesh_index_buffer, wgpu::IndexFormat::Uint16);
+
+  std::vector<NodeInstance> node_instances;
+  node_instances.push_back({.pos = {0.0f, 0.0f}, .scale = 1.0f});
+  lab::Buffer<NodeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
+
+  node_pipeline.add_vertex_buffer(node_instance_buffer, wgpu::VertexStepMode::Instance);
+  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 2);
+  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 3);
 
   lab::Window window("graph visualizer", 900, 600);
   lab::Surface surface(window, webgpu);
 
-  EdgeUniformParams edge_uniform_params{.ratio{window.ratio(), 1.0}};
-  lab::Buffer<EdgeUniformParams> edge_uniform_buffer("edge uniform buffer", {edge_uniform_params},
-                                                     wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
+  UniformParams uniform_params{.ratio{window.ratio(), 1.0}};
+  lab::Buffer<UniformParams> uniform_buffer("node uniform buffer", {uniform_params},
+                                            wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
-  edge_pipeline.add_uniform_buffer(edge_uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
-  edge_pipeline.finalize();
+  node_pipeline.add_uniform_buffer(uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
+  node_pipeline.finalize();
 
   window.set_key_callback([&window](auto event) {
     if (event.key == lab::KeyCode::escape) window.close();
   });
 
-  window.set_resize_callback([&edge_uniform_params, &edge_uniform_buffer, &window, &surface](int w, int h) {
+  window.set_resize_callback([&uniform_params, &uniform_buffer, &window, &surface](int w, int h) {
     std::cout << "window resized to: " << w << "x" << h << "\n";
-    edge_uniform_params.ratio.x = static_cast<float>(h) / w;
-    edge_uniform_buffer.write(edge_uniform_params);
+    uniform_params.ratio.x = static_cast<float>(h) / w;
+    uniform_buffer.write(uniform_params);
     surface.reconfigure(w, h);
   });
 
   while (lab::tick()) {
-    edge_pipeline.render_frame(surface, edge_mesh_indices.size(), edge_instance.size());
+    wgpu::TextureView targetView = lab::get_current_render_texture_view(surface.wgpu_surface);
+
+    wgpu::CommandEncoderDescriptor encoderDesc = {.label = "my command encoder"};
+    wgpu::CommandEncoder encoder = node_pipeline.webgpu.device.CreateCommandEncoder(&encoderDesc);
+
+    node_pipeline.render_config.renderPassColorAttachment.view = targetView;
+    node_pipeline.render_config.renderPassDesc.colorAttachmentCount = 1;
+    node_pipeline.render_config.renderPassDesc.colorAttachments =
+        &node_pipeline.render_config.renderPassColorAttachment;
+
+    wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&node_pipeline.render_config.renderPassDesc);
+    renderPass.SetPipeline(node_pipeline.wgpu_pipeline);
+
+    for (uint32_t i = 0; i < node_pipeline.vb_configs.size(); ++i) {
+      renderPass.SetVertexBuffer(i, node_pipeline.vb_configs[i].buffer, node_pipeline.vb_configs[i].offset,
+                                 node_pipeline.vb_configs[i].buffer.GetSize());
+    }
+
+    for (uint32_t i = 0; i < node_pipeline.ib_configs.size(); ++i) {
+      const auto& ibc = node_pipeline.ib_configs[i];
+      renderPass.SetIndexBuffer(ibc.buffer, ibc.format, ibc.offset, ibc.buffer.GetSize());
+    }
+
+    for (uint32_t i = 0; i < node_pipeline.bindGroups.size(); ++i) {
+      renderPass.SetBindGroup(i, node_pipeline.bindGroups[i], 0, nullptr);
+    }
+
+    renderPass.DrawIndexed(uint32_t(mesh_indices.size()), uint32_t(node_instances.size()));
+
+    renderPass.End();
+
+    wgpu::CommandBufferDescriptor cmdBufferDescriptor = {.label = "my command buffer"};
+    wgpu::CommandBuffer commands = encoder.Finish(&cmdBufferDescriptor);
+
+    webgpu.queue.Submit(1, &commands);
+
+    surface.wgpu_surface.Present();
   }
 }

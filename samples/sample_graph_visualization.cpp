@@ -4,10 +4,6 @@
 
 #include <random>
 
-struct Vertex {
-  glm::vec2 pos;
-};
-
 struct NodeInstance {
   glm::vec2 pos;
   float scale;
@@ -32,10 +28,10 @@ int main() {
   lab::Shader edge_shader("edge shader", "shaders/sample_graph_edge_shader.wgsl");
   lab::Pipeline edge_pipeline(edge_shader, webgpu);
 
-  const float h = sqrt(3.0f) / 2.0f;
-  std::vector<Vertex> mesh{
-      {{-0.5f, h}}, {{-1.0f, 0.0f}}, {{-0.5f, -h}}, // left
-      {{0.5f, -h}}, {{1.0f, 0.0f}},  {{0.5f, h}},   // right
+  const float k = 2.0f * sqrt(3.0f) / 3.0f;
+  std::vector<glm::vec2> mesh{
+      {-k * 0.5f, 1.0}, {-k, 0.0f}, {-k * 0.5f, -1.0}, // left
+      {k * 0.5f, -1.0}, {k, 0.0f},  {k * 0.5f, 1.0},   // right
   };
   std::vector<uint16_t> mesh_indices{
       0, 1, 2, // left   tri
@@ -44,7 +40,7 @@ int main() {
       3, 4, 5, // right  tri
   };
 
-  lab::Buffer<Vertex> mesh_vertex_buffer("mesh vertex buffer", mesh, webgpu);
+  lab::Buffer<glm::vec2> mesh_vertex_buffer("mesh vertex buffer", mesh, webgpu);
   lab::Buffer<uint16_t> mesh_index_buffer("mesh index buffer", mesh_indices, wgpu::BufferUsage::Index, webgpu);
 
   node_pipeline.add_vertex_buffer(mesh_vertex_buffer);
@@ -160,7 +156,7 @@ int main() {
 
     renderPass.End();
 
-    wgpu::CommandBufferDescriptor cmdBufferDescriptor = {.label = "lab default command buffer"};
+    wgpu::CommandBufferDescriptor cmdBufferDescriptor = {.label = "my command buffer"};
     wgpu::CommandBuffer commands = encoder.Finish(&cmdBufferDescriptor);
 
     webgpu.queue.Submit(1, &commands);
