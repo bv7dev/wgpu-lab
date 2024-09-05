@@ -58,7 +58,6 @@ struct Pipeline {
     finalize_config(shaderModule);
     finalize_bind_group();
     wgpu_pipeline = transfer();
-    // shaderModule.release();
   }
 
   struct DrawCallParams {
@@ -187,7 +186,7 @@ struct Pipeline {
 
   void add_bind_group_layout_buffer_entry(uint32_t binding, wgpu::ShaderStage visibility,
                                           wgpu::BufferBindingType buffer_type, uint64_t min_binding_size) {
-    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry; // = wgpu::Default;
+    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
 
@@ -199,7 +198,7 @@ struct Pipeline {
 
   void add_bind_group_buffer_entry(wgpu::Buffer wgpu_buffer, uint32_t binding_index, uint64_t size,
                                    uint64_t offset = 0) {
-    wgpu::BindGroupEntry bindGroupEntry; // = wgpu::Default;
+    wgpu::BindGroupEntry bindGroupEntry;
     bindGroupEntry.buffer = wgpu_buffer;
     bindGroupEntry.binding = binding_index;
 
@@ -210,7 +209,7 @@ struct Pipeline {
   }
 
   void add_bind_group_layout_texture_entry(uint32_t binding, wgpu::ShaderStage visibility) {
-    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry; // = wgpu::Default;
+    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
 
@@ -223,7 +222,7 @@ struct Pipeline {
   }
 
   void add_bind_group_texture_entry(wgpu::TextureView texture_view, uint32_t binding_index) {
-    wgpu::BindGroupEntry bindGroupEntry; // = wgpu::Default;
+    wgpu::BindGroupEntry bindGroupEntry;
     bindGroupEntry.textureView = texture_view;
     bindGroupEntry.binding = binding_index;
 
@@ -241,21 +240,19 @@ struct Pipeline {
     std::string layoutLabel{groupLabel};
     layoutLabel.append(" Layout");
 
-    wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc; // = wgpu::Default;
+    wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc;
     bindGroupLayoutDesc.entryCount = bindGroupLayoutEntries.size();
     bindGroupLayoutDesc.entries = bindGroupLayoutEntries.data();
     bindGroupLayoutDesc.label = layoutLabel.c_str();
 
-    // bindGroupLayouts.push_back(webgpu.device.createBindGroupLayout(bindGroupLayoutDesc));
     bindGroupLayouts.push_back(webgpu.device.CreateBindGroupLayout(&bindGroupLayoutDesc));
 
-    wgpu::BindGroupDescriptor bindGroupDesc; // = wgpu::Default;
+    wgpu::BindGroupDescriptor bindGroupDesc;
     bindGroupDesc.layout = bindGroupLayouts.back();
     bindGroupDesc.entryCount = bindGroupEntries.size();
     bindGroupDesc.entries = bindGroupEntries.data();
     bindGroupDesc.label = groupLabel.c_str();
 
-    // bindGroups.push_back(webgpu.device.createBindGroup(bindGroupDesc));
     bindGroups.push_back(webgpu.device.CreateBindGroup(&bindGroupDesc));
 
     bindGroupLayoutEntries.clear();
