@@ -3,6 +3,8 @@
 
 #include <dawn/webgpu_cpp.h>
 
+#include <string>
+
 namespace lab {
 
 struct Shader {
