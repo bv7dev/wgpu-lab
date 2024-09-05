@@ -17,7 +17,8 @@ struct Shader {
   // Warning! User is responsible to `.release()` the returned shader module
   // - be careful not to leak resources if you need to use it directly
   // - by default, it's automatically managed, see: `Pipeline::init()`
-  [[nodiscard]] wgpu::ShaderModule transfer(wgpu::Device device) const;
+  [[nodiscard]] wgpu::ShaderModule transfer(wgpu::Device device,
+                                            wgpu::SType struct_type = wgpu::SType::ShaderModuleWGSLDescriptor) const;
 };
 
 } // namespace lab

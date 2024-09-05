@@ -98,5 +98,7 @@
         "ranges": "cpp",
         "lab": "cpp",
         "*.inc": "cpp"
-    }
+    },
+    "editor.formatOnSave": true,
+    "C_Cpp.formatting": "clangFormat"
 }
