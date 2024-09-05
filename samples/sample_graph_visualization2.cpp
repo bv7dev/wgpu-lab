@@ -29,11 +29,16 @@ int main() {
   };
 
   struct VsInput {
-    @location(0) vertex_pos : vec2f, @location(1) vertex_side : f32, @location(2) pos : vec2f, @location(3) scale : f32,
+    @location(0) vertex_pos : vec2f,
+    @location(1) vertex_side : f32,
+    @location(2) pos : vec2f,
+    @location(3) scale : f32,
   };
 
   struct VsOutput {
-    @builtin(position) position : vec4f, @location(0) pos : vec2f,
+    @builtin(position) position : vec4f,
+    @location(0) pos : vec2f,
+    @location(1) side: f32,
   };
 
   @group(0) @binding(0) var<uniform> uniforms : Uniforms;
@@ -46,6 +51,7 @@ int main() {
     }
     out.position = vec4f((in.pos + vpos * in.scale) * uniforms.ratio, 0.0, 1.0);
     out.pos = in.vertex_pos;
+    out.side = in.vertex_side;
     return out;
   }
 
@@ -54,7 +60,8 @@ int main() {
     if (intensity <= 0.0) {
       return vec4f(0.2, 0.0, 0.0, 0.2);
     }
-    return vec4f(0.2 + intensity * 0.8);
+    return vec4f(0.2 + intensity * 0.8)*(vec4f(1.0, 0.7, 0.7, 1.0) * max(in.side, 0.4)) +
+           vec4f(0.2 + intensity * 0.8)*(vec4f(0.7, 0.7, 1.0, 1.0) * max(-in.side, 0.4));
   }
   )";
 
