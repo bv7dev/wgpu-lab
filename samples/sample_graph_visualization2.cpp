@@ -28,9 +28,12 @@ int main() {
     ratio : vec2f, time : f32,
   };
 
-  struct VsInput {
-    @location(0) vertex_pos : vec2f,
-    @location(1) vertex_side : f32,
+  struct Vertex {
+    @location(0) pos : vec2f,
+    @location(1) side : f32,
+  };
+
+  struct Instance {
     @location(2) pos : vec2f,
     @location(3) scale : f32,
   };
@@ -43,25 +46,29 @@ int main() {
 
   @group(0) @binding(0) var<uniform> uniforms : Uniforms;
 
-  @vertex fn vs_main(in : VsInput) -> VsOutput {
+  @vertex fn vs_main(vtx: Vertex, ins: Instance) -> VsOutput {
     var out : VsOutput;
-    var vpos = in.vertex_pos;
-    if (in.vertex_side > 0.0) {
+    var vpos = vtx.pos;
+    if (vtx.side > 0.0) {
       vpos.x += 0.4;
     }
-    out.position = vec4f((in.pos + vpos * in.scale) * uniforms.ratio, 0.0, 1.0);
-    out.pos = in.vertex_pos;
-    out.side = in.vertex_side;
+    out.position = vec4f((ins.pos + vpos * ins.scale) * uniforms.ratio, 0.0, 1.0);
+    out.pos = vtx.pos;
+    out.side = vtx.side;
     return out;
   }
 
   @fragment fn fs_main(in : VsOutput) -> @location(0) vec4f {
-    let intensity = pow(1.0 - length(in.pos), 1.0);
-    if (intensity <= 0.0) {
-      return vec4f(0.2, 0.0, 0.0, 0.2);
-    }
-    return vec4f(0.2 + intensity * 0.8)*(vec4f(1.0, 0.7, 0.7, 1.0) * max(in.side, 0.4)) +
-           vec4f(0.2 + intensity * 0.8)*(vec4f(0.7, 0.7, 1.0, 1.0) * max(-in.side, 0.4));
+    let intensity = pow(1.0 - length(in.pos), 5.0);
+
+    // // colorize sides
+    // if (intensity <= 0.02) {
+    //   return vec4f(0.2, 0.0, 0.0, 0.2);
+    // }
+    // return vec4f(0.2 + intensity * 0.8)*(vec4f(1.0, 0.7, 0.7, 1.0) * max(in.side, 0.4)) +
+    //        vec4f(0.2 + intensity * 0.8)*(vec4f(0.7, 0.7, 1.0, 1.0) * max(-in.side, 0.4));
+
+    return vec4f(intensity);
   }
   )";
 
@@ -75,7 +82,7 @@ int main() {
 
   std::vector<uint16_t> mesh_indices{
       0, 1, 2, 2, 3, 0, // left quad
-      3, 2, 5, 5, 4, 3, // central degenerate quad
+      3, 2, 5, 5, 4, 3, // central quad
       4, 5, 6, 6, 7, 4, // right quad
   };
 
@@ -89,7 +96,7 @@ int main() {
   node_pipeline.add_index_buffer(mesh_index_buffer, wgpu::IndexFormat::Uint16);
 
   std::vector<NodeInstance> node_instances;
-  node_instances.push_back({.pos = {0.0f, 0.0f}, .scale = 1.0f});
+  node_instances.push_back({.pos = {0.0f, 0.0f}, .scale = 0.2f});
   lab::Buffer<NodeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
 
   node_pipeline.add_vertex_buffer(node_instance_buffer, wgpu::VertexStepMode::Instance);
