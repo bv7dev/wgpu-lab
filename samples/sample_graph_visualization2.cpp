@@ -48,18 +48,18 @@ int main() {
 
   @vertex fn vs_main(vtx: Vertex, ins: Instance) -> VsOutput {
     var out : VsOutput;
-    var vpos = vtx.pos;
+    var offset = vec2f(0.0);
     if (vtx.side > 0.0) {
-      vpos.x += 0.4;
+      offset.x += 0.4;
     }
-    out.position = vec4f((ins.pos + vpos * ins.scale) * uniforms.ratio, 0.0, 1.0);
+    out.position = vec4f(((ins.pos + vtx.pos*ins.scale) + offset)*uniforms.ratio, 0.0, 1.0);
     out.pos = vtx.pos;
     out.side = vtx.side;
     return out;
   }
 
   @fragment fn fs_main(in : VsOutput) -> @location(0) vec4f {
-    let intensity = pow(1.0 - length(in.pos), 5.0);
+    let intensity = pow(1.0 - length(in.pos), 2.0);
 
     // // colorize sides
     // if (intensity <= 0.02) {
@@ -96,7 +96,8 @@ int main() {
   node_pipeline.add_index_buffer(mesh_index_buffer, wgpu::IndexFormat::Uint16);
 
   std::vector<NodeInstance> node_instances;
-  node_instances.push_back({.pos = {0.0f, 0.0f}, .scale = 0.2f});
+  node_instances.push_back({.pos = {0.0f, 0.0f}, .scale = 0.08f});
+
   lab::Buffer<NodeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
 
   node_pipeline.add_vertex_buffer(node_instance_buffer, wgpu::VertexStepMode::Instance);
