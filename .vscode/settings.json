@@ -97,8 +97,11 @@
         "expected": "cpp",
         "ranges": "cpp",
         "lab": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp"
     },
     "editor.formatOnSave": true,
-    "C_Cpp.formatting": "clangFormat"
+    "C_Cpp.formatting": "clangFormat",
+    "C_Cpp.default.cppStandard": "c++20"
 }
