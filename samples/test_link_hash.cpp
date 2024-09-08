@@ -10,7 +10,7 @@ template<>
 struct std::formatter<ui4> : std::formatter<std::string> {
   auto format(ui4 i, format_context& ctx) const { return formatter<string>::format(std::format("{}", i.value), ctx); }
 };
-std::ostream& operator<<(std::ostream& o, ui4 i) { return o << i.value; }
+std::ostream& operator<<(std::ostream& o, ui4 i) { return o << unsigned(i.value); }
 
 struct ui8 {
   ui8(const ui4& high, const ui4& low) : value{uint8_t(high.value << 4 | low.value)} {}
@@ -24,7 +24,7 @@ template<>
 struct std::formatter<ui8> : std::formatter<std::string> {
   auto format(ui8 i, format_context& ctx) const { return formatter<string>::format(std::format("{}", i.value), ctx); }
 };
-std::ostream& operator<<(std::ostream& o, ui8 i) { return o << i.value; }
+std::ostream& operator<<(std::ostream& o, ui8 i) { return o << unsigned(i.value); }
 
 struct Link {
   ui8 key;
@@ -43,7 +43,7 @@ int main() {
   uint8_t z = a + b;
   ui4 w = a + d;
 
-  std::cout << int(w) << int(c) << int(a) << std::endl;
-
-  cout << format("{}, {}, {}, {}\n{}, {}, {}, {}\n", a, b.value, c.value, d.value, x, y, z, w);
+  std::cout << w << c << a << std::endl;
+  cout << format("{}, {}, {}, {}\n", a, b, c, d);
+  cout << format("{}, {}, {}, {}\n", x, y, z, w);
 }
