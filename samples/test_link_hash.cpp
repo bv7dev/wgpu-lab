@@ -2,88 +2,10 @@
 #include <iostream>
 #include <string>
 
-#pragma region // unsigned types, 2, 4 and 8 bits
-
-// struct ui2 {
-//   ui2() = default;
-//   ui2(std::integral auto v) : value{uint8_t(v & 0x3u)} {}
-//   operator uint8_t() const { return value; }
-//   uint8_t operator++() {
-//     value = ++value & 0x3u;
-//     return value;
-//   }
-//   uint8_t operator++(int) {
-//     uint8_t old = value;
-//     operator++();
-//     return old;
-//   }
-//   uint8_t value;
-// };
-// template<>
-// struct std::formatter<ui2> : std::formatter<std::string> {
-//   auto format(ui2 i, format_context& ctx) const {
-//     return formatter<string>::format(std::format("{:1d} \x1b[90m{:02b}\x1b[0m", i.value, i.value), ctx);
-//   }
-// };
-// std::ostream& operator<<(std::ostream& o, ui2 i) { return o << unsigned(i.value); }
-
-// struct ui4 {
-//   ui4() = default;
-//   ui4(std::integral auto v) : value{uint8_t(v & 0xfu)} {}
-//   ui4(const ui2& high, const ui2& low) : value{uint8_t(high.value << 2 | low.value)} {}
-//   ui4(const ui2& low) : value{low.value} {}
-//   operator uint8_t() const { return value; }
-//   operator ui2() const { return ui2(value); }
-//   uint8_t operator++() {
-//     value = ++value & 0xfu;
-//     return value;
-//   }
-//   uint8_t operator++(int) {
-//     uint8_t old = value;
-//     operator++();
-//     return old;
-//   }
-//   ui2 high() { return ui2(value >> 2); }
-//   ui2 low() { return ui2(value); }
-//   uint8_t value;
-// };
-// template<>
-// struct std::formatter<ui4> : std::formatter<std::string> {
-//   auto format(ui4 i, format_context& ctx) const {
-//     return formatter<string>::format(std::format("{:2d} \x1b[90m{:04b}\x1b[0m", i.value, i.value), ctx);
-//   }
-// };
-// std::ostream& operator<<(std::ostream& o, ui4 i) { return o << unsigned(i.value); }
-
-// struct ui8 {
-//   ui8() = default;
-//   ui8(std::integral auto v) : value{uint8_t(v)} {}
-//   ui8(const ui4& high, const ui4& low) : value{uint8_t(high.value << 4 | low.value)} {}
-//   ui8(const ui4& low) : value{low.value} {}
-//   operator uint8_t() const { return value; }
-//   operator ui4() const { return ui4(value); }
-//   uint8_t operator++() { return ++value; }
-//   uint8_t operator++(int) { return value++; }
-//   ui4 high() { return ui4(value >> 4); }
-//   ui4 low() { return ui4(value); }
-//   uint8_t value;
-// };
-// template<>
-// struct std::formatter<ui8> : std::formatter<std::string> {
-//   auto format(ui8 i, format_context& ctx) const {
-//     return formatter<string>::format(std::format("{:3d} \x1b[90m{:08b}\x1b[0m", i.value, i.value), ctx);
-//   }
-// };
-// std::ostream& operator<<(std::ostream& o, ui8 i) { return o << unsigned(i.value); }
-
-#pragma endregion
 #pragma region // generic signed or unsigned integral type with variable bit length
 
-template<auto V>
-constexpr bool is_power_of_two = V == 0 || V == 1 || V && !(V & (V - 1));
-
 template<std::integral T, unsigned Bits>
-  requires is_power_of_two<Bits>
+  requires(Bits <= 1 || !(Bits & (Bits - 1)))
 struct Int {
   static const unsigned BitMask = (1 << Bits) - 1, HalfBits = Bits >> 1;
   Int() = default;
@@ -108,9 +30,13 @@ struct Int {
 template<std::integral T, unsigned Bits>
 struct std::formatter<Int<T, Bits>> : std::formatter<std::string> {
   auto format(Int<T, Bits> i, format_context& ctx) const {
-    auto maxlen = std::to_string((size_t(1u) << Bits) - 1).size();
-    auto fmtstr = std::format("{{:{}d}} \x1b[90m{{:0{}b}}\x1b[0m", maxlen, Bits);
-    return formatter<string>::format(std::vformat(fmtstr, std::make_format_args(i.value, i.value)), ctx);
+    if constexpr (Bits > 0) {
+      auto maxlen = std::to_string((size_t(1u) << Bits) - 1).size();
+      auto fmtstr = std::format("{{:{}d}} \x1b[90m{{:0{}b}}\x1b[0m", maxlen, Bits);
+      return formatter<string>::format(std::vformat(fmtstr, std::make_format_args(i.value, i.value)), ctx);
+    } else {
+      return formatter<string>::format("\x1b[90mnothing\x1b[0m", ctx);
+    }
   }
 };
 template<std::integral T, unsigned Bits>
@@ -126,6 +52,13 @@ using ui8 = Int<uint8_t, 8>;
 
 int main() {
 #pragma region // experiment with bit patterns
+
+  ui2 x = 2;
+  auto y = x.high();
+  auto z = y.low();
+  auto w = z.low();
+
+  std::cout << y << ", " << z << ", " << w << std::endl;
 
   for (int i = 0; i < 4; ++i) {
     for (ui4 a = 0; a < 4; ++a) {
