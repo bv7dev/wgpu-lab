@@ -26,7 +26,7 @@ int main() {
   lab::Pipeline pipeline(shader, webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0);
 
   pipeline.add_uniform_buffer(uniform_buffer, 0, wgpu::ShaderStage::Vertex | wgpu::ShaderStage::Fragment);
   pipeline.finalize();

@@ -44,12 +44,12 @@ int main() {
   lab::Buffer<uint16_t> mesh_index_buffer("mesh index buffer", mesh_indices, wgpu::BufferUsage::Index, webgpu);
 
   node_pipeline.add_vertex_buffer(mesh_vertex_buffer);
-  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
+  node_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0);
 
   node_pipeline.add_index_buffer(mesh_index_buffer, wgpu::IndexFormat::Uint16);
 
   edge_pipeline.add_vertex_buffer(mesh_vertex_buffer);
-  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
+  edge_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0);
 
   edge_pipeline.add_index_buffer(mesh_index_buffer, wgpu::IndexFormat::Uint16);
   // TODO: add mechanism to avoid duplicate setups like above:
@@ -69,8 +69,8 @@ int main() {
   lab::Buffer<NodeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
 
   node_pipeline.add_vertex_buffer(node_instance_buffer, wgpu::VertexStepMode::Instance);
-  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
-  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 2);
+  node_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 1);
+  node_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32, 2);
 
   std::vector<EdgeInstance> edge_instances;
   edge_instances.push_back({.pos_a = {0.2f, 0.3f}, .pos_b = {0.8f, 0.5f}, .scale = 0.2f});
@@ -78,9 +78,9 @@ int main() {
   lab::Buffer<EdgeInstance> edge_instance_buffer("edge instance buffer", edge_instances, webgpu);
 
   edge_pipeline.add_vertex_buffer(edge_instance_buffer, wgpu::VertexStepMode::Instance);
-  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1);
-  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 2);
-  edge_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 3);
+  edge_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 1);
+  edge_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 2);
+  edge_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32, 3);
 
   lab::Window window("graph visualizer", 900, 600);
   lab::Surface surface(window, webgpu);

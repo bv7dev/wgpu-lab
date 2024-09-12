@@ -141,8 +141,8 @@ struct Pipeline {
     add_vertex_buffer(buffer.wgpu_buffer, mode, offset);
   }
 
-  void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location, uint64_t offset = ~0,
-                            uint64_t buffer_index = ~0) {
+  void add_vertex_attrib(wgpu::VertexFormat format, uint32_t shader_location, uint64_t offset = ~0,
+                         uint64_t buffer_index = ~0) {
     uint64_t bi = buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index;
     offset = offset == ~0 ? vertex_attributes_stride(vb_configs.at(bi).vertexAttributes) : offset;
     vb_configs.at(bi).vertexAttributes.push_back({

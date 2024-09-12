@@ -90,8 +90,8 @@ int main() {
   lab::Buffer mesh_index_buffer("mesh index buffer", mesh_indices, wgpu::BufferUsage::Index, webgpu);
 
   node_pipeline.add_vertex_buffer(mesh_vertex_buffer);
-  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
-  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1);
+  node_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0);
+  node_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32, 1);
 
   node_pipeline.add_index_buffer(mesh_index_buffer, wgpu::IndexFormat::Uint16);
 
@@ -101,8 +101,8 @@ int main() {
   lab::Buffer<NodeInstance> node_instance_buffer("node instance buffer", node_instances, webgpu);
 
   node_pipeline.add_vertex_buffer(node_instance_buffer, wgpu::VertexStepMode::Instance);
-  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 2);
-  node_pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 3);
+  node_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 2);
+  node_pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32, 3);
 
   lab::Window window("graph visualizer", 900, 600);
   lab::Surface surface(window, webgpu);

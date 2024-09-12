@@ -85,11 +85,11 @@ int main() {
                                              wgpu::BufferUsage::Vertex | wgpu::BufferUsage::CopyDst, webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0); // position
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1); // uv
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0); // position
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 1); // uv
 
   pipeline.add_vertex_buffer(instance_buffer, wgpu::VertexStepMode::Instance);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 2); // instance_position
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 2); // instance_position
 
   MyUniformData uniforms{.ratio = {window.ratio(), 1.f}, .scale = .2f};
   lab::Buffer<MyUniformData> uniform_buffer("My uniform buffer", {uniforms},

@@ -53,8 +53,8 @@ int main() {
   lab::Buffer<MyVertex> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0); // pos
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 1); // uv
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0); // pos
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 1); // uv
 
   MyUniforms uniforms{.ratio = {window.ratio(), 1.0f}, .time = 0.0f, .scale = 0.4f};
   lab::Buffer<MyUniforms> uniform_buffer("My uniform buffer", {uniforms},

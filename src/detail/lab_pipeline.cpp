@@ -165,9 +165,13 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface, const 
     renderPass.SetIndexBuffer(ibc.buffer, ibc.format, ibc.offset, ibc.buffer.GetSize());
   }
 
-  // renderPass.Draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
-  //                 draw_params.firstInstance);
-  renderPass.DrawIndexed(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex);
+  // TODO: only a temporary fix (avoid too many branches in render code)
+  if (self->ib_configs.size() == 0) {
+    renderPass.Draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
+                    draw_params.firstInstance);
+  } else {
+    renderPass.DrawIndexed(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex);
+  }
 
   renderPass.End();
   // renderPass.Release();
