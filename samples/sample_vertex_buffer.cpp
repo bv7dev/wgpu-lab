@@ -7,13 +7,14 @@ struct MyVertexFormat {
 
 int main() {
   lab::Webgpu webgpu("My WebGPU Context");
-  lab::Shader shader("My Shader", "shaders/vbuf2.wgsl");
+  lab::Shader shader("My Shader", "shaders/draw_colored.wgsl");
   lab::Pipeline pipeline(shader, webgpu);
 
   std::vector<MyVertexFormat> vertex_data = {
+      //         x      y                r     g     b
       {.pos = {-0.5f, -0.5f}, .color = {0.8f, 0.2f, 0.2f}},
-      {.pos = {+0.5f, -0.5f}, .color = {0.9f, 0.8f, 0.2f}},
-      {.pos = {+0.0f, +0.5f}, .color = {0.2f, 0.6f, 0.3f}},
+      {.pos = {+0.5f, -0.5f}, .color = {0.8f, 0.8f, 0.2f}},
+      {.pos = {+0.0f, +0.5f}, .color = {0.2f, 0.8f, 0.4f}},
   };
   lab::Buffer vertex_buffer("My Vertex Buffer", vertex_data, webgpu);
 
@@ -26,7 +27,7 @@ int main() {
   lab::Surface surface(window, webgpu);
 
   while (lab::tick()) {
-    pipeline.render_frame(surface, {3, 1});
+    pipeline.render_frame(surface, 3, 1);
     lab::sleep(50ms);
   }
 }

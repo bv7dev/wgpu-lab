@@ -1,54 +1,61 @@
-## wgpu-lab
+# wgpu lab
+wgpu-lab is a library designed for rapid prototyping of native `WebGPU` applications.
+Its primary purpose is to provide convenient wrappers and intuitive tools for 
+working with [WebGPU Dawn](https://dawn.googlesource.com/dawn).
 
-is a library for rapid prototyping of native WebGPU applications.
-Main purpose is to provide convenience wrappers and tools for working with WebGPU Dawn.
-Currently the library is in a very early, heavily experimental stage of development.
-Expect the API to change a lot until it is ready for a `1.0` release.
+Please note that this library is in an early, heavily experimental stage, 
+and the API is expected to undergo significant changes.
+
+**Contributions are welcome!**
+
+## Building the Library and Running Sample Executables
+wgpu-lab is intended to be included into projects as a Git submodule.
+Integration with other build systems should be straightforward.
+
+The library and sample executables are built using `CMake`.
+If you're developing the library or experimenting with the samples, I recommend using
+the `CMake Tools` extension for Visual Studio Code, provided by Microsoft.
+The build system is still a work in progress and may evolve over time.
+
+For Visual Studio Code users, there's a shared `.vscode/launch.json` configuration file.
+This setup allows you to build and run any `.cpp` file located inside the `./samples/`
+directory simply by opening it in the editor and pressing `F5`.
 
 
-### How to build the library and run sample executables
-
-wgpu-lab is intended to be included into projects as a git submodule. 
-Any other way to link it should be fine. Integration into other build systems should be trivial.
-Feel free to contribute.
-
-CMake is used to build the library and sample executables. 
-For developing the library I recommend using the `CMake Tools` extension for Visual Studio Code, provided by Microsoft. 
-The build system is work in progress and likely to change a lot in the future.
-
-If using VS Code, there is a shared `.vscode/launch.json` which enables to conveniently 
-build and run any `test_(...).cpp` or `sample_(...).cpp` file by simply opening it in 
-the editor and pressing `F5`
-
-
-### Simple Example
+## Simple Example - Vertex Buffer with Vertex Colors
 
 ```cpp
 #include <lab>
 
+struct MyVertexFormat {
+  float pos[2];
+  float color[3];
+};
+
 int main() {
   lab::Webgpu webgpu("My WebGPU Context");
-  lab::Shader shader("My Shader Module", "shaders/my_shader.wgsl");
-
-  lab::Window window("Vertex Buffer Demo", 640, 400);
-  lab::Surface surface(window, webgpu);
-
-  std::vector<float> vertex_data = {-0.5f,  -0.5f, 1.0f, +0.5f,  -0.5f, 0.6f, +0.0f,  0.5f, 0.2f,
-                                    -0.55f, -0.5f, 1.0f, -0.05f, +0.5f, 0.6f, -0.55f, 0.5f, 0.2f};
-
-  lab::Buffer<float> vertex_buffer("My vertex buffer", vertex_data, webgpu);
-
+  lab::Shader shader("My Shader", "shaders/draw_colored.wgsl");
   lab::Pipeline pipeline(shader, webgpu);
 
-  pipeline.add_vertex_buffer(vertex_buffer.wgpu_buffer);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0); // vec2 position
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1);   // color
+  std::vector<MyVertexFormat> vertex_data = {
+      //         x      y                r     g     b
+      {.pos = {-0.5f, -0.5f}, .color = {0.8f, 0.2f, 0.2f}},
+      {.pos = {+0.5f, -0.5f}, .color = {0.8f, 0.8f, 0.2f}},
+      {.pos = {+0.0f, +0.5f}, .color = {0.2f, 0.8f, 0.4f}},
+  };
+  lab::Buffer vertex_buffer("My Vertex Buffer", vertex_data, webgpu);
 
+  pipeline.add_vertex_buffer(vertex_buffer);
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0); // position
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x3, 1); // color
   pipeline.finalize();
 
+  lab::Window window("Hello Triangle", 640, 400);
+  lab::Surface surface(window, webgpu);
+
   while (lab::tick()) {
-    pipeline.render_frame(surface, {3, 1});
+    pipeline.render_frame(surface, 3, 1);
+    lab::sleep(50ms);
   }
 }
-
 ```
