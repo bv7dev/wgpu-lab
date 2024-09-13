@@ -36,15 +36,15 @@ struct Buffer {
         .size = sizeof(T) * data.size(),
         .mappedAtCreation = true,
     };
-    current.capacity = data.size();
+    current_capacity = data.size();
     wgpu_buffer = webgpu.device.CreateBuffer(&bufferDesc);
     void* map = wgpu_buffer.GetMappedRange(0, sizeof(T) * data.size());
     memcpy(map, data.data(), sizeof(T) * data.size());
     wgpu_buffer.Unmap();
   }
 
-  using WriteCallback = std::function<void(MappedVRAM<T>&&)>;
-  void to_device(WriteCallback write_func, size_t capacity, wgpu::BufferUsage usage) {
+  using WriteCallback = std::function<void(MappedVRAM<T>)>;
+  std::jthread to_device(WriteCallback write_func, size_t capacity, wgpu::BufferUsage usage) {
     assert(wgpu_buffer == nullptr);
     wgpu::BufferDescriptor bufferDesc{
         .label = label,
@@ -53,47 +53,40 @@ struct Buffer {
         .mappedAtCreation = true,
     };
     wgpu_buffer = webgpu.device.CreateBuffer(&bufferDesc);
-    current.capacity = capacity;
-
-    auto write_thread = std::thread(
-        [](WriteCallback write_func, size_t capacity, wgpu::Buffer buffer) {
-          auto map = reinterpret_cast<T*>(buffer.GetMappedRange(0, sizeof(T) * capacity));
-          MappedVRAM<T> vmap{{map, capacity}, 0, buffer};
-          write_func(std::move(vmap));
-        },
-        write_func, capacity, wgpu_buffer);
-    write_thread.detach();
+    current_capacity = capacity;
+    return std::jthread{[](WriteCallback write_func, size_t capacity, wgpu::Buffer buffer) {
+                          auto map = reinterpret_cast<T*>(buffer.GetMappedRange(0, sizeof(T) * capacity));
+                          MappedVRAM<T> vmap{{map, capacity}, 0, buffer};
+                          write_func(std::move(vmap));
+                        },
+                        write_func, capacity, wgpu_buffer};
   }
 
-  using ReadCallback = std::function<void(ConstMappedVRAM<T>&&)>;
-  void from_device(size_t offset, size_t num_elems, ReadCallback read_func) {
-    assert(wgpu_buffer != nullptr && current.mapping == false);
-    current = {read_func, offset, num_elems, current.capacity, true};
+  using ReadCallback = std::function<void(MappedVRAM<const T>)>;
+  std::jthread from_device(size_t offset, size_t num_elems, ReadCallback read_func) {
+    assert(wgpu_buffer != nullptr);
     wgpu::Future future = wgpu_buffer.MapAsync(
         wgpu::MapMode::Read, sizeof(T) * offset, sizeof(T) * num_elems, wgpu::CallbackMode::WaitAnyOnly,
         [](wgpu::MapAsyncStatus status, char const* message, Buffer* self) {
           if (status == wgpu::MapAsyncStatus::Success) {
             std::cout << "Info: Buffer: " << self->label << " successfully mapped memory!" << std::endl;
-            auto read_thread = std::thread(
-                [](Buffer* self) {
-                  ConstMappedVRAM<T> vmap{{reinterpret_cast<const T*>(self->wgpu_buffer.GetConstMappedRange(
-                                               sizeof(T) * self->current.offset, sizeof(T) * self->current.num_elems)),
-                                           self->current.num_elems},
-                                          self->current.num_elems,
-                                          self->wgpu_buffer};
-                  self->current.user_callback(std::move(vmap));
-                  self->current = {nullptr, 0, 0, false, 0}; // user callback finished
-                },
-                self);
-            read_thread.detach();
           } else {
             std::cerr << "Error: Buffer: " << message << std::endl;
           }
         },
         this);
     webgpu.instance.WaitAny(future, UINT64_MAX);
+    return std::jthread{[](ReadCallback read_func, size_t offset, size_t num_elems, wgpu::Buffer buffer) {
+                          MappedVRAM<const T> vmap{{reinterpret_cast<const T*>(buffer.GetConstMappedRange(
+                                                        sizeof(T) * offset, sizeof(T) * num_elems)),
+                                                    num_elems},
+                                                   num_elems,
+                                                   buffer};
+                          read_func(std::move(vmap));
+                        },
+                        read_func, offset, num_elems, wgpu_buffer};
   }
-  auto from_device(ReadCallback read_func) { return from_device(0, current.capacity, read_func); }
+  inline std::jthread from_device(ReadCallback read_func) { return from_device(0, current_capacity, read_func); }
 
   // write a single element to an existing buffer (needs CopyDst flag)
   void write(const T& elem, uint64_t offset = 0) {
@@ -113,17 +106,9 @@ struct Buffer {
   }
 
   wgpu::Buffer wgpu_buffer = nullptr;
-  Webgpu& webgpu;
-
-private:
-  struct ReadThreadContext {
-    ReadCallback user_callback;
-    size_t offset, num_elems;
-    size_t capacity;
-    bool mapping;
-  } current{};
-
+  size_t current_capacity;
   const char* label;
+  Webgpu& webgpu;
 };
 
 } // namespace lab

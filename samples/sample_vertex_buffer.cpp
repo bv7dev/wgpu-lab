@@ -11,7 +11,7 @@ int main() {
   lab::Pipeline pipeline(shader, webgpu);
 
   std::vector<MyVertexFormat> vertex_data = {
-      //         x      y                r     g     b
+      //         X      Y                R     G     B
       {.pos = {-0.5f, -0.5f}, .color = {0.8f, 0.2f, 0.2f}},
       {.pos = {+0.5f, -0.5f}, .color = {0.8f, 0.8f, 0.2f}},
       {.pos = {+0.0f, +0.5f}, .color = {0.2f, 0.8f, 0.4f}},
