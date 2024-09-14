@@ -171,8 +171,8 @@ struct Pipeline {
 
   template<typename T>
   void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index, wgpu::ShaderStage visibility) {
-    add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
     add_bind_group_layout_buffer_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
+    add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
   }
 
   void add_texture(const Texture& texture, uint32_t binding,
@@ -208,15 +208,17 @@ struct Pipeline {
     bindGroupEntries.push_back(bindGroupEntry);
   }
 
-  void add_bind_group_layout_texture_entry(uint32_t binding, wgpu::ShaderStage visibility) {
+  void add_bind_group_layout_texture_entry(uint32_t binding, wgpu::ShaderStage visibility,
+                                           wgpu::TextureSampleType sampleType = wgpu::TextureSampleType::Float,
+                                           wgpu::TextureViewDimension viewDimension = wgpu::TextureViewDimension::e2D,
+                                           wgpu::Bool multisampled = false) {
     wgpu::BindGroupLayoutEntry bindGroupLayoutEntry;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
 
-    // TODO: make configurable
-    bindGroupLayoutEntry.texture.multisampled = false;
-    bindGroupLayoutEntry.texture.sampleType = wgpu::TextureSampleType::Float;
-    bindGroupLayoutEntry.texture.viewDimension = wgpu::TextureViewDimension::e2D;
+    bindGroupLayoutEntry.texture.multisampled = multisampled;
+    bindGroupLayoutEntry.texture.sampleType = sampleType;
+    bindGroupLayoutEntry.texture.viewDimension = viewDimension;
 
     bindGroupLayoutEntries.push_back(bindGroupLayoutEntry);
   }
@@ -232,7 +234,7 @@ struct Pipeline {
   std::vector<wgpu::BindGroup> bindGroups{};
   std::vector<wgpu::BindGroupLayout> bindGroupLayouts{};
 
-  void finalize_bind_group(const char* group_label = "Default Bind Group") {
+  void finalize_bind_group(const char* group_label = "lab default bind group") {
     std::string groupLabel{label};
     groupLabel.append(" - ");
     groupLabel.append(group_label);

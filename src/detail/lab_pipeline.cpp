@@ -70,7 +70,6 @@ wgpu::TextureView get_current_render_texture_view(wgpu::Surface surface) {
       .arrayLayerCount = 1,
       .aspect = wgpu::TextureAspect::All,
   };
-  // return wgpuTextureCreateView(surfaceTexture.texture, &viewDescriptor);
   return surfaceTexture.texture.CreateView(&viewDescriptor);
 }
 
@@ -127,7 +126,6 @@ wgpu::RenderPipeline Pipeline::transfer() const {
 
 void Pipeline::reset() {
   if (wgpu_pipeline) {
-    // wgpu_pipeline.release();
     wgpu_pipeline = nullptr;
   }
 }
@@ -143,10 +141,14 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface, const 
   wgpu::CommandEncoder encoder = self->webgpu.device.CreateCommandEncoder(&encoderDesc);
 
   self->render_config.renderPassColorAttachment.view = targetView;
-  self->render_config.renderPassDesc.colorAttachmentCount = 1;
-  self->render_config.renderPassDesc.colorAttachments = &self->render_config.renderPassColorAttachment;
 
-  wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&self->render_config.renderPassDesc);
+  wgpu::RenderPassDescriptor renderPassDesc = {
+      .label = "lab default render pass",
+      .colorAttachmentCount = 1,
+      .colorAttachments = &self->render_config.renderPassColorAttachment,
+  };
+
+  wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&renderPassDesc);
   renderPass.SetPipeline(self->wgpu_pipeline);
 
   for (uint32_t i = 0; i < self->vb_configs.size(); ++i) {
@@ -174,16 +176,11 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface, const 
   }
 
   renderPass.End();
-  // renderPass.Release();
 
   wgpu::CommandBufferDescriptor cmdBufferDescriptor = {.label = "lab default command buffer"};
   wgpu::CommandBuffer commands = encoder.Finish(&cmdBufferDescriptor);
-  // encoder.release();
 
   self->webgpu.queue.Submit(1, &commands);
-  // commands.release();
-
-  // targetView.release();
   surface.Present();
 
   return true;

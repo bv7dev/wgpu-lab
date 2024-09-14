@@ -90,7 +90,6 @@ struct MappedVRAM {
   }
   ~MappedVRAM() { unmap(); }
 
-private:
   wgpu::Buffer wgpu_buffer;
   std::span<T> data_view;
   size_t view_size;

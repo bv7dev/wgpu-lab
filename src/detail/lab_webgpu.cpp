@@ -78,8 +78,6 @@ Webgpu::Webgpu(const char* label) : label{label} {
       &device);
   instance.WaitAny(future, UINT64_MAX);
 
-  // device.SetUncapturedErrorCallback(onDeviceError, nullptr);
-
   surface.GetCapabilities(adapter, &capabilities);
   glfwDestroyWindow(window);
 

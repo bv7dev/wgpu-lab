@@ -6,8 +6,7 @@
 // todo: maybe: controller support
 // idea: maybe: bi-directional map to lookup all enum fields by strings and vice versa
 // todo: maybe: generator script to produce this header
-//       with strings and potentially new enums
-// todo: overload cout << to be able to print enums
+// todo: overload cout << and std::formatter to be able to print enums
 
 namespace lab {
 
@@ -177,6 +176,15 @@ enum class MouseButton {
   b7 = 6,
   b8 = 7,
 };
+
+struct KeyEvent {
+  KeyCode key = KeyCode::unknown;
+  KeyAction action = KeyAction::none;
+  ModKey mod = ModKey::none;
+  int scancode = 0;
+};
+
+bool operator==(const KeyEvent& lhs, const KeyEvent& rhs);
 
 } // namespace lab
 

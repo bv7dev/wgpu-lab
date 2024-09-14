@@ -59,8 +59,7 @@ struct Texture {
         .rowsPerImage = descriptor.size.height,
     };
 
-    webgpu.queue.WriteTexture(&target, pixels.data(), pixels.size() * sizeof(T), &layout,
-                              &descriptor.size);
+    webgpu.queue.WriteTexture(&target, pixels.data(), pixels.size() * sizeof(T), &layout, &descriptor.size);
   }
 
   inline int width() const noexcept { return static_cast<int>(descriptor.size.width); }
@@ -85,6 +84,7 @@ struct Texture {
   ~Texture() {
     if (wgpu_texture) {
       wgpu_texture.Destroy();
+      wgpu_texture = nullptr;
     }
   }
 };

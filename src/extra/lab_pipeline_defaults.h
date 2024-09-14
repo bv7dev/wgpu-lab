@@ -50,11 +50,6 @@ struct RenderConfig {
       .storeOp = wgpu::StoreOp::Store,
       .clearValue = wgpu::Color{0.08, 0.08, 0.085, 1.0},
   };
-
-  wgpu::RenderPassDescriptor renderPassDesc = {
-      .label = "Default Render Pass",
-      .colorAttachmentCount = 1,
-  };
 };
 
 } // namespace lab::pipeline_defaults

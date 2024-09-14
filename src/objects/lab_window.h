@@ -8,47 +8,32 @@
 
 namespace lab {
 
-struct KeyEvent {
-  KeyCode key = KeyCode::unknown;
-  KeyAction action = KeyAction::none;
-  ModKey mod = ModKey::none;
-  int scancode = 0;
-};
-
-bool operator==(const KeyEvent& lhs, const KeyEvent& rhs);
-
 struct Window {
-  using KeyCallback = std::function<void(const KeyEvent&)>;
-  using ResizeCallback = std::function<void(int width, int height)>;
-
   Window(const char* title, int width, int height);
 
   Window(const Window&) = delete;
   Window& operator=(const Window&) = delete;
 
-  void set_key_callback(KeyCallback);
+  void set_key_callback(std::function<void(const KeyEvent&)>);
   void clear_key_callback();
 
-  void set_resize_callback(ResizeCallback);
+  void set_resize_callback(std::function<void(int width, int height)>);
   void clear_resize_callback();
 
   void set_title(const char* title);
 
   int width() const;
   int height() const;
-  float ratio() const { return (1.f / width()) * height(); }
-
-  GlfwWindowHandle get_handle() const;
+  float ratio() const;
 
   bool is_open() const;
-
   void close();
   ~Window();
 
-private:
-  KeyCallback user_key_callback;
-  ResizeCallback user_resize_callback;
-  GlfwWindowHandle handle;
+  std::function<void(int width, int height)> user_resize_callback;
+  std::function<void(const KeyEvent&)> user_key_callback;
+
+  GLFWwindowHandle glfw_window_handle;
 };
 
 } // namespace lab

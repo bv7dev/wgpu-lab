@@ -6,8 +6,8 @@
 namespace lab {
 
 Surface::Surface(Window& wnd, Webgpu& wgpu)
-    : window{wnd}, webgpu{wgpu}, wgpu_surface{wgpu::glfw::CreateSurfaceForWindow(
-                                     wgpu.instance, wnd.get_handle())} {
+    : window{wnd}, webgpu{wgpu},
+      wgpu_surface{wgpu::glfw::CreateSurfaceForWindow(wgpu.instance, wnd.glfw_window_handle)} {
   reconfigure();
   window.set_resize_callback([&](int width, int height) {
     if (width > 0 && height > 0) {
@@ -34,7 +34,6 @@ void Surface::reconfigure() { reconfigure(window.width(), window.height()); }
 Surface::~Surface() {
   if (wgpu_surface) {
     wgpu_surface.Unconfigure();
-    // wgpu_surface.release();
     wgpu_surface = nullptr;
   }
 }

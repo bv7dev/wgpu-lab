@@ -113,11 +113,13 @@ int main() {
     wgpu::CommandEncoder encoder = node_pipeline.webgpu.device.CreateCommandEncoder(&encoderDesc);
 
     node_pipeline.render_config.renderPassColorAttachment.view = targetView;
-    node_pipeline.render_config.renderPassDesc.colorAttachmentCount = 1;
-    node_pipeline.render_config.renderPassDesc.colorAttachments =
-        &node_pipeline.render_config.renderPassColorAttachment;
+    wgpu::RenderPassDescriptor renderPassDesc{
+        .label = "my render pass",
+        .colorAttachmentCount = 1,
+        .colorAttachments = &node_pipeline.render_config.renderPassColorAttachment,
+    };
 
-    wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&node_pipeline.render_config.renderPassDesc);
+    wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&renderPassDesc);
     renderPass.SetPipeline(node_pipeline.wgpu_pipeline);
 
     for (uint32_t i = 0; i < node_pipeline.vb_configs.size(); ++i) {
