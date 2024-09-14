@@ -70,7 +70,8 @@ The library currently only depends on [WebGPU Dawn](https://dawn.googlesource.co
 It also makes heavy use of the C++ STL (see `./src/extra/lab_public.h`).
 However, to build all of the sample executables, you'll also need to add
 [GLM](https://github.com/g-truc/glm) and [tinygltf](https://github.com/syoyo/tinygltf)
-to the `./libs` directory.
+to the `./libs` directory. Lastly, Python needs to be installed so that
+dawn can fetch it's many dependencies (Tested with Python 3.10)
 
 ### Work in Progress
 - Based on previous unpleasant experiences, I've decided not to add wgpu-lab's dependencies as Git submodules for now.
