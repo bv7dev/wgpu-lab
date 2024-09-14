@@ -67,6 +67,7 @@ simply by opening it in the editor and pressing `F5`.
 ### Dependencies
 The library currently only depends on [WebGPU Dawn](https://dawn.googlesource.com/dawn) and uses
 [GLFW](https://www.glfw.org/) for windowing, which already comes along with dawn.
+It also makes heavy use of the C++ STL (see `./src/extra/lab_public.h`).
 However, to build all of the sample executables, you'll also need to add
 [GLM](https://github.com/g-truc/glm) and [tinygltf](https://github.com/syoyo/tinygltf)
 to the `./libs` directory.
