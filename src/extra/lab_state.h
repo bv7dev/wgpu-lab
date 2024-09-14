@@ -11,7 +11,7 @@
 
 namespace lab {
 
-using WindowMap = std::unordered_map<GlfwWindowHandle, WindowHandle>;
+using WindowMap = std::unordered_map<GLFWwindowHandle, WindowHandle>;
 
 extern struct State {
   WindowMap window_map{};

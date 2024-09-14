@@ -3,9 +3,10 @@
 int main() {
   using namespace lab;
 
-  Webgpu webgpu("My Instance");
-  Shader shader("My Shader", "shaders/test1.wgsl");
-  Window window("pipeline tests", 640, 400);
+  Webgpu webgpu("My WebGPU Context");
+  Shader shader("My Shader Module", "shaders/test1.wgsl");
+
+  Window window("Triangle Wireframe Demo", 640, 400);
 
   Surface surface(window, webgpu);
 
@@ -31,6 +32,5 @@ int main() {
   while (tick()) {
     Pipeline::DrawCallParams draw_params(3, 1); // draw 3 vertices and 1 instance
     pipeline.render_frame(surface, draw_params);
-    sleep(50ms);
   }
 }

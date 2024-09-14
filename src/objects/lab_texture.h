@@ -12,7 +12,7 @@ namespace lab {
 struct Texture {
   Webgpu& webgpu;
 
-  WGPUTextureDescriptor descriptor = {
+  wgpu::TextureDescriptor descriptor = {
       .label = "lab default texture",
       .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
       .mipLevelCount = 1,
@@ -25,11 +25,11 @@ struct Texture {
           uint32_t depthOrArrayLayers = 1)
       : webgpu{instance} {
     if (height > 1 && depthOrArrayLayers > 1) {
-      descriptor.dimension = wgpu::TextureDimension::_3D;
+      descriptor.dimension = wgpu::TextureDimension::e3D;
     } else if (height > 1 && depthOrArrayLayers == 1) {
-      descriptor.dimension = wgpu::TextureDimension::_2D;
+      descriptor.dimension = wgpu::TextureDimension::e2D;
     } else if (height == 1 && depthOrArrayLayers == 1) {
-      descriptor.dimension = wgpu::TextureDimension::_1D;
+      descriptor.dimension = wgpu::TextureDimension::e1D;
     }
     descriptor.size = {width, height, depthOrArrayLayers};
     descriptor.format = format;
@@ -38,9 +38,9 @@ struct Texture {
   Texture(const Texture&) = delete;
   Texture& operator=(const Texture&) = delete;
 
-  [[nodiscard]] wgpu::Texture transfer() { return webgpu.device.createTexture(descriptor); }
+  [[nodiscard]] wgpu::Texture transfer() { return webgpu.device.CreateTexture(&descriptor); }
 
-  WGPUImageCopyTexture target = {
+  wgpu::ImageCopyTexture target = {
       .mipLevel = 0,
       .origin = {0, 0, 0},
       .aspect = wgpu::TextureAspect::All,
@@ -53,22 +53,21 @@ struct Texture {
     wgpu_texture = transfer();
     target.texture = wgpu_texture;
 
-    WGPUTextureDataLayout layout = {
+    wgpu::TextureDataLayout layout = {
         .offset = 0,
         .bytesPerRow = sizeof(T) * descriptor.size.width,
         .rowsPerImage = descriptor.size.height,
     };
 
-    webgpu.queue.writeTexture(target, pixels.data(), pixels.size() * sizeof(T), layout,
-                              descriptor.size);
+    webgpu.queue.WriteTexture(&target, pixels.data(), pixels.size() * sizeof(T), &layout, &descriptor.size);
   }
 
   inline int width() const noexcept { return static_cast<int>(descriptor.size.width); }
   inline int height() const noexcept { return static_cast<int>(descriptor.size.height); }
 
-  mutable WGPUTextureViewDescriptor textureViewDesc = {
+  mutable wgpu::TextureViewDescriptor textureViewDesc = {
       .label = "lab default texture view",
-      .dimension = wgpu::TextureViewDimension::_2D,
+      .dimension = wgpu::TextureViewDimension::e2D,
       .baseMipLevel = 0,
       .mipLevelCount = 1,
       .baseArrayLayer = 0,
@@ -79,13 +78,13 @@ struct Texture {
   [[nodiscard]] wgpu::TextureView create_view() const {
     assert(wgpu_texture != nullptr);
     textureViewDesc.format = descriptor.format;
-    return wgpuTextureCreateView(wgpu_texture, &textureViewDesc);
+    return wgpu_texture.CreateView(&textureViewDesc);
   }
 
   ~Texture() {
     if (wgpu_texture) {
-      wgpu_texture.destroy();
-      wgpu_texture.release();
+      wgpu_texture.Destroy();
+      wgpu_texture = nullptr;
     }
   }
 };

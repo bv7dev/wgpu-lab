@@ -10,12 +10,18 @@
 #include <objects/lab_texture.h>
 #include <objects/lab_webgpu.h>
 
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 namespace lab {
 
 // returns size in bytes of given wgpu::VertexFormat
-uint64_t vertex_format_size(wgpu::VertexFormat);
+constexpr uint64_t vertex_format_size(const wgpu::VertexFormat& format);
+
+// returns the total stride of a given vector of wgpu::VertexAttribute objects
+uint64_t vertex_attributes_stride(const std::vector<wgpu::VertexAttribute>& vertexAttributes);
+
+// todo: remove ?
+wgpu::TextureView get_current_render_texture_view(wgpu::Surface surface);
 
 // Is responsible to manage the process of rendering frames onto surfaces
 struct Pipeline {
@@ -52,15 +58,13 @@ struct Pipeline {
     finalize_config(shaderModule);
     finalize_bind_group();
     wgpu_pipeline = transfer();
-    shaderModule.release();
   }
 
   struct DrawCallParams {
     uint32_t vertexCount, instanceCount;
     uint32_t firstVertex, firstInstance;
   };
-  using RenderFunction =
-      std::function<bool(PipelineHandle self, wgpu::Surface, const DrawCallParams&)>;
+  using RenderFunction = std::function<bool(PipelineHandle self, wgpu::Surface, const DrawCallParams&)>;
 
   // Render onto surface (DrawCallParams{vertexCount, instanceCount, firstVertex, firstInstance})
   bool render_frame(Surface& surface, const DrawCallParams& params) {
@@ -73,11 +77,9 @@ struct Pipeline {
   }
 
   // Render `vertex_count` vertices onto a surface `instance_count` times
-  bool render_frame(Surface& surface, std::integral auto vertex_count,
-                    std::integral auto instance_count) {
-    return render_func(
-        this, surface.wgpu_surface,
-        {static_cast<uint32_t>(vertex_count), static_cast<uint32_t>(instance_count), 0, 0});
+  bool render_frame(Surface& surface, std::integral auto vertex_count, std::integral auto instance_count) {
+    return render_func(this, surface.wgpu_surface,
+                       {static_cast<uint32_t>(vertex_count), static_cast<uint32_t>(instance_count), 0, 0});
   }
 
   // Warning! User is responsible to `.release()` the returned render pipeline
@@ -88,8 +90,7 @@ struct Pipeline {
   // Bundles together user_config and default_config
   void finalize_config(wgpu::ShaderModule);
 
-  static bool default_render(PipelineHandle self, wgpu::Surface surface,
-                             const DrawCallParams& draw_params);
+  static bool default_render(PipelineHandle self, wgpu::Surface surface, const DrawCallParams& draw_params);
 
   void reset();
   ~Pipeline();
@@ -128,45 +129,54 @@ struct Pipeline {
   std::vector<VertexBufferConfig> vb_configs;
   std::vector<wgpu::VertexBufferLayout> vb_layouts;
 
-  void add_vertex_buffer(wgpu::Buffer wgpu_buffer,
-                         wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
+  void add_vertex_buffer(wgpu::Buffer wgpu_buffer, wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
                          uint64_t offset = 0) {
-    assert(wgpu_buffer.getUsage() & wgpu::BufferUsage::Vertex);
+    assert(wgpu_buffer.GetUsage() & wgpu::BufferUsage::Vertex);
     vb_configs.push_back({wgpu_buffer, mode, offset});
   }
 
   template<typename T>
-  void add_vertex_buffer(const Buffer<T>& buffer,
-                         wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
+  void add_vertex_buffer(const Buffer<T>& buffer, wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
                          uint64_t offset = 0) {
     add_vertex_buffer(buffer.wgpu_buffer, mode, offset);
   }
 
-  void add_vertex_attribute(wgpu::VertexFormat format, uint32_t shader_location,
-                            uint64_t offset = ~0, uint64_t buffer_index = ~0) {
+  void add_vertex_attrib(wgpu::VertexFormat format, uint32_t shader_location, uint64_t offset = ~0,
+                         uint64_t buffer_index = ~0) {
     uint64_t bi = buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index;
-    if (vb_configs.at(bi).vertexAttributes.size() > 0) {
-      offset = offset == ~0 ? vertex_format_size(vb_configs.at(bi).vertexAttributes.back().format)
-                            : offset;
-    } else {
-      offset = 0;
-    }
-    vb_configs.at(bi).vertexAttributes.push_back({{
+    offset = offset == ~0 ? vertex_attributes_stride(vb_configs.at(bi).vertexAttributes) : offset;
+    vb_configs.at(bi).vertexAttributes.push_back({
         .format = format,
         .offset = offset,
         .shaderLocation = shader_location,
-    }});
+    });
+  }
+
+  struct IndexBufferConfig {
+    wgpu::Buffer buffer;
+    wgpu::IndexFormat format;
+    uint64_t offset;
+  };
+
+  std::vector<IndexBufferConfig> ib_configs;
+
+  void add_index_buffer(wgpu::Buffer buffer, wgpu::IndexFormat format, uint64_t offset = 0) {
+    ib_configs.push_back({buffer, format, offset});
   }
 
   template<typename T>
-  void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index,
-                          wgpu::ShaderStageFlags visibility) {
-    add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
+  void add_index_buffer(const Buffer<T>& buffer, wgpu::IndexFormat format, uint64_t offset = 0) {
+    add_index_buffer(buffer.wgpu_buffer, format, offset);
+  }
+
+  template<typename T>
+  void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index, wgpu::ShaderStage visibility) {
     add_bind_group_layout_buffer_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
+    add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
   }
 
   void add_texture(const Texture& texture, uint32_t binding,
-                   wgpu::ShaderStageFlags visibility = wgpu::ShaderStage::Fragment) {
+                   wgpu::ShaderStage visibility = wgpu::ShaderStage::Fragment) {
     add_bind_group_layout_texture_entry(binding, visibility);
     add_bind_group_texture_entry(texture.create_view(), binding);
   }
@@ -174,10 +184,9 @@ struct Pipeline {
   std::vector<wgpu::BindGroupLayoutEntry> bindGroupLayoutEntries{};
   std::vector<wgpu::BindGroupEntry> bindGroupEntries{};
 
-  void add_bind_group_layout_buffer_entry(uint32_t binding, WGPUShaderStageFlags visibility,
-                                          WGPUBufferBindingType buffer_type,
-                                          uint64_t min_binding_size) {
-    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry = wgpu::Default;
+  void add_bind_group_layout_buffer_entry(uint32_t binding, wgpu::ShaderStage visibility,
+                                          wgpu::BufferBindingType buffer_type, uint64_t min_binding_size) {
+    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
 
@@ -189,7 +198,7 @@ struct Pipeline {
 
   void add_bind_group_buffer_entry(wgpu::Buffer wgpu_buffer, uint32_t binding_index, uint64_t size,
                                    uint64_t offset = 0) {
-    wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
+    wgpu::BindGroupEntry bindGroupEntry;
     bindGroupEntry.buffer = wgpu_buffer;
     bindGroupEntry.binding = binding_index;
 
@@ -199,21 +208,23 @@ struct Pipeline {
     bindGroupEntries.push_back(bindGroupEntry);
   }
 
-  void add_bind_group_layout_texture_entry(uint32_t binding, WGPUShaderStageFlags visibility) {
-    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry = wgpu::Default;
+  void add_bind_group_layout_texture_entry(uint32_t binding, wgpu::ShaderStage visibility,
+                                           wgpu::TextureSampleType sampleType = wgpu::TextureSampleType::Float,
+                                           wgpu::TextureViewDimension viewDimension = wgpu::TextureViewDimension::e2D,
+                                           wgpu::Bool multisampled = false) {
+    wgpu::BindGroupLayoutEntry bindGroupLayoutEntry;
     bindGroupLayoutEntry.binding = binding;
     bindGroupLayoutEntry.visibility = visibility;
 
-    // TODO: make configurable
-    bindGroupLayoutEntry.texture.multisampled = false;
-    bindGroupLayoutEntry.texture.sampleType = wgpu::TextureSampleType::Float;
-    bindGroupLayoutEntry.texture.viewDimension = wgpu::TextureViewDimension::_2D;
+    bindGroupLayoutEntry.texture.multisampled = multisampled;
+    bindGroupLayoutEntry.texture.sampleType = sampleType;
+    bindGroupLayoutEntry.texture.viewDimension = viewDimension;
 
     bindGroupLayoutEntries.push_back(bindGroupLayoutEntry);
   }
 
   void add_bind_group_texture_entry(wgpu::TextureView texture_view, uint32_t binding_index) {
-    wgpu::BindGroupEntry bindGroupEntry = wgpu::Default;
+    wgpu::BindGroupEntry bindGroupEntry;
     bindGroupEntry.textureView = texture_view;
     bindGroupEntry.binding = binding_index;
 
@@ -221,9 +232,9 @@ struct Pipeline {
   }
 
   std::vector<wgpu::BindGroup> bindGroups{};
-  std::vector<WGPUBindGroupLayout> bindGroupLayouts{};
+  std::vector<wgpu::BindGroupLayout> bindGroupLayouts{};
 
-  void finalize_bind_group(const char* group_label = "Default Bind Group") {
+  void finalize_bind_group(const char* group_label = "lab default bind group") {
     std::string groupLabel{label};
     groupLabel.append(" - ");
     groupLabel.append(group_label);
@@ -231,20 +242,20 @@ struct Pipeline {
     std::string layoutLabel{groupLabel};
     layoutLabel.append(" Layout");
 
-    wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc = wgpu::Default;
+    wgpu::BindGroupLayoutDescriptor bindGroupLayoutDesc;
     bindGroupLayoutDesc.entryCount = bindGroupLayoutEntries.size();
     bindGroupLayoutDesc.entries = bindGroupLayoutEntries.data();
     bindGroupLayoutDesc.label = layoutLabel.c_str();
 
-    bindGroupLayouts.push_back(webgpu.device.createBindGroupLayout(bindGroupLayoutDesc));
+    bindGroupLayouts.push_back(webgpu.device.CreateBindGroupLayout(&bindGroupLayoutDesc));
 
-    wgpu::BindGroupDescriptor bindGroupDesc = wgpu::Default;
+    wgpu::BindGroupDescriptor bindGroupDesc;
     bindGroupDesc.layout = bindGroupLayouts.back();
     bindGroupDesc.entryCount = bindGroupEntries.size();
     bindGroupDesc.entries = bindGroupEntries.data();
     bindGroupDesc.label = groupLabel.c_str();
 
-    bindGroups.push_back(webgpu.device.createBindGroup(bindGroupDesc));
+    bindGroups.push_back(webgpu.device.CreateBindGroup(&bindGroupDesc));
 
     bindGroupLayoutEntries.clear();
     bindGroupEntries.clear();

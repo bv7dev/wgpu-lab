@@ -1,5 +1,4 @@
-#define WEBGPU_CPP_IMPLEMENTATION
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 #include <extra/lab_state.h>
 #include <lab>
@@ -44,24 +43,11 @@ bool tick() {
   return state.window_map.size() > 0;
 }
 
-// todo: figure out what device.tick() actually does,
-//       and when it should be called.
-bool tick(Webgpu& webgpu) {
-  webgpu.device.tick();
-  return tick();
-}
-
 bool operator==(const KeyEvent& lhs, const KeyEvent& rhs) {
   return lhs.key == rhs.key && lhs.mod == rhs.mod && lhs.action == rhs.action;
 }
 
-void reset_time() { state.start_tp = std::chrono::steady_clock::now(); }
-
-// should be precise for around 2500 h program runtime
-float elapsed_seconds() {
-  return static_cast<float>(
-      static_cast<double>((std::chrono::steady_clock::now() - state.start_tp).count()) /
-      std::chrono::steady_clock::time_point::period::den);
-}
+void restart_timer() { state.start_tp = std::chrono::steady_clock::now(); }
+std::chrono::steady_clock::time_point get_timer_start() { return state.start_tp; }
 
 } // namespace lab

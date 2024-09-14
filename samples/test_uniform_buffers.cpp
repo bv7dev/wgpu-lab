@@ -20,31 +20,28 @@ int main() {
 
   lab::Buffer<float> vertex_buffer("My vertex buffer", vertex_data, webgpu);
 
-  lab::Buffer<float> uniform_buffer(
-      "My uniform buffer", {1.0}, wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
+  lab::Buffer<float> uniform_buffer("My uniform buffer", {1.0}, wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst,
+                                    webgpu);
 
   lab::Buffer<buffer_t> uniform_buffer2("My uniform buffer 2", {{}, {}},
-                                        wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst,
-                                        webgpu);
+                                        wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
   pipeline.add_vertex_buffer(vertex_buffer);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32x2, 0);
-  pipeline.add_vertex_attribute(wgpu::VertexFormat::Float32, 1,
-                                lab::vertex_format_size(wgpu::VertexFormat::Float32x2));
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0);
+  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32, 1, lab::vertex_format_size(wgpu::VertexFormat::Float32x2));
 
   pipeline.add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, 0, sizeof(float));
-  pipeline.add_bind_group_layout_buffer_entry(0, wgpu::ShaderStage::Vertex,
-                                              wgpu::BufferBindingType::Uniform, sizeof(float));
+  pipeline.add_bind_group_layout_buffer_entry(0, wgpu::ShaderStage::Vertex, wgpu::BufferBindingType::Uniform,
+                                              sizeof(float));
   pipeline.finalize_bind_group();
 
   pipeline.add_bind_group_buffer_entry(uniform_buffer2.wgpu_buffer, 0, sizeof(buffer_t));
-  pipeline.add_bind_group_layout_buffer_entry(0, wgpu::ShaderStage::Vertex,
-                                              wgpu::BufferBindingType::Uniform, sizeof(buffer_t));
+  pipeline.add_bind_group_layout_buffer_entry(0, wgpu::ShaderStage::Vertex, wgpu::BufferBindingType::Uniform,
+                                              sizeof(buffer_t));
 
-  pipeline.add_bind_group_buffer_entry(uniform_buffer2.wgpu_buffer, 1, sizeof(buffer_t),
-                                       sizeof(buffer_t));
-  pipeline.add_bind_group_layout_buffer_entry(1, wgpu::ShaderStage::Fragment,
-                                              wgpu::BufferBindingType::Uniform, sizeof(buffer_t));
+  pipeline.add_bind_group_buffer_entry(uniform_buffer2.wgpu_buffer, 1, sizeof(buffer_t), sizeof(buffer_t));
+  pipeline.add_bind_group_layout_buffer_entry(1, wgpu::ShaderStage::Fragment, wgpu::BufferBindingType::Uniform,
+                                              sizeof(buffer_t));
 
   pipeline.finalize_bind_group("Bind Group 2");
 

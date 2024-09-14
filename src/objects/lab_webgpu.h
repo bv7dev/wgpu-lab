@@ -1,7 +1,7 @@
 #ifndef WGPU_LAB_WEBGPU_H
 #define WGPU_LAB_WEBGPU_H
 
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 namespace lab {
 
@@ -13,9 +13,10 @@ struct Webgpu {
 
   ~Webgpu();
 
-  wgpu::SurfaceCapabilities capabilities;
+  wgpu::SurfaceCapabilities capabilities{};
 
   wgpu::Instance instance = nullptr;
+  wgpu::Adapter adapter = nullptr;
   wgpu::Device device = nullptr;
   wgpu::Queue queue = nullptr;
 

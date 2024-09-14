@@ -7,6 +7,8 @@
 #include <chrono>
 #include <cmath>
 #include <concepts>
+#include <cstdint>
+#include <cstdlib>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -20,8 +22,8 @@
 using namespace std::chrono_literals;
 #endif
 
-// Dawn dependencies
-#include <webgpu/webgpu.hpp>
+// Dawn wgpu C++ header
+#include <dawn/webgpu_cpp.h>
 
 // Lab objects and enums -------------------------
 

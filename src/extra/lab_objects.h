@@ -37,6 +37,6 @@ using BufferHandle = Buffer<T>*;
 // external structs ------------------------------
 
 struct GLFWwindow;
-using GlfwWindowHandle = GLFWwindow*;
+using GLFWwindowHandle = GLFWwindow*;
 
 #endif // WGPU_LAB_OBJECTS_H

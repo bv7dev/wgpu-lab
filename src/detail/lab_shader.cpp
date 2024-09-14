@@ -20,15 +20,22 @@ Shader::Shader(const std::string& lbl, const std::string& path) : label{lbl} {
   source = buffer.str();
 }
 
-wgpu::ShaderModule Shader::transfer(wgpu::Device device) const {
-  wgpu::ShaderModuleWGSLDescriptor wgslDesc = {{
-      .chain = {.next = nullptr, .sType = wgpu::SType::ShaderModuleWGSLDescriptor},
-      .code = source.c_str(),
-  }};
-  wgpu::ShaderModuleDescriptor shaderDesc;
-  shaderDesc.nextInChain = &wgslDesc.chain;
-  shaderDesc.label = "My shader module";
-  return device.createShaderModule(shaderDesc);
+wgpu::ShaderModule Shader::transfer(wgpu::Device device, wgpu::SType struct_type) const {
+  switch (struct_type) {
+  case wgpu::SType::ShaderModuleSPIRVDescriptor:
+    std::cout << "Error: Shader: SPIR-V Shader Module not yet implemented. Please use WGSL instead." << std::endl;
+    return nullptr;
+  case wgpu::SType::ShaderModuleWGSLDescriptor:
+    wgpu::ShaderModuleWGSLDescriptor wgslDesc;
+    wgslDesc.sType = struct_type;
+    wgslDesc.code = source.c_str();
+    wgpu::ShaderModuleDescriptor shaderDesc;
+    shaderDesc.nextInChain = &wgslDesc;
+    shaderDesc.label = label.c_str();
+    return device.CreateShaderModule(&shaderDesc);
+  }
+  std::cout << "Error: Shader: struct_type not supported." << std::endl;
+  return nullptr;
 }
 
 } // namespace lab

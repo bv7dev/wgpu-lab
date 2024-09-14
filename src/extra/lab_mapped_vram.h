@@ -1,7 +1,7 @@
 #ifndef WGPU_LAB_MAPPED_VRAM
 #define WGPU_LAB_MAPPED_VRAM
 
-#include <webgpu/webgpu.hpp>
+#include <dawn/webgpu_cpp.h>
 
 #include <ranges>
 
@@ -9,10 +9,10 @@ namespace lab {
 
 // Convenience wrapper around `std::span` and `wgpu::Buffer`
 // which unmaps buffer automatically on destruction.
-// It's interface mimics that of a simple vector.
+// It's interface is similar to that of std::vector.
 // Example:
 // ```cpp
-// auto write_func = [](MappedVRAM&& vmap) {
+// auto write_func = [](MappedVRAM<T> vmap) {
 //   for (int i = 0; i < vmap.capacity(); ++i) {
 //     vmap.push(my_data[i]); // write data into vmap
 //   }
@@ -22,88 +22,78 @@ namespace lab {
 // ```
 template<typename T>
 struct MappedVRAM {
-  MappedVRAM(std::span<T> view, size_t size, wgpu::Buffer buffer)
-      : view{view}, view_size{size}, buffer{buffer} {}
-  MappedVRAM(MappedVRAM&& rhs) : view{rhs.view}, view_size{rhs.view_size}, buffer{rhs.buffer} {
-    rhs.buffer = nullptr;
+  MappedVRAM(std::span<T> view, size_t view_size, wgpu::Buffer wgpu_buffer)
+      : data_view{view}, view_size{view_size}, wgpu_buffer{wgpu_buffer} {}
+  MappedVRAM(MappedVRAM<T>&& other)
+      : data_view{std::move(other.data_view)}, view_size{std::move(other.view_size)},
+        wgpu_buffer{std::move(other.wgpu_buffer)} {
+    other.data_view = {};
+    other.view_size = 0;
+    other.wgpu_buffer = nullptr;
   }
-  MappedVRAM& operator=(MappedVRAM&& rhs) {
-    view = std::move(rhs.view);
-    view_size = std::move(rhs.view_size);
-    buffer = std::move(rhs.buffer);
-    rhs.buffer = nullptr;
+  MappedVRAM& operator=(MappedVRAM<T>&& other) {
+    data_view = std::move(other.data_view);
+    view_size = std::move(other.view_size);
+    wgpu_buffer = std::move(other.wgpu_buffer);
+    other.data_view = {};
+    other.view_size = 0;
+    other.wgpu_buffer = nullptr;
     return *this;
   }
 
-  MappedVRAM(const MappedVRAM&) = delete;
-  MappedVRAM& operator=(const MappedVRAM&) = delete;
+  MappedVRAM(const MappedVRAM<T>&) = delete;
+  MappedVRAM<T>& operator=(const MappedVRAM<T>&) = delete;
 
-  std::span<T> get_view() {
-    assert(buffer && view_size > 0);
-    return {view.begin(), view_size};
+  std::span<T> get_view() const {
+    assert(wgpu_buffer && view_size > 0);
+    return {data_view.begin(), view_size};
   }
 
-  size_t capacity() const { return view.size(); }
+  size_t capacity() const { return data_view.size(); }
   size_t size() const { return view_size; }
 
   const T& operator[](size_t index) const {
-    assert(buffer && index < view_size);
-    return view[index];
+    assert(wgpu_buffer && index < view_size);
+    return data_view[index];
   }
   T& operator[](size_t index) {
-    assert(buffer && index < view_size);
-    return view[index];
+    assert(wgpu_buffer && index < view_size);
+    return data_view[index];
   }
 
   void resize(size_t size) {
-    assert(buffer && size <= capacity());
+    assert(wgpu_buffer && size <= capacity());
     view_size = size;
   }
   const T& push(const T& e) {
-    assert(buffer && view_size < capacity());
-    return view[view_size++] = e;
+    assert(wgpu_buffer && view_size < capacity());
+    return data_view[view_size++] = e;
   }
   T& pop() {
-    assert(buffer && view_size > 0);
-    return view[--view_size];
+    assert(wgpu_buffer && view_size > 0);
+    return data_view[--view_size];
   }
 
-  auto begin() const { return view.begin(); }
-  auto end() const { return view.begin() + view_size; }
-  auto begin() { return view.begin(); }
-  auto end() { return view.begin() + view_size; }
+  auto begin() const { return data_view.begin(); }
+  auto end() const { return data_view.begin() + view_size; }
+  auto begin() { return data_view.begin(); }
+  auto end() { return data_view.begin() + view_size; }
 
-  bool is_mapped() { return buffer != nullptr; }
-  void unmap() const {
-    if (buffer) {
-      buffer.unmap();
-      buffer = nullptr;
+  bool is_mapped() { return wgpu_buffer != nullptr; }
+  void unmap() {
+    if (wgpu_buffer) {
+      wgpu_buffer.Unmap();
+      wgpu_buffer = nullptr;
       view_size = 0;
-      view = {};
+      data_view = {};
     }
   }
   ~MappedVRAM() { unmap(); }
 
-private:
-  // these are mutable so that unmap can clear them even in const context
-  mutable wgpu::Buffer buffer;
-  mutable std::span<T> view;
-  mutable size_t view_size;
+  wgpu::Buffer wgpu_buffer;
+  std::span<T> data_view;
+  size_t view_size;
 };
-
-// Constant version of `MappedVRAM<T>`
-// Example:
-// ```cpp
-// auto write_func = [](ConstMappedVRAM&& vmap) {
-//   for (auto& e : vmap) {
-//     std::cout << e << ' '; // read data from vmap
-//   }
-// }
-// const size_t offset = 0, num_elems = 1024;
-// buffer.from_device(offset, num_elems, read_func);
-// ```
-template<typename T>
-using ConstMappedVRAM = const MappedVRAM<const T>;
 
 } // namespace lab
 
