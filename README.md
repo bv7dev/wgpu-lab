@@ -52,7 +52,7 @@ int main() {
 ```
 
 
-## How to Build and Run samples
+## Build and Run Samples
 wgpu-lab is intended to be included into projects as a Git submodule.
 Integration with other build systems should be straightforward.
 
