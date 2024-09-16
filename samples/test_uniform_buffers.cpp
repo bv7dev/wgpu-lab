@@ -1,10 +1,8 @@
 #include <lab>
 
-#pragma warning(disable : 4324)
 struct alignas(256) buffer_t {
   float val;
 };
-#pragma warning(default : 4324)
 
 int main() {
   lab::Webgpu webgpu("My Instance");
