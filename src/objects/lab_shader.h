@@ -18,7 +18,7 @@ struct Shader {
   // - be careful not to leak resources if you need to use it directly
   // - by default, it's automatically managed, see: `Pipeline::init()`
   [[nodiscard]] wgpu::ShaderModule transfer(wgpu::Device device,
-                                            wgpu::SType struct_type = wgpu::SType::ShaderModuleWGSLDescriptor) const;
+                                            wgpu::SType struct_type = wgpu::SType::ShaderSourceWGSL) const;
 };
 
 } // namespace lab

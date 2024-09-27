@@ -22,11 +22,11 @@ Shader::Shader(const std::string& lbl, const std::string& path) : label{lbl} {
 
 wgpu::ShaderModule Shader::transfer(wgpu::Device device, wgpu::SType struct_type) const {
   switch (struct_type) {
-  case wgpu::SType::ShaderModuleSPIRVDescriptor:
+  case wgpu::SType::ShaderSourceSPIRV:
     std::cout << "Error: Shader: SPIR-V Shader Module not yet implemented. Please use WGSL instead." << std::endl;
     return nullptr;
-  case wgpu::SType::ShaderModuleWGSLDescriptor:
-    wgpu::ShaderModuleWGSLDescriptor wgslDesc;
+  case wgpu::SType::ShaderSourceWGSL:
+    wgpu::ShaderSourceWGSL wgslDesc;
     wgslDesc.sType = struct_type;
     wgslDesc.code = source.c_str();
     wgpu::ShaderModuleDescriptor shaderDesc;
