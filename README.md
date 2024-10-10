@@ -52,13 +52,23 @@ int main() {
 ```
 
 
-## Build and Run Samples
-wgpu-lab is intended to be included into projects as a Git submodule.
-Integration with other build systems should be straightforward.
+## Build and Run Samples (WIP)
+I don't know much about how to setup a proper build system for libraries yet. 
+I'm hoping for some people more knowledgable about CMake to help me with setting it up.
 
-The library and sample executables are built using CMake. If you're developing the library or
-experimenting with the samples, I recommend using the `CMake Tools` extension for Visual Studio Code
-provided by Microsoft. The build system is a work in progress and may evolve over time.
+I intended wgpu-lab to be included into projects as a Git submodule.
+The goal for the build system is to work out of the box on windows, linux and mac.
+
+**First Steps:**
+1. clone this repo
+2. create a `libs/` directory inside it
+3. clone `dawn` into the `libs/` dir
+4. switch to branch `chromium/6670`
+5. clone `GLM` and `tinygltf` into `libs` to be able to build the sample executables
+6. after first successful build of everything, manually copy webgpu_dawn.dll from dawn's build directory into `wgpu-lab/build/` to be able to run the exes.
+
+I recommend using the `CMake Tools` extension for Visual Studio Code
+provided by Microsoft to easily build the project.
 
 For VS Code users, there's a shared `.vscode/launch.json` configuration file inside this repository.
 This setup allows you to build and run any `.cpp` file located in the `./samples` directory
@@ -73,7 +83,7 @@ However, to build all of the sample executables, you'll also need to add
 to the `./libs` directory. Lastly, Python needs to be installed so that
 dawn can fetch it's many dependencies (Tested with Python 3.10)
 
-### Work in Progress
+### Additional Info
 - Based on previous unpleasant experiences, I've decided not to add wgpu-lab's dependencies as Git submodules for now.
   Instead, you currently need to manually clone the dependencies into a `./libs` directory under this project's root directory.
   I'm still considering whether to add them as submodules or implement a script to automate fetching dependencies.
