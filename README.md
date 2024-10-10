@@ -63,12 +63,11 @@ The goal for the build system is to work out of the box on windows, linux and ma
 1. clone this repo
 2. create a `libs/` directory inside it
 3. clone `dawn` into the `libs/` dir
-4. switch to branch `chromium/6670`
+4. switch `dawn` to branch `chromium/6670`
 5. clone `GLM` and `tinygltf` into `libs` to be able to build the sample executables
-6. after first successful build of everything, manually copy webgpu_dawn.dll from dawn's build directory into `wgpu-lab/build/` to be able to run the exes.
+6. after first successful build, copy webgpu_dawn.dll from dawn's build directory into `wgpu-lab/build/` to be able to run the exes.
 
-I recommend using the `CMake Tools` extension for Visual Studio Code
-provided by Microsoft to easily build the project.
+I recommend using the `CMake Tools` extension for Visual Studio Code by Microsoft to easily build the project.
 
 For VS Code users, there's a shared `.vscode/launch.json` configuration file inside this repository.
 This setup allows you to build and run any `.cpp` file located in the `./samples` directory
