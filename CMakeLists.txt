@@ -4,10 +4,10 @@ project(
   VERSION 0.1.0
   LANGUAGES CXX C)
 
-set(DAWN_FETCH_DEPENDENCIES ON)
+set(DAWN_FETCH_DEPENDENCIES ON CACHE INTERNAL "" FORCE)
 add_subdirectory(libs/dawn)
 
-set(GLM_ENABLE_CXX_20 ON)
+set(GLM_ENABLE_CXX_20 ON CACHE INTERNAL "" FORCE)
 add_subdirectory(libs/glm)
 
 set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
@@ -39,7 +39,7 @@ add_library(wgpu-lab
   src/lab)
 
 target_include_directories(wgpu-lab PUBLIC src)
-target_link_libraries(wgpu-lab PUBLIC dawn::webgpu_dawn dawn::dawn_glfw glfw)
+target_link_libraries(wgpu-lab PUBLIC ${Vulkan_LIBRARIES} dawncpp dawn_proc dawn_common dawn_platform dawn_native dawn::dawn_glfw glfw)
 
 # sample executables -------------------------------------------------------------
 file(GLOB SAMPLE_FILES samples/*.cpp)
