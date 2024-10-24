@@ -43,11 +43,7 @@ target_include_directories(wgpu-lab PUBLIC src)
 # target_link_libraries(wgpu-lab PUBLIC webgpu dawn::dawn_glfw glfw)
 target_link_libraries(wgpu-lab PUBLIC
   webgpu_cpp
-  dawn_internal_config
   dawn::dawn_common
-  dawn::dawn_system_utils
-  dawn::dawn_wgpu_utils
-  dawn::dawn_test_utils
   dawn::dawn_proc
   dawn::dawn_glfw
   dawn::dawn_native

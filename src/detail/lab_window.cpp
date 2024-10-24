@@ -76,9 +76,9 @@ void Window::close() {
     state.window_map.erase(glfw_window_handle);
     glfw_window_handle = nullptr;
     if (state.window_map.size() == 0) {
-      if (state.glfw_init) {
+      if (state.lab_init) {
         glfwTerminate();
-        state.glfw_init = false;
+        state.lab_init = false;
         std::cout << "Info: GLFW: Terminated!" << std::endl;
       }
     }

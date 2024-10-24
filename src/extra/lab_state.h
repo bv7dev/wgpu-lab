@@ -15,7 +15,7 @@ using WindowMap = std::unordered_map<GLFWwindowHandle, WindowHandle>;
 
 extern struct State {
   WindowMap window_map{};
-  bool glfw_init = false;
+  bool lab_init = false;
   std::chrono::steady_clock::time_point start_tp = std::chrono::steady_clock::now();
 } state;
 
