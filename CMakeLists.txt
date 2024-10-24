@@ -6,7 +6,6 @@ project(
 
 set(DAWN_FETCH_DEPENDENCIES ON CACHE INTERNAL "" FORCE)
 add_subdirectory(libs/dawn)
-# add_subdirectory(libs/webgpu-dawn)
 
 set(GLM_ENABLE_CXX_20 ON CACHE INTERNAL "" FORCE)
 add_subdirectory(libs/glm)
@@ -40,9 +39,9 @@ add_library(wgpu-lab
   src/lab)
 
 target_include_directories(wgpu-lab PUBLIC src)
-# target_link_libraries(wgpu-lab PUBLIC webgpu dawn::dawn_glfw glfw)
 target_link_libraries(wgpu-lab PUBLIC
   webgpu_cpp
+  dawn_internal_config
   dawn::dawn_common
   dawn::dawn_proc
   dawn::dawn_glfw
@@ -89,7 +88,6 @@ foreach(LAB_TARGET IN LISTS ALL_TARGETS)
     COMPILE_WARNING_AS_ERROR OFF)
   if (MSVC)
     target_compile_options(${LAB_TARGET} PRIVATE /W3)
-    # target_compile_options(${LAB_TARGET} PRIVATE /wd4324)
   else()
     target_compile_options(${LAB_TARGET} PRIVATE -Wall -Wextra -pedantic)
   endif()
