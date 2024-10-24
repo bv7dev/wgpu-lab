@@ -8,8 +8,10 @@ def git_clone(repo_url, branch_or_tag_name=None):
   subprocess.run(args)
 
 if __name__ == '__main__':
-  os.mkdir('libs/')
-  os.chdir('libs/')
-  git_clone('https://dawn.googlesource.com/dawn', 'chromium/6670')
-  git_clone('https://github.com/g-truc/glm', '1.0.1')
-  git_clone('https://github.com/syoyo/tinygltf', 'v2.9.3')
+  try:
+    os.mkdir('libs/')
+  finally:
+    os.chdir('libs/')
+    git_clone('https://dawn.googlesource.com/dawn', 'chromium/6670')
+    git_clone('https://github.com/g-truc/glm', '1.0.1')
+    git_clone('https://github.com/syoyo/tinygltf', 'v2.9.3')
