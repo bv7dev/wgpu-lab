@@ -4,14 +4,34 @@ project(
   VERSION 0.1.0
   LANGUAGES CXX C)
 
-set(DAWN_FETCH_DEPENDENCIES ON CACHE INTERNAL "" FORCE)
+# dawn config ------------------------------------------------------------------
+set(DAWN_FETCH_DEPENDENCIES ON)
+set(DAWN_BUILD_SAMPLES OFF)
+
+# set(DAWN_ENABLE_D3D11 OFF)
+# set(DAWN_ENABLE_D3D12 OFF)
+# set(DAWN_ENABLE_METAL OFF)
+# set(DAWN_ENABLE_NULL OFF)
+# set(DAWN_ENABLE_DESKTOP_GL OFF)
+# set(DAWN_ENABLE_OPENGLES OFF)
+# set(DAWN_ENABLE_VULKAN ON)
+
+# # set(TINT_BUILD_SPV_READER OFF)
+# # set(TINT_BUILD_CMD_TOOLS OFF)
+set(TINT_BUILD_TESTS OFF)
+# set(TINT_BUILD_IR_BINARY ON)
+
 add_subdirectory(libs/dawn)
 
+# glm config -------------------------------------------------------------------
 set(GLM_ENABLE_CXX_20 ON CACHE INTERNAL "" FORCE)
+
 add_subdirectory(libs/glm)
 
+# tinygltf config --------------------------------------------------------------
 set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
 set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
+
 add_subdirectory(libs/tinygltf)
 
 # wgpu-lab library -------------------------------------------------------------
@@ -49,7 +69,7 @@ target_link_libraries(wgpu-lab PUBLIC
   glfw
 )
 
-# sample executables -------------------------------------------------------------
+# sample executables -----------------------------------------------------------
 file(GLOB SAMPLE_FILES samples/*.cpp)
 set(SAMPLE_TARGETS)
 foreach(SAMPLE_FILE IN LISTS SAMPLE_FILES)
@@ -69,7 +89,7 @@ foreach(SHADER_FILE IN LISTS SHADER_FILES)
     ${CMAKE_CURRENT_BINARY_DIR}/shaders/${SHADER_FILENAME} COPYONLY)
 endforeach(SHADER_FILE)
 
-# copy asset files to binary dir ----------------------------------------------
+# copy asset files to binary dir -----------------------------------------------
 file(GLOB ASSET_FILES assets/**)
 foreach(ASSET_FILE IN LISTS ASSET_FILES)
   get_filename_component(ASSET_FILENAME ${ASSET_FILE} NAME)
