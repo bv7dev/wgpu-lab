@@ -4,8 +4,8 @@ import subprocess
 def dir_create_then_enter(path):
   if os.path.isdir(path):
     return False
-  os.mkdir(dir_name)
-  os.chdir(dir_name)
+  os.mkdir(path)
+  os.chdir(path)
   return True
 
 def git_clone(repo_url, branch_or_tag_name=None):

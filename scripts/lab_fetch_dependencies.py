@@ -8,5 +8,5 @@ if dir_create_then_enter('libs'):
   git_clone('https://github.com/syoyo/tinygltf', 'v2.9.3')
 
 else:
-  print("wgpu-lab's dependencies already have been fetched")
+  print("wgpu-lab's dependencies already fetched")
   print("delete libs directory to reset")
