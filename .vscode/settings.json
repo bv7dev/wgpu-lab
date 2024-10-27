@@ -1,7 +1,7 @@
 {
-  "C_Cpp.formatting": "clangFormat",
-  "C_Cpp.default.cppStandard": "c++20",
-  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "cmake.generator": "Ninja",
-  "cmake.configureOnOpen": false
+  "cmake.configureOnOpen": false,
+  "files.associations": {
+    "lab": "cpp"
+  }
 }

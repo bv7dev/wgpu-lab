@@ -8,18 +8,10 @@ project(
 set(DAWN_FETCH_DEPENDENCIES ON)
 set(DAWN_BUILD_SAMPLES OFF)
 
-# set(DAWN_ENABLE_D3D11 OFF)
-# set(DAWN_ENABLE_D3D12 OFF)
-# set(DAWN_ENABLE_METAL OFF)
-# set(DAWN_ENABLE_NULL OFF)
-# set(DAWN_ENABLE_DESKTOP_GL OFF)
-# set(DAWN_ENABLE_OPENGLES OFF)
-# set(DAWN_ENABLE_VULKAN ON)
-
-# # set(TINT_BUILD_SPV_READER OFF)
-# # set(TINT_BUILD_CMD_TOOLS OFF)
+set(TINT_BUILD_SPV_READER OFF)
+set(TINT_BUILD_CMD_TOOLS OFF)
 set(TINT_BUILD_TESTS OFF)
-# set(TINT_BUILD_IR_BINARY ON)
+set(TINT_BUILD_IR_BINARY OFF)
 
 add_subdirectory(libs/dawn)
 
@@ -77,7 +69,7 @@ foreach(SAMPLE_FILE IN LISTS SAMPLE_FILES)
   list(APPEND SAMPLE_TARGETS ${SAMPLE_FILENAME})
   add_executable(${SAMPLE_FILENAME}
     samples/${SAMPLE_FILENAME}.cpp)
-  target_include_directories(${SAMPLE_FILENAME} PRIVATE libs/tinygltf)
+  target_include_directories(${SAMPLE_FILENAME} PRIVATE libs/tinygltf src samples)
   target_link_libraries(${SAMPLE_FILENAME} PRIVATE wgpu-lab glm::glm)
 endforeach(SAMPLE_FILE)
 
