@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "twxs.cmake",
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        "editorconfig.editorconfig",
+        "polymeilex.wgsl"
+    ]
+}
