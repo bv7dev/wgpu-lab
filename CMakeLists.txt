@@ -4,6 +4,15 @@ project(
   VERSION 0.1.0
   LANGUAGES CXX C)
 
+# check if python is installed and call script to fetch lab's dependencies -------
+find_package(Python3 REQUIRED)
+message(STATUS "wgpu-lab: using python at ${Python3_EXECUTABLE}")
+message(STATUS "Running lab_fetch_dependencies.py:")
+execute_process(COMMAND
+  ${Python3_EXECUTABLE}
+  "${PROJECT_SOURCE_DIR}/scripts/lab_fetch_dependencies.py"
+  --root ${PROJECT_SOURCE_DIR})
+
 # dawn config ------------------------------------------------------------------
 set(DAWN_FETCH_DEPENDENCIES ON)
 set(DAWN_BUILD_SAMPLES OFF)
@@ -58,8 +67,7 @@ target_link_libraries(wgpu-lab PUBLIC
   dawn::dawn_proc
   dawn::dawn_glfw
   dawn::dawn_native
-  glfw
-)
+  glfw)
 
 # sample executables -----------------------------------------------------------
 file(GLOB SAMPLE_FILES samples/*.cpp)
