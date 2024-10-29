@@ -52,49 +52,48 @@ int main() {
 ```
 
 
-## Build and Run Samples (WIP)
-I don't know much about how to setup a proper build system for libraries yet. 
-I'm hoping for some people more knowledgable about CMake to help me with setting it up.
+## Getting Started
 
-I intended wgpu-lab to be included into projects as a Git submodule.
-The goal for the build system is to work out of the box on windows, linux and mac.
+### windows
 
-**First Steps:**
-1. clone this repo
-2. create a `libs/` directory inside it
-3. clone `dawn` into the `libs/` dir
-4. switch `dawn` to branch `chromium/6670`
-5. clone `GLM` and `tinygltf` into `libs` to be able to build the sample executables
-6. after first successful build, copy webgpu_dawn.dll from dawn's build directory into `wgpu-lab/build/` to be able to run the exes.
+**setup:**
+1. install [Visual Studio](https://visualstudio.microsoft.com/vs/community/) for MSVC compiler and CMake, or a C++ compiler and build tools of your choice (configure it yourself and feel free to share your setup by creating an issue or a pull request)
+1. install [VS Code](https://code.visualstudio.com/) editor (optional - this project is configured to work well within VS Code)  
+   open VS Code and install recommended extensions (a pop-up should appear)  
+   look into the extensions tab to see if extensions `C/C++`, `CMake` and `CMake Tools` are installed 
+1. install [Python](https://www.python.org/downloads/) which is required to download dependencies in wgpu-lab and dawn
 
-I recommend using the `CMake Tools` extension for Visual Studio Code by Microsoft to easily build the project.
+**build:**
+1. clone this repository:
+   ```sh
+   git clone https://github.com/bv7dev/wgpu-lab.git
+   ```
+   or alternatively, download a release build
+1. open the cloned directory or the unzipped release in VS Code (File -> Open Folder...)
+1. hit the `⚙ Build` button in Code's bottom toolbar (provided by `CMake Tools` extension) or use `CMake` manually to configure and build
 
-For VS Code users, there's a shared `.vscode/launch.json` configuration file inside this repository.
-This setup allows you to build and run any `.cpp` file located in the `./samples` directory
-simply by opening it in the editor and pressing `F5`.
+Only the first build takes a very long time for downloading and building dawn
+
+
+**run and debug sample executables:**
+
+For VS Code users, there's a shared `.vscode/launch.json` configuration file.
+This setup allows you to build and run any `.cpp` source file that's located in the `samples/` directory,
+simply by opening it in the editor and pressing `F5` which runs the code in debug mode (set breakpoints and step through code to learn how it works).
+
+To get started, you can add your own `.cpp` file and tinker around and step through the code.
 
 ### Dependencies
 The library currently only depends on [WebGPU Dawn](https://dawn.googlesource.com/dawn) and uses
 [GLFW](https://www.glfw.org/) for windowing, which already comes included with dawn.
-It also makes heavy use of the C++ STL (see `./src/extra/lab_public.h`).
-However, to build all of the sample executables, you'll also need to add
+wgpu-lab also makes heavy use of the C++ STL (see `src/extra/lab_public.h`).
+However, to build all of the sample executables, the libraries
 [GLM](https://github.com/g-truc/glm) and [tinygltf](https://github.com/syoyo/tinygltf)
-to the `./libs` directory. Lastly, Python needs to be installed so that
-dawn can fetch it's many dependencies (Tested with Python 3.10)
-
-### Additional Info
-- Based on previous unpleasant experiences, I've decided not to add wgpu-lab's dependencies as Git submodules for now.
-  Instead, you currently need to manually clone the dependencies into a `./libs` directory under this project's root directory.
-  I'm still considering whether to add them as submodules or implement a script to automate fetching dependencies.
-- At the moment, Dawn is built as a `.dll` file but isn't automatically copied into wgpu-lab's build folder.
-  After the first build, you'll need to manually copy `webgpu_dawn.dll` into the `./build` directory for now.
-  Soon, this should be automated and there should be an option to choose between static and dynamic linking with Dawn.
-- So far the entire project was only tested on windows, using dawn branch
-  [chromium/6670](https://dawn.googlesource.com/dawn/+/refs/heads/chromium/6670)
+are also included.
 
 
 ## Roadmap
-- [ ] address build system issues from WIP section
+- [x] address build system issues from WIP section
 - [ ] re-design render pipeline (too chaotic at the moment)
 - [ ] replace render_frame function by smaller, composable mechanisms
 - [ ] add compute pipeline support
