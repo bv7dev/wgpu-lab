@@ -108,7 +108,7 @@ int main() {
   uniforms.time = t0;
 
   while (lab::tick()) {
-    pipeline.render_frame(surface, vertex_data.size(), instance_data.size());
+    pipeline.render_frame(surface, int(vertex_data.size()), int(instance_data.size()));
 
     const int i = input.current_instance % instance_data.size();
     velocity = velocity * (1.f - friction * deltatime) + input.axis * force * deltatime;

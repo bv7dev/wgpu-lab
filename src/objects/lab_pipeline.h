@@ -67,17 +67,17 @@ struct Pipeline {
   using RenderFunction = std::function<bool(PipelineHandle self, wgpu::Surface, const DrawCallParams&)>;
 
   // Render onto surface (DrawCallParams{vertexCount, instanceCount, firstVertex, firstInstance})
-  bool render_frame(Surface& surface, const DrawCallParams& params) {
+  bool render_frame(const Surface& surface, const DrawCallParams& params) {
     return render_func(this, surface.wgpu_surface, params);
   }
 
   // Render `vertex_count` vertices onto a surface
-  bool render_frame(Surface& surface, std::integral auto vertex_count) {
+  bool render_frame(const Surface& surface, std::integral auto vertex_count) {
     return render_func(this, surface.wgpu_surface, {static_cast<uint32_t>(vertex_count), 1, 0, 0});
   }
 
   // Render `vertex_count` vertices onto a surface `instance_count` times
-  bool render_frame(Surface& surface, std::integral auto vertex_count, std::integral auto instance_count) {
+  bool render_frame(const Surface& surface, std::integral auto vertex_count, std::integral auto instance_count) {
     return render_func(this, surface.wgpu_surface,
                        {static_cast<uint32_t>(vertex_count), static_cast<uint32_t>(instance_count), 0, 0});
   }

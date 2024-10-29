@@ -28,6 +28,5 @@ int main() {
 
   while (lab::tick()) {
     pipeline.render_frame(surface, 3, 1);
-    lab::sleep(50ms);
   }
 }

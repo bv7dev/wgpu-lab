@@ -44,6 +44,5 @@ int main() {
   while (lab::tick()) {
     pipeline.render_frame(surface,
                           {static_cast<uint32_t>(vertex_data.size()), static_cast<uint32_t>(instance_data.size())});
-    lab::sleep(50ms);
   }
 }

@@ -10,7 +10,6 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "compilerPath": "cl.exe",
             "cppStandard": "c++20",
             "intelliSenseMode": "windows-msvc-x64"
         }
