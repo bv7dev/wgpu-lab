@@ -38,8 +38,6 @@ int main() {
       } else {
         if (window_2.is_open()) pipeline_1.render_frame(surface_2, {3, 1});
       }
-
-      lab::sleep(16ms);
     }
   }
 
@@ -81,8 +79,6 @@ int main() {
       if (sometimes_open && sometimes_open.get()->is_open()) {
         pipeline.render_frame(*sometimes_surf.get(), {3, 1});
       }
-
-      sleep(16ms);
     }
   }
 
@@ -107,7 +103,6 @@ int main() {
     while (lab::tick()) {
       if (first_window.is_open()) pipeline.render_frame(first_surface, {3, 1});
       if (second_window.is_open()) pipeline.render_frame(second_surface, {3, 1});
-      lab::sleep(16ms);
     }
   }
 
@@ -131,52 +126,7 @@ int main() {
     while (lab::tick()) {
       if (first_window.is_open()) pipe1.render_frame(first_surface, {3, 1});
       if (second_window.is_open()) pipe2.render_frame(second_surface, {3, 1});
-      lab::sleep(16ms);
     }
   }
 
-  // TEST 7 - unholy experiments
-  {
-    // time experiments
-    using namespace lab;
-
-    Webgpu webgpu{"My Instance"};
-    Window window{"My Window", 640, 400};
-    Shader shader{"My Shader", "shaders/test1.wgsl"};
-
-    Surface surface{window, webgpu};
-    Pipeline pipeline{shader, webgpu, true};
-
-    window.set_key_callback([&window](const KeyEvent& event) {
-      if (event.key == KeyCode::space && event.action == KeyAction::press) {
-        window.clear_resize_callback();
-      }
-    });
-
-    Window w2{"bla", 400, 280};
-    Surface s2{w2, webgpu};
-
-    int frame = 0;
-    double last_t = glfwGetTime();
-    double last_T = last_t;
-
-    while (tick()) {
-      if (window.is_open()) pipeline.render_frame(surface, {3, 1});
-      if (w2.is_open()) pipeline.render_frame(s2, {3, 1});
-      frame++;
-
-      if ((frame & 0xFF) == 0x00) {
-        std::cout << "fps: " << (256.0 / (glfwGetTime() - last_t)) << std::endl;
-        last_t = glfwGetTime();
-      }
-
-      double x = glfwGetTime() - last_T;
-      last_T = glfwGetTime();
-      if ((frame & 0xFF) == 0x01) {
-        std::cout << x << std::endl;
-      }
-
-      sleep(std::chrono::duration<double, std::ratio<1>>(0.016 - x));
-    }
-  }
 }

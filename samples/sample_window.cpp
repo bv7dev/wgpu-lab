@@ -10,7 +10,5 @@ int main() {
     }
   });
 
-  while (tick()) {
-    lab::sleep(50ms); // saves my laptop from overheating
-  }
+  while (tick()) {}
 }

@@ -16,7 +16,7 @@
       "name": "(win) launch",
       "program": "${command:cmake.launchTargetDirectory}/${fileBasenameNoExtension}.exe",
       "console": "integratedTerminal",
-      "cwd": "${workspaceFolder}",
+      "cwd": "${workspaceFolder}/samples",
       "request": "launch",
       "type": "cppvsdbg",
       "stopAtEntry": false,

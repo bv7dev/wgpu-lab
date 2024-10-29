@@ -1,12 +1,14 @@
 #ifndef WGPU_LAB_WEBGPU_H
 #define WGPU_LAB_WEBGPU_H
 
+#include <string>
+
 #include <dawn/webgpu_cpp.h>
 
 namespace lab {
 
 struct Webgpu {
-  Webgpu(const char* label);
+  Webgpu(const std::string& label, wgpu::PowerPreference = wgpu::PowerPreference::HighPerformance);
 
   Webgpu(const Webgpu&) = delete;
   Webgpu& operator=(const Webgpu&) = delete;
@@ -20,7 +22,7 @@ struct Webgpu {
   wgpu::Device device = nullptr;
   wgpu::Queue queue = nullptr;
 
-  const char* label;
+  std::string label;
 };
 
 } // namespace lab

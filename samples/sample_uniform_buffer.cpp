@@ -55,9 +55,6 @@ int main() {
     // update uniform values for next draw call
     uniforms.ratio[0] = window.ratio();
     uniforms.time = lab::elapsed_seconds();
-
-    // sacrifice fps to save battery life
-    lab::sleep(10ms);
   }
 
   time_resetter.join();

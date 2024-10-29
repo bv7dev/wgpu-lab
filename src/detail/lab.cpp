@@ -1,3 +1,5 @@
+#include <dawn/dawn_proc.h>
+#include <dawn/native/DawnNative.h>
 #include <dawn/webgpu_cpp.h>
 
 #include <extra/lab_state.h>
@@ -10,19 +12,21 @@ namespace lab {
 State state;
 
 bool init_lab() {
-  if (!state.glfw_init) {
+  if (!state.lab_init) {
+    // initialize glfw
     if (!glfwInit()) {
       std::cerr << "Error: GLFW: Failed to initialize!" << std::endl;
       return false;
     }
     std::cout << "Info: GLFW: Initialized!" << std::endl;
-    state.glfw_init = true;
-    return true;
+
+    // initialize dawn proc tables
+    dawnProcSetProcs(&dawn::native::GetProcs());
+
+    // initialize only once
+    state.lab_init = true;
   }
-  //
-  // potentially more init stuff in the future
-  //
-  return false;
+  return state.lab_init;
 }
 
 bool tick() {

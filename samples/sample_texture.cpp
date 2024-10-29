@@ -71,7 +71,5 @@ int main() {
 
     uniforms.ratio[0] = window.ratio();
     uniforms.time = lab::elapsed_seconds();
-
-    lab::sleep(20ms);
   }
 }
