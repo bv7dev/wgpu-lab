@@ -82,7 +82,7 @@ foreach(SAMPLE_FILE IN LISTS SAMPLE_FILES)
 endforeach(SAMPLE_FILE)
 
 # copy shader files to binary dir ----------------------------------------------
-file(GLOB SHADER_FILES shaders/*.wgsl)
+file(GLOB SHADER_FILES samples/shaders/*.wgsl)
 foreach(SHADER_FILE IN LISTS SHADER_FILES)
   get_filename_component(SHADER_FILENAME ${SHADER_FILE} NAME)
   configure_file(${SHADER_FILE}
@@ -90,7 +90,7 @@ foreach(SHADER_FILE IN LISTS SHADER_FILES)
 endforeach(SHADER_FILE)
 
 # copy asset files to binary dir -----------------------------------------------
-file(GLOB ASSET_FILES assets/**)
+file(GLOB ASSET_FILES samples/assets/**)
 foreach(ASSET_FILE IN LISTS ASSET_FILES)
   get_filename_component(ASSET_FILENAME ${ASSET_FILE} NAME)
   configure_file(${ASSET_FILE}

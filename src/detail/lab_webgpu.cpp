@@ -10,7 +10,7 @@ namespace lab {
 
 bool init_lab();
 
-Webgpu::Webgpu(const char* label) : label{label} {
+Webgpu::Webgpu(const std::string& lbl, wgpu::PowerPreference power_pref) : label{lbl} {
   init_lab();
 
   glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
@@ -29,7 +29,7 @@ Webgpu::Webgpu(const char* label) : label{label} {
 
   wgpu::RequestAdapterOptions adapterOpts = {
       .compatibleSurface = surface,
-      .powerPreference = wgpu::PowerPreference::HighPerformance,
+      .powerPreference = power_pref,
   };
 
   wgpu::Future future = instance.RequestAdapter(
