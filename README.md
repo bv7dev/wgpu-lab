@@ -26,27 +26,33 @@ struct MyVertexFormat {
 int main() {
   lab::Webgpu webgpu("My WebGPU Context");
   lab::Shader shader("My Shader", "shaders/draw_colored.wgsl");
-  lab::Pipeline pipeline(shader, webgpu);
 
+  lab::Pipeline pipeline(shader, webgpu); // the rendering pipeline
+
+  // colored triangle data
   std::vector<MyVertexFormat> vertex_data = {
       //         X      Y                R     G     B
       {.pos = {-0.5f, -0.5f}, .color = {0.8f, 0.2f, 0.2f}},
       {.pos = {+0.5f, -0.5f}, .color = {0.8f, 0.8f, 0.2f}},
       {.pos = {+0.0f, +0.5f}, .color = {0.2f, 0.8f, 0.4f}},
   };
+
+  // vertex buffer (sends copy of data to GPU memory)
   lab::Buffer vertex_buffer("My Vertex Buffer", vertex_data, webgpu);
 
+  // pipeline needs to know about buffers and their memory layouts (vertex attributes)
   pipeline.add_vertex_buffer(vertex_buffer);
   pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0); // position
   pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x3, 1); // color
-  pipeline.finalize();
+  pipeline.finalize();                                          // make ready for rendering
 
   lab::Window window("Hello Triangle", 640, 400);
-  lab::Surface surface(window, webgpu);
 
+  lab::Surface surface(window, webgpu); // surface to render onto
+
+  // main application loop
   while (lab::tick()) {
-    pipeline.render_frame(surface, 3, 1);
-    lab::sleep(50ms);
+    pipeline.render_frame(surface, 3, 1); // 3 vertices, 1 instance
   }
 }
 ```
@@ -54,34 +60,37 @@ int main() {
 
 ## Getting Started
 
-### windows
+### Windows
 
-**setup:**
-1. install [Visual Studio](https://visualstudio.microsoft.com/vs/community/) for MSVC compiler and CMake, or a C++ compiler and build tools of your choice (configure it yourself and feel free to share your setup by creating an issue or a pull request)
-1. install [VS Code](https://code.visualstudio.com/) editor (optional - this project is configured to work well within VS Code)  
+**Setup:**
+1. Install [Visual Studio](https://visualstudio.microsoft.com/vs/community/) for MSVC compiler and CMake, or a C++ compiler and build tools of your choice (configure it yourself and feel free to share your setup by creating an issue or a pull request)
+1. Install [VS Code](https://code.visualstudio.com/) (optional - this project is configured to work well within VS Code)  
    open VS Code and install recommended extensions (a pop-up should appear)  
-   look into the extensions tab to see if extensions `C/C++`, `CMake` and `CMake Tools` are installed 
-1. install [Python](https://www.python.org/downloads/) which is required to download dependencies in wgpu-lab and dawn
+   look into the extensions tab to see if `C/C++`, `CMake` and `CMake Tools` are installed 
+1. Install [Python](https://www.python.org/downloads/) which is required to download dependencies in wgpu-lab and dawn
 
-**build:**
-1. clone this repository:
+**Build:**
+1. Clone this repository:
    ```sh
    git clone https://github.com/bv7dev/wgpu-lab.git
    ```
    or alternatively, download a release build
-1. open the cloned directory or the unzipped release in VS Code (File -> Open Folder...)
-1. hit the `⚙ Build` button in Code's bottom toolbar (provided by `CMake Tools` extension) or use `CMake` manually to configure and build
+1. Open the cloned directory or the unzipped release in VS Code (File -> Open Folder...)
+1. Hit the `⚙ Build` button in Code's bottom toolbar (provided by `CMake Tools` extension) or use `CMake` manually to configure and build
 
-Only the first build takes a very long time for downloading and building dawn
+The first build takes a long time for downloading, generating and building dawn.
 
+### Linux (coming soon)
 
-**run and debug sample executables:**
+### Mac (help wanted)
+
+**Run sample executables:**
 
 For VS Code users, there's a shared `.vscode/launch.json` configuration file.
 This setup allows you to build and run any `.cpp` source file that's located in the `samples/` directory,
-simply by opening it in the editor and pressing `F5` which runs the code in debug mode (set breakpoints and step through code to learn how it works).
+simply by opening it in the editor and pressing `F5`. This runs the code in debug mode (set breakpoints and step through the code to learn how it works).
 
-To get started, you can add your own `.cpp` file and tinker around and step through the code.
+To get started, you can add your own `.cpp` file, tinker around and step through the code. Use CMake Tools to reconfigure the project after adding new files.
 
 ### Dependencies
 The library currently only depends on [WebGPU Dawn](https://dawn.googlesource.com/dawn) and uses
@@ -93,9 +102,11 @@ are also included.
 
 
 ## Roadmap
-- [x] address build system issues from WIP section
+- [x] address build system issues
 - [ ] re-design render pipeline (too chaotic at the moment)
-- [ ] replace render_frame function by smaller, composable mechanisms
+- [ ] replace render_frame() function by smaller, composable mechanisms
 - [ ] add compute pipeline support
 - [ ] add emscripten support for WebAssembly
-- [ ] unify and finalize lab API and release stable 1.0 version
+- [ ] unify and finalize lab API 
+- [ ] write documentation and tests 
+- [ ] release stable 1.0 version

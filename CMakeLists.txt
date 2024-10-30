@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13...3.24 FATAL_ERROR)
 project(
   wgpu-lab
-  VERSION 0.1.0
+  VERSION 0.2.0
   LANGUAGES CXX C)
 
 # check if python is installed and call script to fetch lab's dependencies -------
