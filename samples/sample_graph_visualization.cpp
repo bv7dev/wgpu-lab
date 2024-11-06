@@ -107,12 +107,10 @@ int main() {
   });
 
   while (lab::tick()) {
-    wgpu::TextureView targetView = lab::get_current_render_texture_view(surface.wgpu_surface);
-
     wgpu::CommandEncoderDescriptor encoderDesc = {.label = "my command encoder"};
     wgpu::CommandEncoder encoder = node_pipeline.webgpu.device.CreateCommandEncoder(&encoderDesc);
 
-    node_pipeline.render_config.renderPassColorAttachment.view = targetView;
+    node_pipeline.render_config.renderPassColorAttachment.view = surface.get_current_texture();
     wgpu::RenderPassDescriptor renderPassDesc{
         .label = "my render pass",
         .colorAttachmentCount = 1,

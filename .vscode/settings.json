@@ -1,4 +1,5 @@
 {
+  "C_Cpp.formatting": "clangFormat",
   "cmake.generator": "Ninja",
   "cmake.configureOnOpen": false,
   "files.associations": {

@@ -20,6 +20,8 @@ struct Surface {
   void reconfigure(int width, int height);
   void reconfigure();
 
+  wgpu::TextureView get_current_texture();
+
   ~Surface();
 };
 

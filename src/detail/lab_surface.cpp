@@ -3,6 +3,8 @@
 #include <GLFW/glfw3.h>
 #include <webgpu/webgpu_glfw.h>
 
+#include <iostream>
+
 namespace lab {
 
 Surface::Surface(Window& wnd, Webgpu& wgpu)
@@ -30,6 +32,26 @@ void Surface::reconfigure(int w, int h) {
 }
 
 void Surface::reconfigure() { reconfigure(window.width(), window.height()); }
+
+wgpu::TextureView Surface::get_current_texture() {
+  wgpu::SurfaceTexture surfaceTexture;
+  wgpu_surface.GetCurrentTexture(&surfaceTexture);
+  if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::Success) {
+    std::cerr << "Error: Pipeline: Could not get current render texture" << std::endl;
+    return nullptr;
+  }
+  wgpu::TextureViewDescriptor viewDescriptor{
+      .label = "lab default texture view",
+      .format = surfaceTexture.texture.GetFormat(),
+      .dimension = wgpu::TextureViewDimension::e2D,
+      .baseMipLevel = 0,
+      .mipLevelCount = 1,
+      .baseArrayLayer = 0,
+      .arrayLayerCount = 1,
+      .aspect = wgpu::TextureAspect::All,
+  };
+  return surfaceTexture.texture.CreateView(&viewDescriptor);
+}
 
 Surface::~Surface() {
   if (wgpu_surface) {
