@@ -110,6 +110,8 @@ struct SurfaceState {
   Size configured_size;   // {0, 0} while not configured
   wgpu::Texture texture;  // of the frame being rendered, null between frames
   wgpu::TextureView view; // a view of `texture`
+  wgpu::TextureFormat depth_format = wgpu::TextureFormat::Undefined;
+  wgpu::Texture depth_texture; // as large as the surface, null without a depth format
   std::string label;
 
   // Frame capture: with the environment variable LAB_CAPTURE_DIR set, every surface

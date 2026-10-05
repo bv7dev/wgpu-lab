@@ -106,6 +106,17 @@ Texture::Texture(Gpu& gpu_object, wgpu::TextureFormat format, uint32_t width, ui
 
 wgpu::TextureView Texture::view() const { return texture.CreateView(); }
 
+wgpu::Sampler sampler(Gpu& gpu, SamplerOptions options) {
+  wgpu::SamplerDescriptor desc;
+  desc.label = std::string_view(options.label);
+  desc.addressModeU = options.address_mode;
+  desc.addressModeV = options.address_mode;
+  desc.addressModeW = options.address_mode;
+  desc.magFilter = options.filter;
+  desc.minFilter = options.filter;
+  return gpu.device().CreateSampler(&desc);
+}
+
 void Texture::write_bytes(const void* data, uint64_t byte_count, uint64_t given_pixel_size) {
   check_pixels(name, "write", pixel_format, extent, byte_count, given_pixel_size);
 

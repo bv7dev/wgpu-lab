@@ -77,6 +77,23 @@ private:
   std::string name;
 };
 
+struct SamplerOptions {
+  // `Linear` blends neighbouring pixels, `Nearest` shows them as blocks
+  wgpu::FilterMode filter = wgpu::FilterMode::Linear;
+
+  // what happens outside of the texture: `Repeat`, `MirrorRepeat` or `ClampToEdge`
+  wgpu::AddressMode address_mode = wgpu::AddressMode::Repeat;
+
+  std::string label = "lab sampler";
+};
+
+// Creates a sampler: the way a shader reads a texture with `textureSample()`
+// ```cpp
+// wgpu::Sampler sampler = lab::sampler(gpu);
+// auto group = pipeline.bind_group(0, {{0, texture}, {1, sampler}});
+// ```
+wgpu::Sampler sampler(Gpu& gpu, SamplerOptions options = {});
+
 } // namespace lab
 
 #endif // WGPU_LAB_TEXTURE_H

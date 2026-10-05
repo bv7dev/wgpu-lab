@@ -290,6 +290,99 @@ TEST_CASE("Texture: written pixels can be read back and sampled") {
   CHECK(gpu.errors().empty());
 }
 
+TEST_CASE("render: with a depth buffer, the nearer fragment wins whatever the drawing order") {
+  lab::Gpu gpu;
+  lab::Texture target = make_target(gpu);
+  lab::Texture depth(gpu, wgpu::TextureFormat::Depth24Plus, target_size, target_size);
+
+  // a fullscreen triangle at a depth and in a color that both come from a uniform
+  auto shader = lab::Shader::from_source(gpu, R"(
+    struct Layer { color: vec4f, depth: f32 };
+    @group(0) @binding(0) var<uniform> layer: Layer;
+    @vertex fn vs_main(@builtin(vertex_index) i: u32) -> @builtin(position) vec4f {
+      var positions = array<vec2f, 3>(vec2f(-1.0, -1.0), vec2f(3.0, -1.0), vec2f(-1.0, 3.0));
+      return vec4f(positions[i], layer.depth, 1.0);
+    }
+    @fragment fn fs_main() -> @location(0) vec4f {
+      return layer.color;
+    }
+  )");
+  lab::Pipeline pipeline(gpu, shader, {.target = {target, depth}});
+
+  struct alignas(16) Layer {
+    float color[4];
+    float depth;
+  };
+  lab::Buffer<Layer> near_layer(gpu, {{{0.0f, 1.0f, 0.0f, 1.0f}, 0.2f}}, wgpu::BufferUsage::Uniform);
+  lab::Buffer<Layer> far_layer(gpu, {{{0.0f, 0.0f, 1.0f, 1.0f}, 0.8f}}, wgpu::BufferUsage::Uniform);
+  lab::Draw draw_near{.bind_groups = {pipeline.bind_group(0, {{0, near_layer}})}, .count = 3};
+  lab::Draw draw_far{.bind_groups = {pipeline.bind_group(0, {{0, far_layer}})}, .count = 3};
+
+  SUBCASE("near first, far second") {
+    lab::Frame frame(gpu);
+    lab::RenderPass pass(frame, target, {.depth = &depth});
+    pass.draw(pipeline, draw_near);
+    pass.draw(pipeline, draw_far);
+    pass.end();
+    frame.submit();
+    CHECK(all_pixels_are(target.read<Pixel>(), {0, 255, 0, 255}));
+  }
+  SUBCASE("far first, near second") {
+    lab::Frame frame(gpu);
+    lab::RenderPass pass(frame, target, {.depth = &depth});
+    pass.draw(pipeline, draw_far);
+    pass.draw(pipeline, draw_near);
+    pass.end();
+    frame.submit();
+    CHECK(all_pixels_are(target.read<Pixel>(), {0, 255, 0, 255}));
+  }
+
+  SUBCASE("a pipeline without depth cannot draw into a pass that has a depth buffer") {
+    lab::Pipeline no_depth(gpu, shader, {.target = target});
+    lab::Frame frame(gpu);
+    lab::RenderPass pass(frame, target, {.depth = &depth});
+    CHECK_THROWS_WITH_AS(pass.draw(no_depth, draw_near), doctest::Contains("with depth"), lab::Error);
+  }
+  CHECK(gpu.errors().empty());
+}
+
+TEST_CASE("Texture: a sampler filters between pixels") {
+  lab::Gpu gpu;
+  lab::Texture target = make_target(gpu);
+
+  // one black and one white pixel, side by side
+  lab::Texture image(gpu, wgpu::TextureFormat::RGBA8Unorm, 2, 1);
+  image.write(std::vector<Pixel>{{0, 0, 0, 255}, {255, 255, 255, 255}});
+
+  auto shader = lab::Shader::from_source(gpu, fullscreen_vertex_shader + R"(
+    @group(0) @binding(0) var image: texture_2d<f32>;
+    @group(0) @binding(1) var image_sampler: sampler;
+    @fragment fn fs_main(@builtin(position) position: vec4f) -> @location(0) vec4f {
+      return textureSample(image, image_sampler, vec2f(position.x / 64.0, 0.5));
+    }
+  )");
+  lab::Pipeline pipeline(gpu, shader, {.target = target, .blend = std::nullopt});
+
+  auto render_with = [&](wgpu::Sampler sampler) {
+    lab::Frame frame(gpu);
+    lab::RenderPass pass(frame, target);
+    pass.draw(pipeline, {.bind_groups = {pipeline.bind_group(0, {{0, image}, {1, sampler}})}, .count = 3});
+  };
+
+  const wgpu::AddressMode clamp = wgpu::AddressMode::ClampToEdge;
+
+  render_with(lab::sampler(gpu, {.filter = wgpu::FilterMode::Nearest, .address_mode = clamp}));
+  auto nearest = target.read<Pixel>();
+  CHECK(nearest[at(31, 32)].r == 0); // a hard edge in the middle
+  CHECK(nearest[at(32, 32)].r == 255);
+
+  render_with(lab::sampler(gpu, {.filter = wgpu::FilterMode::Linear, .address_mode = clamp}));
+  auto linear = target.read<Pixel>();
+  CHECK(linear[at(32, 32)].r == doctest::Approx(128).epsilon(0.05)); // a gradient from black to white
+  CHECK(linear[at(24, 32)].r < linear[at(40, 32)].r);
+  CHECK(gpu.errors().empty());
+}
+
 TEST_CASE("Texture: save_png writes a PNG file") {
   lab::Gpu gpu;
   lab::Texture target = make_target(gpu);

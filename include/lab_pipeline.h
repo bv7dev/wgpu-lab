@@ -82,8 +82,9 @@ struct TargetFormat {
   wgpu::TextureFormat color;
   wgpu::TextureFormat depth = wgpu::TextureFormat::Undefined; // Undefined: no depth buffer
 
-  TargetFormat(const Surface& surface) : color{surface.format()} {}
+  TargetFormat(const Surface& surface) : color{surface.format()}, depth{surface.depth_format()} {}
   TargetFormat(const Texture& texture) : color{texture.format()} {}
+  TargetFormat(const Texture& color, const Texture& depth) : color{color.format()}, depth{depth.format()} {}
   TargetFormat(wgpu::TextureFormat color, wgpu::TextureFormat depth = wgpu::TextureFormat::Undefined)
       : color{color}, depth{depth} {}
 
@@ -240,6 +241,11 @@ struct PipelineDesc {
 
   // how the output is mixed with what is already in the target, nullopt replaces it
   std::optional<wgpu::BlendState> blend = alpha_blend;
+
+  // Depth test, only used if the target has a depth buffer: a fragment is kept if its
+  // depth compares like this to what is stored, and then stored itself if depth_write is set
+  wgpu::CompareFunction depth_compare = wgpu::CompareFunction::Less;
+  bool depth_write = true;
 
   // only needed if the shader has more than one entry point per stage
   std::string vertex_entry = {};

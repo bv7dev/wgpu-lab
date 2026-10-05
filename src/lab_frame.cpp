@@ -59,7 +59,8 @@ void Frame::submit() {
 
 // RenderPass ------------------------------------------------------------------------------------
 
-void RenderPass::begin(Frame& target_frame, wgpu::TextureView view, TargetFormat format, const PassOptions& options) {
+void RenderPass::begin(Frame& target_frame, wgpu::TextureView view, wgpu::TextureView depth_view, TargetFormat format,
+                       const PassOptions& options) {
   frame = &target_frame;
   target = format;
   label = options.label;
@@ -85,27 +86,46 @@ void RenderPass::begin(Frame& target_frame, wgpu::TextureView view, TargetFormat
       .colorAttachmentCount = 1,
       .colorAttachments = &attachment,
   };
+
+  wgpu::RenderPassDepthStencilAttachment depth_attachment;
+  if (depth_view) {
+    depth_attachment.view = depth_view;
+    depth_attachment.depthLoadOp = options.clear_depth ? wgpu::LoadOp::Clear : wgpu::LoadOp::Load;
+    depth_attachment.depthStoreOp = wgpu::StoreOp::Store;
+    depth_attachment.depthClearValue = options.clear_depth.value_or(1.0f);
+    if (format.depth == wgpu::TextureFormat::Depth24PlusStencil8 ||
+        format.depth == wgpu::TextureFormat::Depth32FloatStencil8) {
+      depth_attachment.stencilLoadOp = wgpu::LoadOp::Clear;
+      depth_attachment.stencilStoreOp = wgpu::StoreOp::Store;
+    }
+    desc.depthStencilAttachment = &depth_attachment;
+  }
+
   encoder = frame->encoder.BeginRenderPass(&desc);
   frame->pass_open = true;
 }
 
 RenderPass::RenderPass(Surface& surface, PassOptions options) {
   own_frame.emplace(surface);
-  begin(*own_frame, surface.current_view(), surface, options);
+  begin(*own_frame, surface.current_view(), surface.depth_view(), surface, options);
   if (encoder) {
     own_frame->surfaces.push_back(surface.state());
   }
 }
 
 RenderPass::RenderPass(Frame& target_frame, Surface& surface, PassOptions options) {
-  begin(target_frame, surface.current_view(), surface, options);
+  begin(target_frame, surface.current_view(), surface.depth_view(), surface, options);
   if (encoder && std::ranges::find(frame->surfaces, surface.state()) == frame->surfaces.end()) {
     frame->surfaces.push_back(surface.state());
   }
 }
 
 RenderPass::RenderPass(Frame& target_frame, const Texture& texture, PassOptions options) {
-  begin(target_frame, texture.view(), texture, options);
+  if (options.depth) {
+    begin(target_frame, texture.view(), options.depth->view(), TargetFormat{texture, *options.depth}, options);
+  } else {
+    begin(target_frame, texture.view(), nullptr, texture, options);
+  }
 }
 
 RenderPass::~RenderPass() {

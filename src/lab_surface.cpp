@@ -40,6 +40,16 @@ void SurfaceState::configure(Size size) {
   };
   handle.Configure(&config);
   configured_size = size;
+
+  if (depth_format != wgpu::TextureFormat::Undefined) {
+    wgpu::TextureDescriptor depth_desc{
+        .label = "lab surface depth buffer",
+        .usage = wgpu::TextureUsage::RenderAttachment,
+        .size = {static_cast<uint32_t>(size.width), static_cast<uint32_t>(size.height), 1},
+        .format = depth_format,
+    };
+    depth_texture = gpu->device.CreateTexture(&depth_desc);
+  }
 }
 
 wgpu::TextureView SurfaceState::current_view() {
@@ -101,6 +111,7 @@ Surface::Surface(Gpu& gpu, Window& window, SurfaceOptions options)
   state.window = window.state();
   state.label = std::format("surface of window \"{}\"", glfwGetWindowTitle(window.handle()));
   state.present_mode = options.present_mode;
+  state.depth_format = options.depth;
 
   state.handle = platform::create_surface(gpu.instance(), window.handle());
   if (!state.handle) {
@@ -150,6 +161,7 @@ Surface::Surface(Gpu& gpu, Window& window, SurfaceOptions options)
 }
 
 wgpu::TextureFormat Surface::format() const { return shared_state->format; }
+wgpu::TextureFormat Surface::depth_format() const { return shared_state->depth_format; }
 
 Size Surface::size() const { return shared_state->framebuffer_size(); }
 
@@ -159,6 +171,9 @@ float Surface::aspect() const {
 }
 
 wgpu::TextureView Surface::current_view() { return shared_state->current_view(); }
+wgpu::TextureView Surface::depth_view() {
+  return shared_state->depth_texture ? shared_state->depth_texture.CreateView() : nullptr;
+}
 void Surface::present() { shared_state->present(); }
 
 const wgpu::Surface& Surface::handle() const { return shared_state->handle; }

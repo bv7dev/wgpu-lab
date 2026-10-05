@@ -17,6 +17,10 @@ struct SurfaceOptions {
   // `Undefined` picks BGRA8Unorm or RGBA8Unorm, whichever the window system prefers.
   // Other formats it supports can be asked for, e.g. RGBA16Float for HDR output.
   wgpu::TextureFormat format = wgpu::TextureFormat::Undefined;
+
+  // A depth format (e.g. Depth24Plus) gives the surface a depth buffer, which it keeps
+  // at the size of the window. Render passes onto the surface then test against it.
+  wgpu::TextureFormat depth = wgpu::TextureFormat::Undefined;
 };
 
 // What a Gpu renders onto to make it appear in a Window.
@@ -36,7 +40,8 @@ public:
   Surface& operator=(Surface&&) = default;
 
   wgpu::TextureFormat format() const;
-  Size size() const;    // in pixels
+  wgpu::TextureFormat depth_format() const; // Undefined if the surface has no depth buffer
+  Size size() const;                        // in pixels
   float aspect() const; // width divided by height
 
   // The texture view to render the current frame into
@@ -45,6 +50,9 @@ public:
   //    minimized or the surface has to adapt to a new size first): skip the frame
   //  - `lab::RenderPass` and `lab::Frame` call this and `present()` for you
   wgpu::TextureView current_view();
+
+  // The depth buffer that goes with `current_view()`, null if the surface has none
+  wgpu::TextureView depth_view();
 
   // Shows what has been rendered into `current_view()`
   void present();

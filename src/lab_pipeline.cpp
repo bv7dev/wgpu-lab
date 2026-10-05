@@ -102,8 +102,8 @@ Pipeline::Pipeline(Gpu& gpu_object, const Shader& shader, PipelineDesc desc)
 
   wgpu::DepthStencilState depth_stencil;
   depth_stencil.format = desc.target.depth;
-  depth_stencil.depthWriteEnabled = wgpu::OptionalBool::True;
-  depth_stencil.depthCompare = wgpu::CompareFunction::Less;
+  depth_stencil.depthWriteEnabled = desc.depth_write ? wgpu::OptionalBool::True : wgpu::OptionalBool::False;
+  depth_stencil.depthCompare = desc.depth_compare;
 
   wgpu::RenderPipelineDescriptor pipeline_desc;
   pipeline_desc.label = std::string_view(name);

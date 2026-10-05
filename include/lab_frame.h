@@ -59,6 +59,13 @@ struct PassOptions {
   // color the target is cleared to before drawing, nullopt keeps what is in it
   std::optional<wgpu::Color> clear = wgpu::Color{0.08, 0.08, 0.085, 1.0};
 
+  // A depth buffer for passes into a texture: a texture with a depth format and the size
+  // of the target. A surface brings its own, see SurfaceOptions::depth.
+  const Texture* depth = nullptr;
+
+  // depth the depth buffer is cleared to, nullopt keeps what is in it
+  std::optional<float> clear_depth = 1.0f;
+
   std::string label = "lab render pass";
 };
 
@@ -101,7 +108,8 @@ public:
   const wgpu::RenderPassEncoder& handle() const { return encoder; }
 
 private:
-  void begin(Frame& frame, wgpu::TextureView view, TargetFormat format, const PassOptions& options);
+  void begin(Frame& frame, wgpu::TextureView view, wgpu::TextureView depth_view, TargetFormat format,
+             const PassOptions& options);
 
   std::optional<Frame> own_frame;
   Frame* frame = nullptr;
