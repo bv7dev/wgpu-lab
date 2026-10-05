@@ -1,0 +1,3 @@
+# clangd reads the compile commands of the "dev" preset (run `cmake --preset dev` once)
+CompileFlags:
+  CompilationDatabase: build/dev
