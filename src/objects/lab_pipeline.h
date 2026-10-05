@@ -113,6 +113,8 @@ struct Pipeline {
     wgpu_pipeline = transfer();
   }
 
+  // If the pipeline has an index buffer, `vertexCount` and `firstVertex`
+  // count indices instead of vertices
   struct DrawCallParams {
     uint32_t vertexCount = 0, instanceCount = 1;
     uint32_t firstVertex = 0, firstInstance = 0;
@@ -228,7 +230,7 @@ struct Pipeline {
 
   template<typename T>
   void add_uniform_buffer(const Buffer<T>& uniform_buffer, uint32_t binding_index, wgpu::ShaderStage visibility) {
-    add_bind_group_layout_buffer_entry(0, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
+    add_bind_group_layout_buffer_entry(binding_index, visibility, wgpu::BufferBindingType::Uniform, sizeof(T));
     add_bind_group_buffer_entry(uniform_buffer.wgpu_buffer, binding_index, sizeof(T));
   }
 

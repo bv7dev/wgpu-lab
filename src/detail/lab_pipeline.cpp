@@ -137,7 +137,8 @@ bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface, const 
     renderPass.Draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
                     draw_params.firstInstance);
   } else {
-    renderPass.DrawIndexed(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex);
+    renderPass.DrawIndexed(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex, 0,
+                           draw_params.firstInstance);
   }
 
   renderPass.End();
