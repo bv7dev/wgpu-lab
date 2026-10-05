@@ -66,22 +66,19 @@ int Window::height() const {
 
 float Window::ratio() const { return (1.f / width()) * height(); }
 
-bool Window::is_open() const { return glfw_window_handle != nullptr; }
+bool Window::is_open() const { return state.window_map.contains(glfw_window_handle); }
 
+// A closed window is only hidden. The native window has to outlive every Surface
+// and swapchain that presents into it, and the GPU releases those late (when the
+// device is destroyed), so GLFW destroys the native windows at program exit instead.
 void Window::close() {
-  if (glfw_window_handle) {
+  if (is_open()) {
     std::cout << "Info: GLFW: Window(" << glfwGetWindowTitle(glfw_window_handle) << " - " << glfw_window_handle
-              << ") destroyed!" << std::endl;
-    glfwDestroyWindow(glfw_window_handle);
+              << ") closed!" << std::endl;
+    glfwSetKeyCallback(glfw_window_handle, nullptr);
+    glfwSetFramebufferSizeCallback(glfw_window_handle, nullptr);
+    glfwHideWindow(glfw_window_handle);
     state.window_map.erase(glfw_window_handle);
-    glfw_window_handle = nullptr;
-    if (state.window_map.size() == 0) {
-      if (state.lab_init) {
-        glfwTerminate();
-        state.lab_init = false;
-        std::cout << "Info: GLFW: Terminated!" << std::endl;
-      }
-    }
   }
 }
 Window::~Window() { close(); }

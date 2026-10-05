@@ -18,6 +18,9 @@ bool init_lab() {
     }
     std::cout << "Info: GLFW: Initialized!" << std::endl;
 
+    // GLFW stays initialized until the program exits, see Window::close()
+    std::atexit(glfwTerminate);
+
     // initialize only once
     state.lab_init = true;
   }
