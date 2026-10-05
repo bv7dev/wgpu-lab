@@ -1,4 +1,4 @@
-// 05: a texture is filled with pixels and read by the fragment shader
+// 05: a texture is filled with pixels and sampled by the fragment shader
 
 #include <lab>
 
@@ -60,11 +60,11 @@ int main() {
                          {.vertex_buffers = {lab::vertex<MyVertex>({Float32x2, Float32x2})}, // position, uv
                           .target = surface});
 
-  // the bind group connects both resources the shader declares:
-  // `@binding(0) var<uniform> uniforms` and `@binding(1) var gradientTexture`
+  // the bind group connects the resources the shader declares:
+  // `@binding(0) var<uniform> uniforms`, `@binding(1) var gradientTexture` and `@binding(2) var gradientSampler`
   lab::Draw triangle{
       .vertex_buffers = {vertices},
-      .bind_groups = {pipeline.bind_group(0, {{0, uniform_buffer}, {1, texture}})},
+      .bind_groups = {pipeline.bind_group(0, {{0, uniform_buffer}, {1, texture}, {2, lab::sampler(gpu)}})},
   };
 
   while (lab::tick()) {

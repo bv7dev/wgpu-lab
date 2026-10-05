@@ -70,6 +70,10 @@ std::optional<std::string> capture_error(const GpuState& gpu, const std::functio
 void save_texture_png(const GpuState& gpu, const wgpu::Texture& texture, const std::filesystem::path& path,
                       std::string_view label);
 
+// Finds `file` as it is or relative to the directory of the executable, see lab::find_file.
+// `label` names the object the file is for, in the error that is thrown if it is not found.
+std::filesystem::path locate_file(const std::filesystem::path& file, std::string_view label);
+
 // Window ---------------------------------------------------------------------------------------
 
 struct WindowState {

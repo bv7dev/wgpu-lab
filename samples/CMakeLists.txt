@@ -1,15 +1,20 @@
-# glm is the only library the samples use besides the lab ----------------------
-# It is header-only, so it is only downloaded: SOURCE_SUBDIR points at a directory
-# without a CMakeLists.txt, which keeps glm's own build scripts out of ours.
+# libraries that only the samples use ------------------------------------------
+# Both are used header-only, so they are only downloaded: SOURCE_SUBDIR points at a
+# directory without a CMakeLists.txt, which keeps their own build scripts out of ours.
 FetchContent_Declare(glm
   GIT_REPOSITORY https://github.com/g-truc/glm
   GIT_TAG 1.0.1
   GIT_SHALLOW ON
   SOURCE_SUBDIR headers-only)
-FetchContent_MakeAvailable(glm)
+FetchContent_Declare(tinygltf
+  GIT_REPOSITORY https://github.com/syoyo/tinygltf
+  GIT_TAG v2.9.3
+  GIT_SHALLOW ON
+  SOURCE_SUBDIR headers-only)
+FetchContent_MakeAvailable(glm tinygltf)
 
 add_library(lab-sample-libs INTERFACE)
-target_include_directories(lab-sample-libs SYSTEM INTERFACE ${glm_SOURCE_DIR})
+target_include_directories(lab-sample-libs SYSTEM INTERFACE ${glm_SOURCE_DIR} ${tinygltf_SOURCE_DIR})
 
 # one executable per .cpp file in this directory --------------------------------
 # (add your own .cpp here and re-run the CMake configure step)

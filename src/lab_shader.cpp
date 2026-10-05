@@ -2,18 +2,16 @@
 
 #include "platform/lab_platform.h"
 
-#include <lab_shader.h>
+#include <lab>
 
 #include <fstream>
 #include <sstream>
 
 namespace lab {
 
-namespace {
+namespace detail {
 
-// A relative path is tried from the working directory first and then from the
-// directory of the executable, so a program finds its shaders wherever it is started from.
-std::filesystem::path locate(const std::filesystem::path& file, const std::string& label) {
+std::filesystem::path locate_file(const std::filesystem::path& file, std::string_view label) {
   std::error_code ignored;
   if (std::filesystem::is_regular_file(file, ignored)) {
     return file;
@@ -26,14 +24,18 @@ std::filesystem::path locate(const std::filesystem::path& file, const std::strin
     }
     tried += std::format(" and \"{}\"", beside_executable.string());
   }
-  detail::fail(label, std::format("file not found, looked for {}", tried));
+  fail(label, std::format("file not found, looked for {}", tried));
 }
 
-} // namespace
+} // namespace detail
+
+std::filesystem::path find_file(const std::filesystem::path& file) {
+  return detail::locate_file(file, file.filename().string());
+}
 
 Shader::Shader(Gpu& gpu, const std::filesystem::path& wgsl_file, std::string_view label)
     : name{label.empty() ? wgsl_file.filename().string() : std::string{label}} {
-  const std::filesystem::path path = locate(wgsl_file, name);
+  const std::filesystem::path path = detail::locate_file(wgsl_file, name);
   std::ifstream file(path);
   if (!file) {
     detail::fail(name, std::format("could not read \"{}\"", path.string()));

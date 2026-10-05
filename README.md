@@ -89,11 +89,14 @@ The samples in `samples/` build on each other, one concept at a time:
 | `02_triangle` | the smallest program that renders something, pipeline settings |
 | `03_vertex_buffer` | vertices from a buffer (the example above) |
 | `04_uniforms` | a uniform buffer and a bind group, animation |
-| `05_texture` | a texture filled with pixels and read by the shader |
+| `05_texture` | a texture filled with pixels, read through a sampler |
 | `06_instancing` | one mesh drawn many times, live updates, keyboard control |
 | `07_graph` | several pipelines in one render pass, indexed drawing |
 | `08_readback` | getting data back from the GPU, without a window |
 | `09_multi_window` | one GPU rendering into several windows |
+| `10_house` | a 3D scene: depth buffer, camera, lighting, a glTF model and an image file |
+| `11_boids` | a compute shader simulates a flock that is drawn in the same frame |
+| `12_offscreen` | rendering into a texture and using it in a second pass |
 
 
 ## Getting Started
@@ -174,9 +177,10 @@ The pinned Dawn version is set at the top of `cmake/LabDawn.cmake`.
 ### Dependencies
 The library only depends on [WebGPU Dawn](https://dawn.googlesource.com/dawn) and
 [GLFW](https://www.glfw.org/) for windowing.
-Some of the samples use [GLM](https://github.com/g-truc/glm) for vector math,
-and the tests use [doctest](https://github.com/doctest/doctest). Both are downloaded
-when samples and tests are built, which is only the case when wgpu-lab is the top-level project.
+Some of the samples use [GLM](https://github.com/g-truc/glm) for vector math and
+[tinygltf](https://github.com/syoyo/tinygltf) to read a model, and the tests use
+[doctest](https://github.com/doctest/doctest). These are downloaded when samples and tests
+are built, which is only the case when wgpu-lab is the top-level project.
 
 
 ## Roadmap
@@ -184,8 +188,8 @@ when samples and tests are built, which is only the case when wgpu-lab is the to
 - [x] re-design render pipeline
 - [x] replace render_frame() function by smaller, composable mechanisms
 - [x] write tests
-- [ ] add depth buffers, samplers and a 3D sample
-- [ ] add compute pipeline support
+- [x] add depth buffers, samplers and a 3D sample
+- [x] add compute pipeline support
 - [ ] add emscripten support for WebAssembly
 - [ ] unify and finalize lab API
 - [ ] write documentation

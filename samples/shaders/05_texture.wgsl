@@ -16,6 +16,7 @@ struct VertexOutput {
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var gradientTexture: texture_2d<f32>;
+@group(0) @binding(2) var gradientSampler: sampler;
 
 @vertex
 fn vs_main(in: VertexInput) -> VertexOutput {
@@ -29,6 +30,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
-  let color: vec3f = textureLoad(gradientTexture, vec2i(in.uv*256), 0).rgb;
+  // the sampler decides how the texture is read between its pixels and beyond its edges
+  let color: vec3f = textureSample(gradientTexture, gradientSampler, in.uv).rgb;
 	return vec4f(color*((sin(uniforms.time)+1.0)*2.5), 1.0);
 }

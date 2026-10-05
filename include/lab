@@ -22,6 +22,7 @@
 #include <lab_window.h>
 
 #include <chrono>
+#include <filesystem>
 #include <thread>
 
 namespace lab {
@@ -55,6 +56,15 @@ T elapsed_seconds() {
   return static_cast<T>(detail::elapsed_seconds());
 }
 void restart_timer();
+
+// Finds a file that belongs to the program, like an image or a model
+//  - a relative path is looked up from the working directory first, then from the
+//    directory of the executable, so it does not matter where a program is started from
+//  - throws lab::Error if the file is in neither place
+// ```cpp
+// auto path = lab::find_file("assets/house.glb");
+// ```
+std::filesystem::path find_file(const std::filesystem::path& file);
 
 // Wrapper for visual simplicity around `std::this_thread::sleep_for(duration);`
 // ```cpp
