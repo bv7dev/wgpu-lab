@@ -6,6 +6,16 @@ on:
   pull_request:
 
 jobs:
+  # the same clang-format version as in CONTRIBUTING.md, other versions format slightly differently
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check formatting
+        run: |
+          git ls-files 'include/*' 'src/*.cpp' 'src/*.h' 'src/platform/*' 'samples/*.cpp' 'tests/*.cpp' 'tests/*.h' \
+            | xargs pipx run clang-format==23.1.1 --dry-run --Werror
+
   build:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}

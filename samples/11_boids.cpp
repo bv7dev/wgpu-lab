@@ -21,10 +21,10 @@ struct Params {
   float delta_time = 0.0f;
   float cohesion_distance = 0.10f;
   float separation_distance = 0.025f;
-  float alignment_distance = 0.025f;
-  float cohesion_scale = 0.02f;
+  float alignment_distance = 0.06f;
+  float cohesion_scale = 0.01f;
   float separation_scale = 0.05f;
-  float alignment_scale = 0.005f;
+  float alignment_scale = 0.03f;
 };
 
 int main() {

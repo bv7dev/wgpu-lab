@@ -42,7 +42,7 @@ public:
   wgpu::TextureFormat format() const;
   wgpu::TextureFormat depth_format() const; // Undefined if the surface has no depth buffer
   Size size() const;                        // in pixels
-  float aspect() const; // width divided by height
+  float aspect() const;                     // width divided by height
 
   // The texture view to render the current frame into
   //  - stays the same until `present()` is called

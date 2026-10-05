@@ -13,6 +13,15 @@ and the API is likely to undergo significant changes.
 
 **Contributions are welcome!**
 
+<p>
+  <img src="docs/images/10_house.png" height="150" alt="a lit house model on textured ground">
+  <img src="docs/images/11_boids.png" height="150" alt="flocks simulated in a compute shader">
+  <img src="docs/images/07_graph.png" height="150" alt="a graph of glowing nodes and edges">
+  <img src="docs/images/12_offscreen.png" height="150" alt="a triangle rendered with few pixels and magnified">
+</p>
+
+All of these are [samples](#samples) of a hundred lines or so.
+
 
 ## Simple Usage Sample
 ```c++
