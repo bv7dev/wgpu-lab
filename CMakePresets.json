@@ -24,7 +24,7 @@
       "displayName": "Debug + AddressSanitizer + UBSan (GCC/Clang)",
       "inherits": "dev",
       "cacheVariables": {
-        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-omit-frame-pointer",
+        "CMAKE_CXX_FLAGS": "-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer",
         "CMAKE_EXE_LINKER_FLAGS": "-fsanitize=address,undefined"
       }
     }
@@ -33,5 +33,21 @@
     { "name": "dev", "configurePreset": "dev" },
     { "name": "release", "configurePreset": "release" },
     { "name": "dev-asan", "configurePreset": "dev-asan" }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output": { "outputOnFailure": true }
+    },
+    { "name": "dev", "inherits": "base", "configurePreset": "dev" },
+    { "name": "release", "inherits": "base", "configurePreset": "release" },
+    {
+      "name": "dev-asan",
+      "displayName": "Leak detection is off: GPU drivers leak a little when they are unloaded",
+      "inherits": "base",
+      "configurePreset": "dev-asan",
+      "environment": { "ASAN_OPTIONS": "detect_leaks=0" }
+    }
   ]
 }

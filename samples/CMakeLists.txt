@@ -26,6 +26,18 @@ foreach(SAMPLE_FILE IN LISTS SAMPLE_FILES)
   # executables go to the top of the build directory, next to shaders/ and assets/
   set_target_properties(${SAMPLE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
   lab_target_defaults(${SAMPLE_NAME})
+
+  # Every sample doubles as a smoke test: it has to run 60 frames without reporting an error.
+  # These tests open windows, so they carry a label: `ctest -LE samples` skips them.
+  if(LAB_BUILD_TESTS)
+    add_test(NAME sample.${SAMPLE_NAME} COMMAND ${SAMPLE_NAME} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    set_tests_properties(sample.${SAMPLE_NAME} PROPERTIES
+      LABELS samples
+      ENVIRONMENT LAB_EXIT_AFTER_FRAMES=60
+      FAIL_REGULAR_EXPRESSION "Error:"
+      TIMEOUT 30
+      RUN_SERIAL ON)
+  endif()
 endforeach()
 
 # copy shader and asset files to the build directory ----------------------------

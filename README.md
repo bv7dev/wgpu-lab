@@ -88,6 +88,16 @@ simply by opening it in the editor and pressing `F5`. This runs the code in debu
 
 To get started, you can add your own `.cpp` file, tinker around and step through the code. Use CMake Tools to reconfigure the project after adding new files.
 
+**Run the tests:**
+
+```sh
+ctest --preset dev              # everything; each sample opens its window for a second
+ctest --preset dev -LE samples  # only the tests that need no window
+```
+
+Any sample can be run unattended by setting `LAB_EXIT_AFTER_FRAMES`, for example
+`LAB_EXIT_AFTER_FRAMES=120 ./sample_texture` closes its window after 120 frames.
+
 ### Linux
 
 Wayland and X11 are both supported. If GLFW 3.4 or newer is installed

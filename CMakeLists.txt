@@ -5,9 +5,10 @@ project(
   LANGUAGES CXX C)
 
 # options ----------------------------------------------------------------------
-# samples are only built when wgpu-lab is the top-level project, so that pulling
+# samples and tests are only built when wgpu-lab is the top-level project, so that pulling
 # the lab into another project (add_subdirectory / FetchContent) yields just the library
 option(LAB_BUILD_SAMPLES "Build the sample executables" ${PROJECT_IS_TOP_LEVEL})
+option(LAB_BUILD_TESTS "Build the tests (run them with ctest)" ${PROJECT_IS_TOP_LEVEL})
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(FetchContent)
@@ -100,7 +101,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   endif()
 endif()
 
-# sample executables -----------------------------------------------------------
+# tests and sample executables --------------------------------------------------
+if(LAB_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
+
 if(LAB_BUILD_SAMPLES)
   add_subdirectory(samples)
 endif()

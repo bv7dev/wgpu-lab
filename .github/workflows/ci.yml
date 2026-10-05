@@ -20,12 +20,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # GLFW is built from source on the runner, these are its build dependencies
+      # GLFW is built from source on the runner and needs its build dependencies.
+      # The runners have no GPU: mesa-vulkan-drivers provides lavapipe, a software Vulkan driver.
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libwayland-dev libxkbcommon-dev xorg-dev
+          sudo apt-get install -y ninja-build libwayland-dev libxkbcommon-dev xorg-dev mesa-vulkan-drivers
 
       - name: Select compiler (Linux)
         if: runner.os == 'Linux'
@@ -43,3 +44,7 @@ jobs:
 
       - name: Build
         run: cmake --build --preset release
+
+      # the samples open windows and are skipped, everything else renders offscreen
+      - name: Test
+        run: ctest --preset release -LE samples
