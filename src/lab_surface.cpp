@@ -1,6 +1,6 @@
-#include <objects/lab_surface.h>
+#include <lab_surface.h>
 
-#include <platform/lab_platform.h>
+#include "platform/lab_platform.h"
 
 #include <GLFW/glfw3.h>
 

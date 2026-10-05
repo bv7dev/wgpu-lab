@@ -1,4 +1,4 @@
-#include <objects/lab_webgpu.h>
+#include <lab_webgpu.h>
 
 #include <webgpu/webgpu_cpp_print.h>
 

@@ -23,12 +23,12 @@
 
 // Lab objects and enums -------------------------
 
-#include <objects/lab_buffer.h>
-#include <objects/lab_pipeline.h>
-#include <objects/lab_shader.h>
-#include <objects/lab_surface.h>
-#include <objects/lab_texture.h>
-#include <objects/lab_webgpu.h>
-#include <objects/lab_window.h>
+#include <lab_buffer.h>
+#include <lab_pipeline.h>
+#include <lab_shader.h>
+#include <lab_surface.h>
+#include <lab_texture.h>
+#include <lab_webgpu.h>
+#include <lab_window.h>
 
-#include <extra/lab_enums.h>
+#include <lab_enums.h>

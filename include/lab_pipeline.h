@@ -1,14 +1,14 @@
 #ifndef WGPU_LAB_PIPELINE_H
 #define WGPU_LAB_PIPELINE_H
 
-#include <extra/lab_objects.h>
-#include <extra/lab_pipeline_defaults.h>
+#include <lab_objects.h>
+#include <lab_pipeline_defaults.h>
 
-#include <objects/lab_buffer.h>
-#include <objects/lab_shader.h>
-#include <objects/lab_surface.h>
-#include <objects/lab_texture.h>
-#include <objects/lab_webgpu.h>
+#include <lab_buffer.h>
+#include <lab_shader.h>
+#include <lab_surface.h>
+#include <lab_texture.h>
+#include <lab_webgpu.h>
 
 #include <webgpu/webgpu_cpp.h>
 

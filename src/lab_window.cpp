@@ -1,7 +1,7 @@
-#include <objects/lab_window.h>
+#include <lab_window.h>
 
-#include <extra/lab_enums.h>
-#include <extra/lab_state.h>
+#include <lab_enums.h>
+#include "lab_state.h"
 
 #include <GLFW/glfw3.h>
 

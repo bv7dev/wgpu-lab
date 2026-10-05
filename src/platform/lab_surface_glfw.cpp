@@ -1,4 +1,4 @@
-#include <platform/lab_platform.h>
+#include "platform/lab_platform.h"
 
 #include <GLFW/glfw3.h>
 

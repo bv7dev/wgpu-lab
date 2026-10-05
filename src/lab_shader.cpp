@@ -1,4 +1,4 @@
-#include <objects/lab_shader.h>
+#include <lab_shader.h>
 
 #include <filesystem>
 #include <format>

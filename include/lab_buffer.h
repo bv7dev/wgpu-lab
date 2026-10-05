@@ -3,8 +3,8 @@
 
 #include <webgpu/webgpu_cpp.h>
 
-#include <extra/lab_mapped_vram.h>
-#include <objects/lab_webgpu.h>
+#include <lab_mapped_vram.h>
+#include <lab_webgpu.h>
 
 #include <cassert>
 #include <cstring>

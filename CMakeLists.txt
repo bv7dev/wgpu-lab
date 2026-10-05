@@ -58,33 +58,34 @@ endfunction()
 
 # wgpu-lab library -------------------------------------------------------------
 add_library(wgpu-lab
-  src/detail/lab_pipeline.cpp
-  src/detail/lab_shader.cpp
-  src/detail/lab_surface.cpp
-  src/detail/lab_webgpu.cpp
-  src/detail/lab_window.cpp
-  src/detail/lab.cpp
+  src/lab.cpp
+  src/lab_pipeline.cpp
+  src/lab_shader.cpp
+  src/lab_surface.cpp
+  src/lab_webgpu.cpp
+  src/lab_window.cpp
+  src/lab_state.h
 
   src/platform/lab_surface_glfw.cpp
   src/platform/lab_platform.h
 
-  src/extra/lab_enums.h
-  src/extra/lab_mapped_vram.h
-  src/extra/lab_objects.h
-  src/extra/lab_public.h
-  src/extra/lab_state.h
-
-  src/objects/lab_buffer.h
-  src/objects/lab_pipeline.h
-  src/objects/lab_shader.h
-  src/objects/lab_surface.h
-  src/objects/lab_webgpu.h
-  src/objects/lab_window.h
-
-  src/lab)
+  include/lab
+  include/lab_buffer.h
+  include/lab_enums.h
+  include/lab_mapped_vram.h
+  include/lab_objects.h
+  include/lab_pipeline.h
+  include/lab_pipeline_defaults.h
+  include/lab_public.h
+  include/lab_shader.h
+  include/lab_surface.h
+  include/lab_texture.h
+  include/lab_webgpu.h
+  include/lab_window.h)
 add_library(lab::lab ALIAS wgpu-lab)
 
-target_include_directories(wgpu-lab PUBLIC src)
+# include/ is the public interface, src/ is private
+target_include_directories(wgpu-lab PUBLIC include PRIVATE src)
 target_compile_features(wgpu-lab PUBLIC cxx_std_23)
 target_link_libraries(wgpu-lab PUBLIC dawn::webgpu_dawn glfw)
 lab_target_defaults(wgpu-lab)

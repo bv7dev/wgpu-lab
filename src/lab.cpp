@@ -1,6 +1,6 @@
 #include <webgpu/webgpu_cpp.h>
 
-#include <extra/lab_state.h>
+#include "lab_state.h"
 #include <lab>
 
 #include <GLFW/glfw3.h>

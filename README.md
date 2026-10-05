@@ -131,7 +131,7 @@ The pinned Dawn version is set at the top of `cmake/LabDawn.cmake`.
 ### Dependencies
 The library only depends on [WebGPU Dawn](https://dawn.googlesource.com/dawn) and
 [GLFW](https://www.glfw.org/) for windowing.
-wgpu-lab also makes heavy use of the C++ STL (see `src/extra/lab_public.h`).
+wgpu-lab also makes heavy use of the C++ STL (see `include/lab_public.h`).
 However, to build all of the sample executables, the libraries
 [GLM](https://github.com/g-truc/glm) and [tinygltf](https://github.com/syoyo/tinygltf)
 are downloaded as well.

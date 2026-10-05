@@ -1,7 +1,7 @@
 #ifndef WGPU_LAB_TEXTURE_H
 #define WGPU_LAB_TEXTURE_H
 
-#include <objects/lab_webgpu.h>
+#include <lab_webgpu.h>
 
 namespace lab {
 
