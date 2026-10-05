@@ -87,11 +87,16 @@ void BufferCore::write(uint64_t byte_offset, const void* data, uint64_t byte_cou
     return;
   }
   if (byte_offset % 4 != 0 || byte_count % 4 != 0) {
-    // the end of the buffer is padded, so a write that reaches it may be rounded up
+    // the end of the buffer is padded, so a write that reaches it may be rounded up:
+    // the part that is a multiple of 4 bytes goes as it is, the 1 to 3 bytes left over in a padded word
     if (byte_offset % 4 == 0 && byte_offset + byte_count == byte_size) {
-      std::vector<char> padded(align_up_4(byte_count), 0);
-      std::memcpy(padded.data(), data, byte_count);
-      gpu->queue.WriteBuffer(handle, byte_offset, padded.data(), padded.size());
+      const uint64_t whole = byte_count & ~uint64_t{3};
+      if (whole > 0) {
+        gpu->queue.WriteBuffer(handle, byte_offset, data, whole);
+      }
+      char last_word[4] = {};
+      std::memcpy(last_word, static_cast<const char*>(data) + whole, byte_count - whole);
+      gpu->queue.WriteBuffer(handle, byte_offset + whole, last_word, sizeof(last_word));
       return;
     }
     fail(label, std::format("write: WebGPU writes buffers in multiples of 4 bytes, but this write covers bytes "
