@@ -20,25 +20,33 @@ Webgpu::Webgpu(const std::string& lbl, wgpu::PowerPreference power_pref) : label
     return;
   }
 
-  wgpu::RequestAdapterOptions adapterOpts = {
-      .powerPreference = power_pref,
-  };
-
-  wgpu::Future future = instance.RequestAdapter(
-      &adapterOpts, wgpu::CallbackMode::WaitAnyOnly,
-      [](wgpu::RequestAdapterStatus status, wgpu::Adapter adapter, wgpu::StringView message, wgpu::Adapter* userdata) {
-        if (status == wgpu::RequestAdapterStatus::Success) {
-          std::cout << "Info: WGPU: Successfully got adapter!" << std::endl;
-        } else {
-          std::cerr << "Error: WGPU: Failed to get adapter: " << std::string_view(message) << std::endl;
-        }
-        *userdata = std::move(adapter);
-      },
-      &adapter);
-  instance.WaitAny(future, UINT64_MAX);
+  // a software adapter is only asked for if there is no GPU (CI machines, VMs)
+  wgpu::Future future;
+  for (bool fallback : {false, true}) {
+    wgpu::RequestAdapterOptions adapterOpts = {
+        .powerPreference = power_pref,
+        .forceFallbackAdapter = fallback,
+    };
+    future = instance.RequestAdapter(
+        &adapterOpts, wgpu::CallbackMode::WaitAnyOnly,
+        [](wgpu::RequestAdapterStatus, wgpu::Adapter adapter, wgpu::StringView, wgpu::Adapter* userdata) {
+          *userdata = std::move(adapter);
+        },
+        &adapter);
+    instance.WaitAny(future, UINT64_MAX);
+    if (adapter) {
+      break;
+    }
+  }
   if (!adapter) {
+    std::cerr << "Error: WGPU: Failed to get adapter: no GPU and no software adapter found" << std::endl;
     return;
   }
+
+  wgpu::AdapterInfo adapterInfo;
+  adapter.GetInfo(&adapterInfo);
+  std::cout << "Info: WGPU: Using adapter " << std::string_view(adapterInfo.device) << " (" << adapterInfo.backendType
+            << ")" << std::endl;
 
   wgpu::DeviceDescriptor deviceDesc;
   deviceDesc.label = "lab default device";
