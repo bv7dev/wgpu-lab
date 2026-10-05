@@ -60,31 +60,27 @@ int main() {
 
 ## Getting Started
 
-### Windows
+You need a C++23 compiler, [CMake](https://cmake.org/) 3.28 or newer,
+[Ninja](https://ninja-build.org/) and git.
 
-**Setup:**
-1. Install [Visual Studio](https://visualstudio.microsoft.com/vs/community/) for MSVC compiler and CMake, or a C++ compiler and build tools of your choice (configure it yourself and feel free to share your setup by creating an issue or a pull request)
-1. Install [VS Code](https://code.visualstudio.com/) (optional - this project is configured to work well within VS Code)  
-   open VS Code and install recommended extensions (a pop-up should appear)  
-   look into the extensions tab to see if `C/C++`, `CMake` and `CMake Tools` are installed 
-1. Install [Python](https://www.python.org/downloads/) which is required to download dependencies in wgpu-lab and dawn
+```sh
+git clone https://github.com/bv7dev/wgpu-lab.git
+cd wgpu-lab
+cmake --preset dev
+cmake --build --preset dev
+```
 
-**Build:**
-1. Clone this repository:
-   ```sh
-   git clone https://github.com/bv7dev/wgpu-lab.git
-   ```
-   or alternatively, download a release build
-1. Open the cloned directory or the unzipped release in VS Code (File -> Open Folder...)
-1. Hit the `⚙ Build` button in Code's bottom toolbar (provided by `CMake Tools` extension) or use `CMake` manually to configure and build
-
-The first build takes a long time for downloading, generating and building dawn.
-
-### Linux (coming soon)
-
-### Mac (help wanted)
+The first `cmake --preset dev` downloads a prebuilt Dawn (about 40 MB on Linux),
+so there is no long Dawn build to wait for.
 
 **Run sample executables:**
+
+The samples end up at the top of the build directory, next to the shaders they load:
+
+```sh
+cd build/dev
+./sample_vertex_buffer
+```
 
 For VS Code users, there's a shared `.vscode/launch.json` configuration file.
 This setup allows you to build and run any `.cpp` source file that's located in the `samples/` directory,
@@ -92,13 +88,43 @@ simply by opening it in the editor and pressing `F5`. This runs the code in debu
 
 To get started, you can add your own `.cpp` file, tinker around and step through the code. Use CMake Tools to reconfigure the project after adding new files.
 
+### Linux
+
+Wayland and X11 are both supported. If GLFW 3.4 or newer is installed
+(`glfw` on Arch, `libglfw3-dev` on recent Debian/Ubuntu) it is used, otherwise GLFW is built
+from source and needs its build dependencies, for example on Debian/Ubuntu:
+
+```sh
+sudo apt install libwayland-dev libxkbcommon-dev xorg-dev
+```
+
+### Windows
+
+Install [Visual Studio](https://visualstudio.microsoft.com/vs/community/) with the
+"Desktop development with C++" workload (it includes MSVC, CMake and Ninja) and run the
+commands above from a "Developer PowerShell for VS".
+Alternatively, open the folder in [VS Code](https://code.visualstudio.com/) with the
+recommended extensions and pick the `dev` preset.
+
+### Mac (help wanted)
+
+### Choosing where Dawn comes from
+
+| `-DLAB_DAWN=` | What happens |
+|---|---|
+| `prebuilt` (default) | downloads the release archive that Dawn's CI publishes for the pinned version |
+| `source` | fetches and builds Dawn itself (takes a while, needs Python for Dawn's build scripts) |
+| `system` | uses a Dawn you installed yourself, found through `find_package(Dawn)` |
+
+The pinned Dawn version is set at the top of `cmake/LabDawn.cmake`.
+
 ### Dependencies
-The library currently only depends on [WebGPU Dawn](https://dawn.googlesource.com/dawn) and uses
-[GLFW](https://www.glfw.org/) for windowing, which already comes included with dawn.
+The library only depends on [WebGPU Dawn](https://dawn.googlesource.com/dawn) and
+[GLFW](https://www.glfw.org/) for windowing.
 wgpu-lab also makes heavy use of the C++ STL (see `src/extra/lab_public.h`).
 However, to build all of the sample executables, the libraries
 [GLM](https://github.com/g-truc/glm) and [tinygltf](https://github.com/syoyo/tinygltf)
-are also included.
+are downloaded as well.
 
 
 ## Roadmap
