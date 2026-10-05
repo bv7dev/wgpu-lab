@@ -54,6 +54,7 @@ int main() {
 
     std::unique_ptr<Window> sometimes_open;
     std::unique_ptr<Surface> sometimes_surf;
+    bool close_second_window = false;
 
     window.set_key_callback([&](const KeyEvent& event) {
       if (event.key == KeyCode::space && event.action == KeyAction::press) {
@@ -63,10 +64,8 @@ int main() {
 
           sometimes_open.get()->set_key_callback([&](const KeyEvent& event) {
             if (event.key == KeyCode::tab && event.action == KeyAction::release) {
-              sometimes_surf.get()->~Surface();
-              sometimes_open.get()->~Window();
-              sometimes_surf.release();
-              sometimes_open.release();
+              // not destroyed right here: this callback is owned by the window it would destroy
+              close_second_window = true;
             }
           });
         }
@@ -76,8 +75,14 @@ int main() {
     while (tick()) {
       pipeline.render_frame(surface, {3, 1});
 
-      if (sometimes_open && sometimes_open.get()->is_open()) {
-        pipeline.render_frame(*sometimes_surf.get(), {3, 1});
+      if (close_second_window) {
+        sometimes_surf.reset();
+        sometimes_open.reset();
+        close_second_window = false;
+      }
+
+      if (sometimes_open && sometimes_open->is_open()) {
+        pipeline.render_frame(*sometimes_surf, {3, 1});
       }
     }
   }
@@ -89,7 +94,7 @@ int main() {
 
     second_window.set_key_callback([&](const lab::KeyEvent& event) {
       if (event.key == lab::KeyCode::space) {
-        first_window.~Window();
+        first_window.close();
       }
     });
 
@@ -128,5 +133,4 @@ int main() {
       if (second_window.is_open()) pipe2.render_frame(second_surface, {3, 1});
     }
   }
-
 }

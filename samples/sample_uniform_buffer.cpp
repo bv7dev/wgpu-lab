@@ -33,18 +33,6 @@ int main() {
 
   lab::Surface surface(window, webgpu);
 
-  std::thread time_resetter{[]() {
-    std::cout << "Info: time_resetter: spawned a thread which resets time roughly every 7 seconds" << std::endl;
-    while (true) {
-      std::cout << "time reset at: " << lab::elapsed_seconds() << std::endl;
-      lab::restart_timer();
-      while (lab::elapsed_seconds() < 6.997) {
-        // when accuracy doesn't matter, save system resources
-        lab::sleep(10ms);
-      }
-    }
-  }};
-
   while (lab::tick()) {
     // send uniform data to gpu
     uniform_buffer.write(uniforms);
@@ -52,10 +40,14 @@ int main() {
     // render the scene to surface
     pipeline.render_frame(surface, {3, 1});
 
+    // restart the animation roughly every 7 seconds
+    if (lab::elapsed_seconds() > 7.0f) {
+      std::cout << "time reset at: " << lab::elapsed_seconds() << std::endl;
+      lab::restart_timer();
+    }
+
     // update uniform values for next draw call
     uniforms.ratio[0] = window.ratio();
     uniforms.time = lab::elapsed_seconds();
   }
-
-  time_resetter.join();
 }

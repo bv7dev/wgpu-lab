@@ -1,5 +1,7 @@
 #include <lab>
 
+#include <atomic>
+
 using namespace std;
 using namespace lab;
 
@@ -10,7 +12,7 @@ int main() {
   cout << "\n\nWriting Buffer...\n";
   Buffer<int> buffer("My Buffer", webgpu);
   {
-    bool writing_done = false;
+    atomic<bool> writing_done = false;
     auto init_buffer = [&writing_done](MappedVRAM<int> vmap) {
       int start_point = 6;
       vmap.resize(start_point);
@@ -32,7 +34,7 @@ int main() {
 
   // Read the buffer back to CPU -----------------------------------------------
   {
-    bool reading_done = false;
+    atomic<bool> reading_done = false;
     cout << "\n\nReading Buffer...\n";
     auto read_buffer = [&reading_done](MappedVRAM<const int> vmap) {
       for (auto e : vmap) {
