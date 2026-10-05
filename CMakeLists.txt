@@ -59,6 +59,7 @@ endfunction()
 # wgpu-lab library -------------------------------------------------------------
 add_library(wgpu-lab
   src/lab_buffer.cpp
+  src/lab_compute.cpp
   src/lab_frame.cpp
   src/lab_gpu.cpp
   src/lab_image.cpp
@@ -76,6 +77,7 @@ add_library(wgpu-lab
 
   include/lab
   include/lab_buffer.h
+  include/lab_compute.h
   include/lab_error.h
   include/lab_frame.h
   include/lab_gpu.h

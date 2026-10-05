@@ -8,6 +8,7 @@
 // between you and WebGPU.
 
 #include <lab_buffer.h>
+#include <lab_compute.h>
 #include <lab_error.h>
 #include <lab_frame.h>
 #include <lab_gpu.h>

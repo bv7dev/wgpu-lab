@@ -24,6 +24,7 @@ endfunction()
 # tests that need a GPU (or a software adapter), but no window: they render into textures
 lab_add_tests(lab-tests
   test_buffer.cpp
+  test_compute.cpp
   test_pipeline.cpp
   test_render.cpp
   test_vertex_format.cpp)
