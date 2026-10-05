@@ -14,48 +14,86 @@ and the API is likely to undergo significant changes.
 **Contributions are welcome!**
 
 
-## Simple Usage Sample 
+## Simple Usage Sample
 ```c++
 #include <lab>
 
-struct MyVertexFormat {
+#include <vector>
+
+using enum wgpu::VertexFormat;
+
+struct MyVertex {
   float pos[2];
   float color[3];
 };
 
 int main() {
-  lab::Webgpu webgpu("My WebGPU Context");
-  lab::Shader shader("My Shader", "shaders/draw_colored.wgsl");
-
-  lab::Pipeline pipeline(shader, webgpu); // the rendering pipeline
+  lab::Gpu gpu;
+  lab::Window window("Hello Triangle", 640, 400);
+  lab::Surface surface(gpu, window);
 
   // colored triangle data
-  std::vector<MyVertexFormat> vertex_data = {
+  std::vector<MyVertex> vertex_data = {
       //         X      Y                R     G     B
       {.pos = {-0.5f, -0.5f}, .color = {0.8f, 0.2f, 0.2f}},
       {.pos = {+0.5f, -0.5f}, .color = {0.8f, 0.8f, 0.2f}},
       {.pos = {+0.0f, +0.5f}, .color = {0.2f, 0.8f, 0.4f}},
   };
 
-  // vertex buffer (sends copy of data to GPU memory)
-  lab::Buffer vertex_buffer("My Vertex Buffer", vertex_data, webgpu);
+  // vertex buffer (sends a copy of the data to GPU memory)
+  lab::Buffer vertices(gpu, vertex_data);
 
-  // pipeline needs to know about buffers and their memory layouts (vertex attributes)
-  pipeline.add_vertex_buffer(vertex_buffer);
-  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 0); // position
-  pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x3, 1); // color
-  pipeline.finalize();                                          // make ready for rendering
+  lab::Shader shader(gpu, "shaders/03_vertex_buffer.wgsl");
 
-  lab::Window window("Hello Triangle", 640, 400);
-
-  lab::Surface surface(window, webgpu); // surface to render onto
+  // the pipeline needs to know how a vertex is laid out in memory:
+  // two floats for @location(0) position, three floats for @location(1) color
+  lab::Pipeline pipeline(gpu, shader,
+                         {.vertex_buffers = {lab::vertex<MyVertex>({Float32x2, Float32x3})}, .target = surface});
 
   // main application loop
   while (lab::tick()) {
-    pipeline.render_frame(surface, 3, 1); // 3 vertices, 1 instance
+    pipeline.render_frame(surface, {.vertex_buffers = {vertices}}); // draws all 3 vertices of the buffer
   }
 }
 ```
+
+`render_frame()` is the short form for a frame with a single draw call.
+With a `lab::RenderPass`, any number of pipelines draw into the same frame:
+
+```c++
+  while (lab::tick()) {
+    lab::RenderPass pass(surface);         // a pass onto the window, it is one frame
+    pass.draw(edge_pipeline, draw_edges);  // a lab::Draw names the buffers and bind groups to use
+    pass.draw(node_pipeline, draw_nodes);
+  }                                        // the pass ends here: the frame is submitted and shown
+```
+
+The lab never stands between you and WebGPU: `wgpu::` types are used as they are,
+and every lab object hands out the WebGPU object it wraps through `handle()`.
+
+Mistakes are reported where they are made, as a `lab::Error` that names the object:
+
+```
+pipeline(03_vertex_buffer.wgsl): draw: vertex buffer 0 has elements of 4 bytes, but the pipeline
+declares 20 bytes for it: is it the buffer the layout was written for?
+```
+
+
+## Samples
+
+The samples in `samples/` build on each other, one concept at a time:
+
+| Sample | Shows |
+|---|---|
+| `01_window` | a window and keyboard input, no GPU involved yet |
+| `02_triangle` | the smallest program that renders something, pipeline settings |
+| `03_vertex_buffer` | vertices from a buffer (the example above) |
+| `04_uniforms` | a uniform buffer and a bind group, animation |
+| `05_texture` | a texture filled with pixels and read by the shader |
+| `06_instancing` | one mesh drawn many times, live updates, keyboard control |
+| `07_graph` | several pipelines in one render pass, indexed drawing |
+| `08_readback` | getting data back from the GPU, without a window |
+| `09_multi_window` | one GPU rendering into several windows |
 
 
 ## Getting Started
@@ -79,7 +117,7 @@ The samples end up at the top of the build directory, next to the shaders they l
 
 ```sh
 cd build/dev
-./sample_vertex_buffer
+./03_vertex_buffer
 ```
 
 For VS Code users, there's a shared `.vscode/launch.json` configuration file.
@@ -92,11 +130,16 @@ To get started, you can add your own `.cpp` file, tinker around and step through
 
 ```sh
 ctest --preset dev              # everything; each sample opens its window for a second
-ctest --preset dev -LE samples  # only the tests that need no window
+ctest --preset dev -LE display  # only the tests that need no window (they render into textures)
 ```
 
-Any sample can be run unattended by setting `LAB_EXIT_AFTER_FRAMES`, for example
-`LAB_EXIT_AFTER_FRAMES=120 ./sample_texture` closes its window after 120 frames.
+A few environment variables help with running and inspecting programs:
+
+| Variable | Effect |
+|---|---|
+| `LAB_EXIT_AFTER_FRAMES=120` | all windows close after 120 frames |
+| `LAB_CAPTURE_DIR=shots` | every window saves one frame as `shots/<program>.png` (frame 30, or `LAB_CAPTURE_FRAME`) |
+| `LAB_LOG=debug` | more output (`debug`, `info`, `warn`, `error` or `off`) |
 
 ### Linux
 
@@ -131,18 +174,21 @@ The pinned Dawn version is set at the top of `cmake/LabDawn.cmake`.
 ### Dependencies
 The library only depends on [WebGPU Dawn](https://dawn.googlesource.com/dawn) and
 [GLFW](https://www.glfw.org/) for windowing.
-wgpu-lab also makes heavy use of the C++ STL (see `include/lab_public.h`).
-However, to build all of the sample executables, the libraries
-[GLM](https://github.com/g-truc/glm) and [tinygltf](https://github.com/syoyo/tinygltf)
-are downloaded as well.
+Some of the samples use [GLM](https://github.com/g-truc/glm) for vector math,
+and the tests use [doctest](https://github.com/doctest/doctest). Both are downloaded
+when samples and tests are built, which is only the case when wgpu-lab is the top-level project.
 
 
 ## Roadmap
 - [x] address build system issues
-- [ ] re-design render pipeline (too chaotic at the moment)
-- [ ] replace render_frame() function by smaller, composable mechanisms
+- [x] re-design render pipeline
+- [x] replace render_frame() function by smaller, composable mechanisms
+- [x] write tests
+- [ ] add depth buffers, samplers and a 3D sample
 - [ ] add compute pipeline support
 - [ ] add emscripten support for WebAssembly
-- [ ] unify and finalize lab API 
-- [ ] write documentation and tests 
+- [ ] unify and finalize lab API
+- [ ] write documentation
 - [ ] release stable 1.0 version
+
+Coming from version 0.2? See [docs/migrating-from-0.2.md](docs/migrating-from-0.2.md).
