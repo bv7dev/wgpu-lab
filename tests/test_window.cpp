@@ -1,5 +1,7 @@
 #include "common.h"
 
+#include <GLFW/glfw3.h>
+
 #include <memory>
 
 // These tests open windows, so they need a display. They are labelled "display"
@@ -100,6 +102,28 @@ TEST_CASE("window: a surface keeps working after its window was closed and moved
   moved_window.close();
   CHECK_FALSE(lab::tick());
   CHECK_NOTHROW(pipeline.render_frame(moved_surface, 3)); // rendering into a hidden window is harmless
+  CHECK(gpu.errors().empty());
+}
+
+TEST_CASE("window: a surface with a depth buffer follows the size of its window") {
+  lab::Gpu gpu;
+  lab::Window window("test", 200, 150);
+  lab::Surface surface(gpu, window, {.depth = wgpu::TextureFormat::Depth24Plus});
+  lab::Pipeline pipeline = make_triangle_pipeline(gpu, surface);
+  REQUIRE(lab::tick());
+  REQUIRE(pipeline.render_frame(surface, 3));
+
+  // A window manager may honor a resize request, ignore it, or apply it and then take it
+  // back. Whatever it does, color and depth buffer have to stay in step with the window.
+  glfwSetWindowSize(window.handle(), 320, 240);
+  int frames = 0;
+  for (int i = 0; i < 10; ++i) {
+    lab::tick();
+    frames += pipeline.render_frame(surface, 3);
+    CHECK(surface.size() == window.framebuffer_size());
+  }
+
+  CHECK(frames >= 8); // a frame may be skipped while the surface adapts
   CHECK(gpu.errors().empty());
 }
 

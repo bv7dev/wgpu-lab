@@ -107,14 +107,17 @@ void RenderPass::begin(Frame& target_frame, wgpu::TextureView view, wgpu::Textur
 
 RenderPass::RenderPass(Surface& surface, PassOptions options) {
   own_frame.emplace(surface);
-  begin(*own_frame, surface.current_view(), surface.depth_view(), surface, options);
+  // the color view comes first: getting it is what makes the surface adapt to a new window size
+  wgpu::TextureView view = surface.current_view();
+  begin(*own_frame, view, surface.depth_view(), surface, options);
   if (encoder) {
     own_frame->surfaces.push_back(surface.state());
   }
 }
 
 RenderPass::RenderPass(Frame& target_frame, Surface& surface, PassOptions options) {
-  begin(target_frame, surface.current_view(), surface.depth_view(), surface, options);
+  wgpu::TextureView view = surface.current_view(); // first, see above
+  begin(target_frame, view, surface.depth_view(), surface, options);
   if (encoder && std::ranges::find(frame->surfaces, surface.state()) == frame->surfaces.end()) {
     frame->surfaces.push_back(surface.state());
   }

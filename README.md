@@ -152,6 +152,7 @@ A few environment variables help with running and inspecting programs:
 | `LAB_EXIT_AFTER_FRAMES=120` | all windows close after 120 frames |
 | `LAB_CAPTURE_DIR=shots` | every window saves one frame as `shots/<program>.png` (frame 30, or `LAB_CAPTURE_FRAME`) |
 | `LAB_LOG=debug` | more output (`debug`, `info`, `warn`, `error` or `off`) |
+| `LAB_WINDOW_SYSTEM=x11` | on Linux: use X11 (through XWayland) or `wayland`, instead of what GLFW picks |
 
 ### Linux
 

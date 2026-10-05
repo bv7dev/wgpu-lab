@@ -101,11 +101,28 @@ void Runtime::init_glfw() {
   }
   glfwSetErrorCallback(
       [](int code, const char* description) { detail::log(LogLevel::warn, "GLFW error {}: {}", code, description); });
+
+  // LAB_WINDOW_SYSTEM=x11 or =wayland overrides the window system GLFW would pick on Linux,
+  // e.g. to run a program through XWayland in a Wayland session
+  if (const char* value = std::getenv("LAB_WINDOW_SYSTEM")) {
+    const std::string name = value;
+    if (name == "x11") {
+      glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+    } else if (name == "wayland") {
+      glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_WAYLAND);
+    } else {
+      log(LogLevel::warn, "LAB_WINDOW_SYSTEM={} is ignored, it can be x11 or wayland", name);
+    }
+  }
+
   if (!glfwInit()) {
     fail("lab", "GLFW could not be initialized, is there a display?");
   }
   glfw_ready = true;
-  log(LogLevel::debug, "GLFW {} initialized", glfwGetVersionString());
+  log(LogLevel::debug, "GLFW {} initialized, window system: {}", glfwGetVersionString(),
+      glfwGetPlatform() == GLFW_PLATFORM_WAYLAND ? "Wayland"
+      : glfwGetPlatform() == GLFW_PLATFORM_X11   ? "X11"
+                                                 : "native");
 }
 
 void Runtime::retire_window(GLFWwindow* window) {
