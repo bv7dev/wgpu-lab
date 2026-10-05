@@ -36,8 +36,8 @@ void Window::set_key_callback(std::function<void(const KeyEvent&)> kcb) {
 
 void Window::set_resize_callback(std::function<void(int width, int height)> rcb) {
   user_resize_callback = rcb;
-  glfwSetWindowSizeCallback(glfw_window_handle,
-                            [](GLFWwindow* wnd, int w, int h) { state.window_map[wnd]->user_resize_callback(w, h); });
+  glfwSetFramebufferSizeCallback(
+      glfw_window_handle, [](GLFWwindow* wnd, int w, int h) { state.window_map[wnd]->user_resize_callback(w, h); });
 }
 
 void Window::clear_key_callback() {
@@ -46,7 +46,7 @@ void Window::clear_key_callback() {
 }
 
 void Window::clear_resize_callback() {
-  glfwSetWindowSizeCallback(glfw_window_handle, nullptr);
+  glfwSetFramebufferSizeCallback(glfw_window_handle, nullptr);
   user_resize_callback = nullptr;
 }
 

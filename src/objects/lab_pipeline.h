@@ -10,12 +10,65 @@
 #include <objects/lab_texture.h>
 #include <objects/lab_webgpu.h>
 
-#include <dawn/webgpu_cpp.h>
+#include <webgpu/webgpu_cpp.h>
 
 namespace lab {
 
 // returns size in bytes of given wgpu::VertexFormat
-constexpr uint64_t vertex_format_size(const wgpu::VertexFormat& format);
+constexpr uint64_t vertex_format_size(wgpu::VertexFormat format) {
+  using enum wgpu::VertexFormat;
+  switch (format) {
+  case Uint8:
+  case Sint8:
+  case Unorm8:
+  case Snorm8:
+    return 1;
+  case Uint8x2:
+  case Sint8x2:
+  case Unorm8x2:
+  case Snorm8x2:
+  case Uint16:
+  case Sint16:
+  case Unorm16:
+  case Snorm16:
+  case Float16:
+    return 2;
+  case Uint8x4:
+  case Sint8x4:
+  case Unorm8x4:
+  case Snorm8x4:
+  case Unorm8x4BGRA:
+  case Uint16x2:
+  case Sint16x2:
+  case Unorm16x2:
+  case Snorm16x2:
+  case Float16x2:
+  case Float32:
+  case Uint32:
+  case Sint32:
+  case Unorm10_10_10_2:
+  case Snorm10_10_10_2:
+    return 4;
+  case Uint16x4:
+  case Sint16x4:
+  case Unorm16x4:
+  case Snorm16x4:
+  case Float16x4:
+  case Float32x2:
+  case Uint32x2:
+  case Sint32x2:
+    return 8;
+  case Float32x3:
+  case Uint32x3:
+  case Sint32x3:
+    return 12;
+  case Float32x4:
+  case Uint32x4:
+  case Sint32x4:
+    return 16;
+  }
+  return 0;
+}
 
 // returns the total stride of a given vector of wgpu::VertexAttribute objects
 uint64_t vertex_attributes_stride(const std::vector<wgpu::VertexAttribute>& vertexAttributes);
@@ -39,7 +92,7 @@ struct Pipeline {
   //
   // set param `final = true` if there is no need to configure anything -
   // this makes the pipeline ready to use.
-  Pipeline(Shader& sh, Webgpu& wg, bool final = false) : shader{sh}, webgpu{wg} {
+  Pipeline(Shader& sh, Webgpu& wg, bool final = false) : webgpu{wg}, shader{sh} {
     if (final) finalize();
   }
 
@@ -61,8 +114,8 @@ struct Pipeline {
   }
 
   struct DrawCallParams {
-    uint32_t vertexCount, instanceCount;
-    uint32_t firstVertex, firstInstance;
+    uint32_t vertexCount = 0, instanceCount = 1;
+    uint32_t firstVertex = 0, firstInstance = 0;
   };
   using RenderFunction = std::function<bool(PipelineHandle self, wgpu::Surface, const DrawCallParams&)>;
 
@@ -132,7 +185,7 @@ struct Pipeline {
   void add_vertex_buffer(wgpu::Buffer wgpu_buffer, wgpu::VertexStepMode mode = wgpu::VertexStepMode::Vertex,
                          uint64_t offset = 0) {
     assert(wgpu_buffer.GetUsage() & wgpu::BufferUsage::Vertex);
-    vb_configs.push_back({wgpu_buffer, mode, offset});
+    vb_configs.push_back({wgpu_buffer, mode, offset, {}});
   }
 
   template<typename T>
@@ -141,10 +194,14 @@ struct Pipeline {
     add_vertex_buffer(buffer.wgpu_buffer, mode, offset);
   }
 
-  void add_vertex_attrib(wgpu::VertexFormat format, uint32_t shader_location, uint64_t offset = ~0,
-                         uint64_t buffer_index = ~0) {
-    uint64_t bi = buffer_index == ~0 ? vb_configs.size() - 1 : buffer_index;
-    offset = offset == ~0 ? vertex_attributes_stride(vb_configs.at(bi).vertexAttributes) : offset;
+  // offset and buffer_index are worked out automatically by default:
+  // the attribute is appended to the vertex buffer that was added last
+  static constexpr uint64_t automatic = ~uint64_t{0};
+
+  void add_vertex_attrib(wgpu::VertexFormat format, uint32_t shader_location, uint64_t offset = automatic,
+                         uint64_t buffer_index = automatic) {
+    uint64_t bi = buffer_index == automatic ? vb_configs.size() - 1 : buffer_index;
+    offset = offset == automatic ? vertex_attributes_stride(vb_configs.at(bi).vertexAttributes) : offset;
     vb_configs.at(bi).vertexAttributes.push_back({
         .format = format,
         .offset = offset,

@@ -1,7 +1,7 @@
 #ifndef WGPU_LAB_MAPPED_VRAM
 #define WGPU_LAB_MAPPED_VRAM
 
-#include <dawn/webgpu_cpp.h>
+#include <webgpu/webgpu_cpp.h>
 
 #include <ranges>
 
@@ -23,10 +23,10 @@ namespace lab {
 template<typename T>
 struct MappedVRAM {
   MappedVRAM(std::span<T> view, size_t view_size, wgpu::Buffer wgpu_buffer)
-      : data_view{view}, view_size{view_size}, wgpu_buffer{wgpu_buffer} {}
+      : wgpu_buffer{wgpu_buffer}, data_view{view}, view_size{view_size} {}
   MappedVRAM(MappedVRAM<T>&& other)
-      : data_view{std::move(other.data_view)}, view_size{std::move(other.view_size)},
-        wgpu_buffer{std::move(other.wgpu_buffer)} {
+      : wgpu_buffer{std::move(other.wgpu_buffer)}, data_view{std::move(other.data_view)},
+        view_size{std::move(other.view_size)} {
     other.data_view = {};
     other.view_size = 0;
     other.wgpu_buffer = nullptr;

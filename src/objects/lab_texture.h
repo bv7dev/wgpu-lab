@@ -40,7 +40,7 @@ struct Texture {
 
   [[nodiscard]] wgpu::Texture transfer() { return webgpu.device.CreateTexture(&descriptor); }
 
-  wgpu::ImageCopyTexture target = {
+  wgpu::TexelCopyTextureInfo target = {
       .mipLevel = 0,
       .origin = {0, 0, 0},
       .aspect = wgpu::TextureAspect::All,
@@ -53,9 +53,9 @@ struct Texture {
     wgpu_texture = transfer();
     target.texture = wgpu_texture;
 
-    wgpu::TextureDataLayout layout = {
+    wgpu::TexelCopyBufferLayout layout = {
         .offset = 0,
-        .bytesPerRow = sizeof(T) * descriptor.size.width,
+        .bytesPerRow = static_cast<uint32_t>(sizeof(T) * descriptor.size.width),
         .rowsPerImage = descriptor.size.height,
     };
 

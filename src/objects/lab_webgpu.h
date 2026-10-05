@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <dawn/webgpu_cpp.h>
+#include <webgpu/webgpu_cpp.h>
 
 namespace lab {
 
@@ -15,7 +15,9 @@ struct Webgpu {
 
   ~Webgpu();
 
-  wgpu::SurfaceCapabilities capabilities{};
+  // Texture format shared by all surfaces and pipelines of this instance
+  // - BGRA8Unorm is what desktop window systems present natively
+  wgpu::TextureFormat surface_format = wgpu::TextureFormat::BGRA8Unorm;
 
   wgpu::Instance instance = nullptr;
   wgpu::Adapter adapter = nullptr;

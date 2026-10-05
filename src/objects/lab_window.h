@@ -17,6 +17,7 @@ struct Window {
   void set_key_callback(std::function<void(const KeyEvent&)>);
   void clear_key_callback();
 
+  // width and height are the size of the framebuffer in pixels
   void set_resize_callback(std::function<void(int width, int height)>);
   void clear_resize_callback();
 

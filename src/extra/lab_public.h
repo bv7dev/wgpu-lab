@@ -23,7 +23,7 @@ using namespace std::chrono_literals;
 #endif
 
 // Dawn wgpu C++ header
-#include <dawn/webgpu_cpp.h>
+#include <webgpu/webgpu_cpp.h>
 
 // Lab objects and enums -------------------------
 

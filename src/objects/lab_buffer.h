@@ -1,20 +1,23 @@
 #ifndef WGPU_LAB_BUFFER_H
 #define WGPU_LAB_BUFFER_H
 
-#include <dawn/webgpu_cpp.h>
+#include <webgpu/webgpu_cpp.h>
 
 #include <extra/lab_mapped_vram.h>
 #include <objects/lab_webgpu.h>
 
+#include <cassert>
+#include <cstring>
 #include <functional>
 #include <iostream>
 #include <thread>
+#include <vector>
 
 namespace lab {
 
 template<typename T>
 struct Buffer {
-  Buffer(const char* label, Webgpu& instance) : webgpu{instance}, label{label} {}
+  Buffer(const char* label, Webgpu& instance) : label{label}, webgpu{instance} {}
 
   Buffer(const char* label, const std::vector<T>& data, Webgpu& instance) : Buffer{label, instance} {
     to_device(data, wgpu::BufferUsage::Vertex);
@@ -67,11 +70,11 @@ struct Buffer {
     assert(wgpu_buffer != nullptr);
     wgpu::Future future = wgpu_buffer.MapAsync(
         wgpu::MapMode::Read, sizeof(T) * offset, sizeof(T) * num_elems, wgpu::CallbackMode::WaitAnyOnly,
-        [](wgpu::MapAsyncStatus status, char const* message, Buffer* self) {
+        [](wgpu::MapAsyncStatus status, wgpu::StringView message, Buffer* self) {
           if (status == wgpu::MapAsyncStatus::Success) {
             std::cout << "Info: Buffer: " << self->label << " successfully mapped memory!" << std::endl;
           } else {
-            std::cerr << "Error: Buffer: " << message << std::endl;
+            std::cerr << "Error: Buffer: " << std::string_view(message) << std::endl;
           }
         },
         this);

@@ -1,6 +1,4 @@
-#include <dawn/dawn_proc.h>
-#include <dawn/native/DawnNative.h>
-#include <dawn/webgpu_cpp.h>
+#include <webgpu/webgpu_cpp.h>
 
 #include <extra/lab_state.h>
 #include <lab>
@@ -19,9 +17,6 @@ bool init_lab() {
       return false;
     }
     std::cout << "Info: GLFW: Initialized!" << std::endl;
-
-    // initialize dawn proc tables
-    dawnProcSetProcs(&dawn::native::GetProcs());
 
     // initialize only once
     state.lab_init = true;

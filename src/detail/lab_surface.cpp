@@ -1,13 +1,13 @@
 #include <objects/lab_surface.h>
 
+#include <platform/lab_platform.h>
+
 #include <GLFW/glfw3.h>
-#include <webgpu/webgpu_glfw.h>
 
 namespace lab {
 
 Surface::Surface(Window& wnd, Webgpu& wgpu)
-    : window{wnd}, webgpu{wgpu},
-      wgpu_surface{wgpu::glfw::CreateSurfaceForWindow(wgpu.instance, wnd.glfw_window_handle)} {
+    : window{wnd}, webgpu{wgpu}, wgpu_surface{platform::create_surface(wgpu.instance, wnd.glfw_window_handle)} {
   reconfigure();
   window.set_resize_callback([&](int width, int height) {
     if (width > 0 && height > 0) {
@@ -19,17 +19,24 @@ Surface::Surface(Window& wnd, Webgpu& wgpu)
 void Surface::reconfigure(int w, int h) {
   wgpu::SurfaceConfiguration surfaceConfig = {
       .device = webgpu.device,
-      .format = webgpu.capabilities.formats[0],
+      .format = webgpu.surface_format,
       .usage = wgpu::TextureUsage::RenderAttachment,
-      .alphaMode = wgpu::CompositeAlphaMode::Auto,
       .width = static_cast<uint32_t>(w),
       .height = static_cast<uint32_t>(h),
+      .alphaMode = wgpu::CompositeAlphaMode::Auto,
       .presentMode = wgpu::PresentMode::Fifo,
   };
   wgpu_surface.Configure(&surfaceConfig);
 }
 
-void Surface::reconfigure() { reconfigure(window.width(), window.height()); }
+void Surface::reconfigure() {
+  // the surface is measured in pixels, which differ from window coordinates on scaled displays
+  int width, height;
+  glfwGetFramebufferSize(window.glfw_window_handle, &width, &height);
+  if (width > 0 && height > 0) {
+    reconfigure(width, height);
+  }
+}
 
 Surface::~Surface() {
   if (wgpu_surface) {
