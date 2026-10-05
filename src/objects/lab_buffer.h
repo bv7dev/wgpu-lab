@@ -10,12 +10,16 @@
 #include <cstring>
 #include <functional>
 #include <iostream>
+#include <string>
 #include <thread>
+#include <type_traits>
 #include <vector>
 
 namespace lab {
 
+// T has to be trivially copyable, since its bytes are copied to and from GPU memory
 template<typename T>
+  requires std::is_trivially_copyable_v<T>
 struct Buffer {
   Buffer(const char* label, Webgpu& instance) : label{label}, webgpu{instance} {}
 
@@ -34,7 +38,7 @@ struct Buffer {
   void to_device(const std::vector<T>& data, wgpu::BufferUsage usage) {
     assert(wgpu_buffer == nullptr);
     wgpu::BufferDescriptor bufferDesc{
-        .label = label,
+        .label = std::string_view(label),
         .usage = usage,
         .size = sizeof(T) * data.size(),
         .mappedAtCreation = true,
@@ -50,7 +54,7 @@ struct Buffer {
   std::jthread to_device(WriteCallback write_func, size_t capacity, wgpu::BufferUsage usage) {
     assert(wgpu_buffer == nullptr);
     wgpu::BufferDescriptor bufferDesc{
-        .label = label,
+        .label = std::string_view(label),
         .usage = usage,
         .size = sizeof(T) * capacity,
         .mappedAtCreation = true,
@@ -109,8 +113,8 @@ struct Buffer {
   }
 
   wgpu::Buffer wgpu_buffer = nullptr;
-  size_t current_capacity;
-  const char* label;
+  size_t current_capacity = 0;
+  std::string label;
   Webgpu& webgpu;
 };
 

@@ -1,6 +1,8 @@
 #ifndef WGPU_LAB_OBJECTS_H
 #define WGPU_LAB_OBJECTS_H
 
+#include <type_traits>
+
 namespace lab {
 
 // Forward declarations of public lab objects and corresponding handle types.
@@ -27,6 +29,7 @@ struct Pipeline;
 using PipelineHandle = Pipeline*;
 
 template<typename T>
+  requires std::is_trivially_copyable_v<T>
 struct Buffer;
 
 template<typename T>
