@@ -1,47 +1,67 @@
+#include "lab_detail.h"
+
+#include "platform/lab_platform.h"
+
 #include <lab_shader.h>
 
-#include <filesystem>
-#include <format>
 #include <fstream>
-#include <iostream>
 #include <sstream>
-#include <stdexcept>
-#include <string>
 
 namespace lab {
 
-Shader::Shader(const std::string& lbl) : label{lbl} {}
+namespace {
 
-Shader::Shader(const std::string& lbl, const std::string& path) : label{lbl} {
-  std::ifstream file(path);
-  if (!file.is_open()) {
-    // relative paths depend on where the program is started from, so say where that is
-    throw std::runtime_error(std::format("lab::Shader \"{}\": could not open \"{}\" (working directory: {})", lbl, path,
-                                         std::filesystem::current_path().string()));
+// A relative path is tried from the working directory first and then from the
+// directory of the executable, so a program finds its shaders wherever it is started from.
+std::filesystem::path locate(const std::filesystem::path& file, const std::string& label) {
+  std::error_code ignored;
+  if (std::filesystem::is_regular_file(file, ignored)) {
+    return file;
   }
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  source = buffer.str();
+  std::string tried = std::format("\"{}\"", std::filesystem::absolute(file, ignored).string());
+  if (file.is_relative()) {
+    const std::filesystem::path beside_executable = platform::executable_directory() / file;
+    if (std::filesystem::is_regular_file(beside_executable, ignored)) {
+      return beside_executable;
+    }
+    tried += std::format(" and \"{}\"", beside_executable.string());
+  }
+  detail::fail(label, std::format("file not found, looked for {}", tried));
 }
 
-wgpu::ShaderModule Shader::transfer(wgpu::Device device, wgpu::SType struct_type) const {
-  switch (struct_type) {
-  case wgpu::SType::ShaderSourceSPIRV:
-    std::cout << "Error: Shader: SPIR-V Shader Module not yet implemented. Please use WGSL instead." << std::endl;
-    return nullptr;
-  case wgpu::SType::ShaderSourceWGSL: {
-    wgpu::ShaderSourceWGSL wgslDesc;
-    wgslDesc.code = std::string_view(source);
-    wgpu::ShaderModuleDescriptor shaderDesc;
-    shaderDesc.nextInChain = &wgslDesc;
-    shaderDesc.label = std::string_view(label);
-    return device.CreateShaderModule(&shaderDesc);
+} // namespace
+
+Shader::Shader(Gpu& gpu, const std::filesystem::path& wgsl_file, std::string_view label)
+    : name{label.empty() ? wgsl_file.filename().string() : std::string{label}} {
+  const std::filesystem::path path = locate(wgsl_file, name);
+  std::ifstream file(path);
+  if (!file) {
+    detail::fail(name, std::format("could not read \"{}\"", path.string()));
   }
-  default:
-    break;
+  std::stringstream source;
+  source << file.rdbuf();
+  compile(gpu, source.str());
+}
+
+Shader Shader::from_source(Gpu& gpu, std::string_view wgsl, std::string_view label) {
+  Shader shader;
+  shader.name = label;
+  shader.compile(gpu, wgsl);
+  return shader;
+}
+
+void Shader::compile(Gpu& gpu, std::string_view wgsl) {
+  wgpu::ShaderSourceWGSL source;
+  source.code = wgsl;
+  wgpu::ShaderModuleDescriptor desc;
+  desc.nextInChain = &source;
+  desc.label = std::string_view(name);
+
+  // the error WebGPU reports for a shader that does not compile contains the compiler's
+  // diagnostics with line and column, it only lacks the name of the shader
+  if (auto error = detail::capture_error(*gpu.state(), [&] { module = gpu.device().CreateShaderModule(&desc); })) {
+    detail::fail(name, std::format("does not compile\n{}", *error));
   }
-  std::cout << "Error: Shader: struct_type not supported." << std::endl;
-  return nullptr;
 }
 
 } // namespace lab

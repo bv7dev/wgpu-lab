@@ -1,5 +1,5 @@
-#ifndef WGPU_LAB_ENUMS_H
-#define WGPU_LAB_ENUMS_H
+#ifndef WGPU_LAB_INPUT_H
+#define WGPU_LAB_INPUT_H
 
 // Copied and re-formatted from GLFW/glfw3.h
 //
@@ -152,11 +152,11 @@ enum class KeyCode {
   unknown = -1,
 };
 
-// regular enum to allow for bit-wise combinations
+// Modifier keys that were held down, can be combined and tested bit-wise
 // ```cpp
-// auto mod = ModKey::shift | ModKey::ctrl;
+// if ((event.mod & (ModKey::shift | ModKey::control)) != ModKey::none) { ... }
 // ```
-enum ModKey {
+enum class ModKey {
   none = 0x0000,
   shift = 0x0001,
   control = 0x0002,
@@ -165,6 +165,13 @@ enum ModKey {
   caps_lock = 0x0010,
   num_lock = 0x0020,
 };
+
+constexpr ModKey operator|(ModKey a, ModKey b) {
+  return static_cast<ModKey>(static_cast<int>(a) | static_cast<int>(b));
+}
+constexpr ModKey operator&(ModKey a, ModKey b) {
+  return static_cast<ModKey>(static_cast<int>(a) & static_cast<int>(b));
+}
 
 enum class MouseButton {
   left = 0,
@@ -184,8 +191,17 @@ struct KeyEvent {
   int scancode = 0;
 };
 
-bool operator==(const KeyEvent& lhs, const KeyEvent& rhs);
+// Two key events are equal if key, action and modifiers match (the scancode is not compared)
+constexpr bool operator==(const KeyEvent& lhs, const KeyEvent& rhs) {
+  return lhs.key == rhs.key && lhs.mod == rhs.mod && lhs.action == rhs.action;
+}
+
+struct MouseButtonEvent {
+  MouseButton button = MouseButton::left;
+  KeyAction action = KeyAction::none;
+  ModKey mod = ModKey::none;
+};
 
 } // namespace lab
 
-#endif // WGPU_LAB_ENUMS_H
+#endif // WGPU_LAB_INPUT_H

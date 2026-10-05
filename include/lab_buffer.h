@@ -1,122 +1,140 @@
 #ifndef WGPU_LAB_BUFFER_H
 #define WGPU_LAB_BUFFER_H
 
-#include <webgpu/webgpu_cpp.h>
+#include <lab_error.h>
+#include <lab_gpu.h>
+#include <lab_label.h>
 
-#include <lab_mapped_vram.h>
-#include <lab_webgpu.h>
-
-#include <cassert>
-#include <cstring>
+#include <cstdint>
+#include <format>
 #include <functional>
-#include <iostream>
-#include <string>
-#include <thread>
+#include <initializer_list>
+#include <ranges>
+#include <span>
 #include <type_traits>
 #include <vector>
 
 namespace lab {
 
-// T has to be trivially copyable, since its bytes are copied to and from GPU memory
+// Types whose bytes can be copied to and from GPU memory as they are
 template<typename T>
-  requires std::is_trivially_copyable_v<T>
-struct Buffer {
-  Buffer(const char* label, Webgpu& instance) : label{label}, webgpu{instance} {}
+concept GpuData = std::is_trivially_copyable_v<T> && std::is_standard_layout_v<T>;
 
-  Buffer(const char* label, const std::vector<T>& data, Webgpu& instance) : Buffer{label, instance} {
-    to_device(data, wgpu::BufferUsage::Vertex);
+namespace detail {
+
+// The part of Buffer<T> that does not depend on T
+struct BufferCore {
+  using ReadCallback = std::function<void(const void* data, uint64_t byte_count)>;
+
+  BufferCore(Gpu& gpu, uint64_t byte_size, wgpu::BufferUsage usage, Label label, const void* data,
+             const std::function<void(void* mapped)>& fill);
+
+  void write(uint64_t byte_offset, const void* data, uint64_t byte_count) const;
+  void read(uint64_t byte_offset, void* out, uint64_t byte_count) const;
+  void read_async(uint64_t byte_offset, uint64_t byte_count, ReadCallback callback) const;
+
+  std::shared_ptr<GpuState> gpu;
+  wgpu::Buffer handle;
+  wgpu::BufferUsage usage;
+  uint64_t byte_size = 0;
+  std::string label;
+};
+
+} // namespace detail
+
+// A typed array in GPU memory: vertices, indices, uniforms, storage, ...
+// ```cpp
+// lab::Buffer vertices(gpu, vertex_data);                               // Buffer<MyVertex>, a vertex buffer
+// lab::Buffer<MyUniforms> uniforms(gpu, {my_uniforms}, wgpu::BufferUsage::Uniform);
+// uniforms.write(my_uniforms);
+// std::vector<float> result = storage.read();
+// ```
+// The lab adds the usage flags that `write()` and `read()` need, so only the
+// purpose of the buffer has to be given.
+template<GpuData T>
+class Buffer {
+public:
+  static constexpr size_t all = ~size_t{0};
+
+  // Creates a buffer that holds a copy of `data`
+  Buffer(Gpu& gpu, std::span<const T> data, wgpu::BufferUsage usage = wgpu::BufferUsage::Vertex, Label label = {})
+      : core{gpu, data.size_bytes(), usage, std::move(label).as("buffer"), data.data(), nullptr},
+        element_count{data.size()} {}
+
+  Buffer(Gpu& gpu, std::initializer_list<T> data, wgpu::BufferUsage usage = wgpu::BufferUsage::Vertex, Label label = {})
+      : Buffer{gpu, std::span<const T>{data.begin(), data.size()}, usage, std::move(label)} {}
+
+  // Creates a buffer of `count` elements with all bytes set to zero
+  Buffer(Gpu& gpu, size_t count, wgpu::BufferUsage usage, Label label = {})
+      : core{gpu, count * sizeof(T), usage, std::move(label).as("buffer"), nullptr, nullptr}, element_count{count} {}
+
+  // Creates a buffer of `count` elements and lets `fill` write them straight into GPU memory
+  // ```cpp
+  // lab::Buffer<float> ramp(gpu, 256, wgpu::BufferUsage::Storage,
+  //                         [](std::span<float> mapped) { std::ranges::iota(mapped, 0.0f); });
+  // ```
+  Buffer(Gpu& gpu, size_t count, wgpu::BufferUsage usage, const std::function<void(std::span<T>)>& fill,
+         Label label = {})
+      : core{gpu,     count * sizeof(T),
+             usage,   std::move(label).as("buffer"),
+             nullptr, [&](void* mapped) { fill(std::span<T>{static_cast<T*>(mapped), count}); }},
+        element_count{count} {}
+
+  Buffer(Buffer&&) = default;
+  Buffer& operator=(Buffer&&) = default;
+
+  // Replaces elements of the buffer, starting at index `first`
+  void write(std::span<const T> data, size_t first = 0) {
+    check_range(first, data.size(), "write");
+    core.write(first * sizeof(T), data.data(), data.size_bytes());
   }
 
-  Buffer(const char* label, const std::vector<T>& data, wgpu::BufferUsage usage, Webgpu& instance)
-      : Buffer{label, instance} {
-    to_device(data, usage);
+  // Replaces the element at `index`
+  void write(const T& element, size_t index = 0) { write(std::span<const T>{&element, 1}, index); }
+
+  // Copies `count` elements starting at `first` back from the GPU
+  //  - blocks until the GPU has caught up, use `read_async()` to keep rendering meanwhile
+  std::vector<T> read(size_t first = 0, size_t count = all) const {
+    count = count == all ? element_count - std::min(first, element_count) : count;
+    check_range(first, count, "read");
+    std::vector<T> result(count);
+    core.read(first * sizeof(T), result.data(), count * sizeof(T));
+    return result;
   }
 
-  Buffer(const Buffer&) = delete;
-  Buffer& operator=(const Buffer&) = delete;
-
-  void to_device(const std::vector<T>& data, wgpu::BufferUsage usage) {
-    assert(wgpu_buffer == nullptr);
-    wgpu::BufferDescriptor bufferDesc{
-        .label = std::string_view(label),
-        .usage = usage,
-        .size = sizeof(T) * data.size(),
-        .mappedAtCreation = true,
-    };
-    current_capacity = data.size();
-    wgpu_buffer = webgpu.device.CreateBuffer(&bufferDesc);
-    void* map = wgpu_buffer.GetMappedRange(0, sizeof(T) * data.size());
-    memcpy(map, data.data(), sizeof(T) * data.size());
-    wgpu_buffer.Unmap();
+  // Like `read()`, but returns immediately: `callback` is called with the elements
+  // from within a later `tick()` (or `Gpu::poll()`)
+  void read_async(std::function<void(std::span<const T>)> callback, size_t first = 0, size_t count = all) const {
+    count = count == all ? element_count - std::min(first, element_count) : count;
+    check_range(first, count, "read_async");
+    core.read_async(first * sizeof(T), count * sizeof(T),
+                    [callback = std::move(callback)](const void* data, uint64_t byte_count) {
+                      callback(std::span<const T>{static_cast<const T*>(data), byte_count / sizeof(T)});
+                    });
   }
 
-  using WriteCallback = std::function<void(MappedVRAM<T>)>;
-  std::jthread to_device(WriteCallback write_func, size_t capacity, wgpu::BufferUsage usage) {
-    assert(wgpu_buffer == nullptr);
-    wgpu::BufferDescriptor bufferDesc{
-        .label = std::string_view(label),
-        .usage = usage,
-        .size = sizeof(T) * capacity,
-        .mappedAtCreation = true,
-    };
-    wgpu_buffer = webgpu.device.CreateBuffer(&bufferDesc);
-    current_capacity = capacity;
-    return std::jthread{[](WriteCallback write_func, size_t capacity, wgpu::Buffer buffer) {
-                          auto map = reinterpret_cast<T*>(buffer.GetMappedRange(0, sizeof(T) * capacity));
-                          MappedVRAM<T> vmap{{map, capacity}, 0, buffer};
-                          write_func(std::move(vmap));
-                        },
-                        write_func, capacity, wgpu_buffer};
-  }
+  // number of elements
+  size_t size() const { return element_count; }
 
-  using ReadCallback = std::function<void(MappedVRAM<const T>)>;
-  std::jthread from_device(size_t offset, size_t num_elems, ReadCallback read_func) {
-    assert(wgpu_buffer != nullptr);
-    wgpu::Future future = wgpu_buffer.MapAsync(
-        wgpu::MapMode::Read, sizeof(T) * offset, sizeof(T) * num_elems, wgpu::CallbackMode::WaitAnyOnly,
-        [](wgpu::MapAsyncStatus status, wgpu::StringView message, Buffer* self) {
-          if (status == wgpu::MapAsyncStatus::Success) {
-            std::cout << "Info: Buffer: " << self->label << " successfully mapped memory!" << std::endl;
-          } else {
-            std::cerr << "Error: Buffer: " << std::string_view(message) << std::endl;
-          }
-        },
-        this);
-    webgpu.instance.WaitAny(future, UINT64_MAX);
-    return std::jthread{[](ReadCallback read_func, size_t offset, size_t num_elems, wgpu::Buffer buffer) {
-                          MappedVRAM<const T> vmap{{reinterpret_cast<const T*>(buffer.GetConstMappedRange(
-                                                        sizeof(T) * offset, sizeof(T) * num_elems)),
-                                                    num_elems},
-                                                   num_elems,
-                                                   buffer};
-                          read_func(std::move(vmap));
-                        },
-                        read_func, offset, num_elems, wgpu_buffer};
-  }
-  inline std::jthread from_device(ReadCallback read_func) { return from_device(0, current_capacity, read_func); }
+  const wgpu::Buffer& handle() const { return core.handle; }
+  const std::string& label() const { return core.label; }
 
-  // write a single element to an existing buffer (needs CopyDst flag)
-  void write(const T& elem, uint64_t offset = 0) {
-    webgpu.queue.WriteBuffer(wgpu_buffer, offset * sizeof(T), &elem, sizeof(T));
-  }
-
-  // write a vector of elements to an existing buffer (needs CopyDst flag)
-  void write(const std::vector<T>& data, uint64_t offset = 0) {
-    webgpu.queue.WriteBuffer(wgpu_buffer, offset * sizeof(T), data.data(), data.size() * sizeof(T));
-  }
-
-  ~Buffer() {
-    if (wgpu_buffer) {
-      wgpu_buffer.Destroy();
-      wgpu_buffer = nullptr;
+private:
+  void check_range(size_t first, size_t count, const char* what) const {
+    if (first > element_count || count > element_count - first) {
+      detail::fail(core.label, std::format("{}: elements [{}, {}) are outside of the buffer, which has {} elements",
+                                           what, first, first + count, element_count));
     }
   }
 
-  wgpu::Buffer wgpu_buffer = nullptr;
-  size_t current_capacity = 0;
-  std::string label;
-  Webgpu& webgpu;
+  detail::BufferCore core;
+  size_t element_count = 0;
 };
+
+// lets `lab::Buffer buffer(gpu, my_vector)` find out the element type
+template<std::ranges::contiguous_range R>
+Buffer(Gpu&, R&&, wgpu::BufferUsage = wgpu::BufferUsage::Vertex, Label = {})
+    -> Buffer<std::remove_cv_t<std::ranges::range_value_t<R>>>;
 
 } // namespace lab
 

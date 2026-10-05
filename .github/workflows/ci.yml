@@ -45,6 +45,6 @@ jobs:
       - name: Build
         run: cmake --build --preset release
 
-      # the samples open windows and are skipped, everything else renders offscreen
+      # tests that open a window are skipped, everything else renders offscreen
       - name: Test
-        run: ctest --preset release -LE samples
+        run: ctest --preset release -LE display

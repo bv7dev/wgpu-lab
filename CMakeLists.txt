@@ -58,29 +58,34 @@ endfunction()
 
 # wgpu-lab library -------------------------------------------------------------
 add_library(wgpu-lab
-  src/lab.cpp
+  src/lab_buffer.cpp
+  src/lab_frame.cpp
+  src/lab_gpu.cpp
+  src/lab_image.cpp
   src/lab_pipeline.cpp
+  src/lab_runtime.cpp
   src/lab_shader.cpp
   src/lab_surface.cpp
-  src/lab_webgpu.cpp
+  src/lab_texture.cpp
   src/lab_window.cpp
-  src/lab_state.h
+  src/lab_detail.h
 
+  src/platform/lab_paths.cpp
   src/platform/lab_surface_glfw.cpp
   src/platform/lab_platform.h
 
   include/lab
   include/lab_buffer.h
-  include/lab_enums.h
-  include/lab_mapped_vram.h
-  include/lab_objects.h
+  include/lab_error.h
+  include/lab_frame.h
+  include/lab_gpu.h
+  include/lab_input.h
+  include/lab_label.h
+  include/lab_log.h
   include/lab_pipeline.h
-  include/lab_pipeline_defaults.h
-  include/lab_public.h
   include/lab_shader.h
   include/lab_surface.h
   include/lab_texture.h
-  include/lab_webgpu.h
   include/lab_window.h)
 add_library(lab::lab ALIAS wgpu-lab)
 

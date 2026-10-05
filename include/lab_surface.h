@@ -1,26 +1,61 @@
 #ifndef WGPU_LAB_SURFACE_H
 #define WGPU_LAB_SURFACE_H
 
-#include <lab_webgpu.h>
+#include <lab_gpu.h>
 #include <lab_window.h>
 
 namespace lab {
 
-struct Surface {
-  Window& window;
-  Webgpu& webgpu;
+namespace detail {
+struct SurfaceState;
+}
 
-  wgpu::Surface wgpu_surface;
+struct SurfaceOptions {
+  // `Fifo` waits for the display (vsync), `Immediate` and `Mailbox` do not
+  wgpu::PresentMode present_mode = wgpu::PresentMode::Fifo;
 
-  Surface(Window& wnd, Webgpu& wgpu);
+  // `Undefined` picks BGRA8Unorm or RGBA8Unorm, whichever the window system prefers.
+  // Other formats it supports can be asked for, e.g. RGBA16Float for HDR output.
+  wgpu::TextureFormat format = wgpu::TextureFormat::Undefined;
+};
 
-  Surface(const Surface&) = delete;
-  Surface& operator=(const Surface&) = delete;
+// What a Gpu renders onto to make it appear in a Window.
+// The surface follows the size of its window on its own.
+// ```cpp
+// lab::Surface surface(gpu, window);
+// while (lab::tick()) {
+//   lab::RenderPass pass(surface);
+//   pass.draw(pipeline, 3);
+// }
+// ```
+class Surface {
+public:
+  Surface(Gpu& gpu, Window& window, SurfaceOptions options = {});
 
-  void reconfigure(int width, int height);
-  void reconfigure();
+  Surface(Surface&&) = default;
+  Surface& operator=(Surface&&) = default;
 
-  ~Surface();
+  wgpu::TextureFormat format() const;
+  Size size() const;    // in pixels
+  float aspect() const; // width divided by height
+
+  // The texture view to render the current frame into
+  //  - stays the same until `present()` is called
+  //  - is null if there is nothing to render onto at the moment (the window is
+  //    minimized or the surface has to adapt to a new size first): skip the frame
+  //  - `lab::RenderPass` and `lab::Frame` call this and `present()` for you
+  wgpu::TextureView current_view();
+
+  // Shows what has been rendered into `current_view()`
+  void present();
+
+  const wgpu::Surface& handle() const;
+
+  // internal
+  const std::shared_ptr<detail::SurfaceState>& state() const { return shared_state; }
+
+private:
+  std::shared_ptr<detail::SurfaceState> shared_state;
 };
 
 } // namespace lab

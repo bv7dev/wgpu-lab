@@ -1,92 +1,80 @@
 #ifndef WGPU_LAB_TEXTURE_H
 #define WGPU_LAB_TEXTURE_H
 
-#include <lab_webgpu.h>
+#include <lab_buffer.h>
+#include <lab_gpu.h>
+#include <lab_label.h>
+#include <lab_window.h>
+
+#include <filesystem>
+#include <span>
+#include <vector>
 
 namespace lab {
 
-// WIP todos:
-// - allow multi-threaded (read/write) mapping like lab::Buffer (reuse MappedVRAM)
-// - support 3d textures
-// - support texture arrays
-struct Texture {
-  Webgpu& webgpu;
+struct TextureOptions {
+  // The default lets a texture be sampled in shaders, rendered into, written and read back
+  wgpu::TextureUsage usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::RenderAttachment |
+                             wgpu::TextureUsage::CopyDst | wgpu::TextureUsage::CopySrc;
+};
 
-  wgpu::TextureDescriptor descriptor = {
-      .label = "lab default texture",
-      .usage = wgpu::TextureUsage::TextureBinding | wgpu::TextureUsage::CopyDst,
-      .mipLevelCount = 1,
-      .sampleCount = 1,
-      .viewFormatCount = 0,
-      .viewFormats = nullptr,
-  };
+// A 2D image in GPU memory: something to sample in a shader or to render into.
+// ```cpp
+// lab::Texture texture(gpu, wgpu::TextureFormat::RGBA8Unorm, 256, 256);
+// texture.write(pixels);                         // std::vector of 4-byte pixels
+// auto group = pipeline.bind_group(0, {{0, texture}});
+// ```
+class Texture {
+public:
+  Texture(Gpu& gpu, wgpu::TextureFormat format, uint32_t width, uint32_t height, TextureOptions options = {},
+          Label label = {});
 
-  Texture(Webgpu& instance, wgpu::TextureFormat format, uint32_t width, uint32_t height = 1,
-          uint32_t depthOrArrayLayers = 1)
-      : webgpu{instance} {
-    if (height > 1 && depthOrArrayLayers > 1) {
-      descriptor.dimension = wgpu::TextureDimension::e3D;
-    } else if (height > 1 && depthOrArrayLayers == 1) {
-      descriptor.dimension = wgpu::TextureDimension::e2D;
-    } else if (height == 1 && depthOrArrayLayers == 1) {
-      descriptor.dimension = wgpu::TextureDimension::e1D;
-    }
-    descriptor.size = {width, height, depthOrArrayLayers};
-    descriptor.format = format;
+  Texture(Texture&&) = default;
+  Texture& operator=(Texture&&) = default;
+
+  // Replaces all pixels. P is the type of one pixel and has to match the format
+  // in size, e.g. a struct of four uint8_t for RGBA8Unorm.
+  template<GpuData P>
+  void write(std::span<const P> pixels) {
+    write_bytes(pixels.data(), pixels.size_bytes(), sizeof(P));
+  }
+  template<GpuData P>
+  void write(const std::vector<P>& pixels) {
+    write(std::span<const P>{pixels});
   }
 
-  Texture(const Texture&) = delete;
-  Texture& operator=(const Texture&) = delete;
-
-  [[nodiscard]] wgpu::Texture transfer() { return webgpu.device.CreateTexture(&descriptor); }
-
-  wgpu::TexelCopyTextureInfo target = {
-      .mipLevel = 0,
-      .origin = {0, 0, 0},
-      .aspect = wgpu::TextureAspect::All,
-  };
-
-  wgpu::Texture wgpu_texture = nullptr;
-
-  template<typename T>
-  void to_device(const std::vector<T>& pixels) {
-    wgpu_texture = transfer();
-    target.texture = wgpu_texture;
-
-    wgpu::TexelCopyBufferLayout layout = {
-        .offset = 0,
-        .bytesPerRow = static_cast<uint32_t>(sizeof(T) * descriptor.size.width),
-        .rowsPerImage = descriptor.size.height,
-    };
-
-    webgpu.queue.WriteTexture(&target, pixels.data(), pixels.size() * sizeof(T), &layout, &descriptor.size);
+  // Copies all pixels back from the GPU, row by row from the top left
+  //  - blocks until the GPU has caught up
+  template<GpuData P>
+  std::vector<P> read() const {
+    std::vector<P> pixels(static_cast<size_t>(extent.width) * extent.height);
+    read_bytes(pixels.data(), pixels.size() * sizeof(P), sizeof(P));
+    return pixels;
   }
 
-  inline int width() const noexcept { return static_cast<int>(descriptor.size.width); }
-  inline int height() const noexcept { return static_cast<int>(descriptor.size.height); }
+  // Writes the texture to an image file (for 8-bit RGBA and BGRA formats)
+  //  - blocks until the GPU has caught up
+  void save_png(const std::filesystem::path& path) const;
 
-  mutable wgpu::TextureViewDescriptor textureViewDesc = {
-      .label = "lab default texture view",
-      .dimension = wgpu::TextureViewDimension::e2D,
-      .baseMipLevel = 0,
-      .mipLevelCount = 1,
-      .baseArrayLayer = 0,
-      .arrayLayerCount = 1,
-      .aspect = wgpu::TextureAspect::All,
-  };
+  // a view of the whole texture, for bind groups and render passes
+  wgpu::TextureView view() const;
 
-  [[nodiscard]] wgpu::TextureView create_view() const {
-    assert(wgpu_texture != nullptr);
-    textureViewDesc.format = descriptor.format;
-    return wgpu_texture.CreateView(&textureViewDesc);
-  }
+  wgpu::TextureFormat format() const { return pixel_format; }
+  Size size() const { return {static_cast<int>(extent.width), static_cast<int>(extent.height)}; }
+  float aspect() const { return static_cast<float>(extent.width) / static_cast<float>(extent.height); }
 
-  ~Texture() {
-    if (wgpu_texture) {
-      wgpu_texture.Destroy();
-      wgpu_texture = nullptr;
-    }
-  }
+  const wgpu::Texture& handle() const { return texture; }
+  const std::string& label() const { return name; }
+
+private:
+  void write_bytes(const void* data, uint64_t byte_count, uint64_t pixel_size);
+  void read_bytes(void* out, uint64_t byte_count, uint64_t pixel_size) const;
+
+  std::shared_ptr<detail::GpuState> gpu;
+  wgpu::Texture texture;
+  wgpu::TextureFormat pixel_format;
+  wgpu::Extent3D extent;
+  std::string name;
 };
 
 } // namespace lab

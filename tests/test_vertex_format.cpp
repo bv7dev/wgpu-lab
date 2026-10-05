@@ -1,6 +1,4 @@
-#include <doctest/doctest.h>
-
-#include <lab>
+#include "common.h"
 
 using enum wgpu::VertexFormat;
 
@@ -24,8 +22,33 @@ TEST_CASE("vertex_format_size: components times bytes per component") {
   CHECK(lab::vertex_format_size(Unorm10_10_10_2) == 4);
 }
 
-TEST_CASE("vertex_attributes_stride: sum of the attribute sizes") {
-  std::vector<wgpu::VertexAttribute> attributes{{.format = Float32x2}, {.format = Float32x3}, {.format = Unorm8x4}};
-  CHECK(lab::vertex_attributes_stride(attributes) == 8 + 12 + 4);
-  CHECK(lab::vertex_attributes_stride({}) == 0);
+struct Vertex {
+  float position[2];
+  float color[3];
+  uint8_t flags[4];
+};
+
+TEST_CASE("vertex layout: attributes follow each other") {
+  lab::VertexLayout layout = lab::vertex<Vertex>({Float32x2, Float32x3, Unorm8x4});
+
+  CHECK(layout.stride == sizeof(Vertex));
+  CHECK(layout.step_mode == wgpu::VertexStepMode::Vertex);
+  REQUIRE(layout.attributes.size() == 3);
+  CHECK(layout.attributes[0].offset == 0);
+  CHECK(layout.attributes[1].offset == 8);
+  CHECK(layout.attributes[2].offset == 20);
+}
+
+TEST_CASE("vertex layout: an explicit offset moves the attributes after it") {
+  // skips the color
+  lab::VertexLayout layout = lab::instance<Vertex>({Float32x2, {Unorm8x4, 5, offsetof(Vertex, flags)}});
+
+  CHECK(layout.step_mode == wgpu::VertexStepMode::Instance);
+  REQUIRE(layout.attributes.size() == 2);
+  CHECK(layout.attributes[1].offset == 20);
+  CHECK(layout.attributes[1].location == 5);
+}
+
+TEST_CASE("vertex layout: attributes that do not fit into the vertex type are an error") {
+  CHECK_THROWS_WITH_AS(lab::vertex<Vertex>({Float32x4, Float32x4}), doctest::Contains("has only 24 bytes"), lab::Error);
 }

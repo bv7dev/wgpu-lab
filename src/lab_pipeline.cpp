@@ -1,155 +1,158 @@
+#include "lab_detail.h"
+
+#include <lab_frame.h>
 #include <lab_pipeline.h>
 
-#include <format>
-#include <iostream>
+#include <webgpu/webgpu_cpp_print.h>
+
+#include <algorithm>
 #include <sstream>
 
 namespace lab {
 
-uint64_t vertex_attributes_stride(const std::vector<wgpu::VertexAttribute>& vertexAttributes) {
-  uint64_t totalStride = 0;
-  for (const auto& va : vertexAttributes) {
-    totalStride += vertex_format_size(va.format);
+namespace detail {
+
+VertexLayout make_vertex_layout(std::initializer_list<VertexAttribute> attributes, uint64_t stride,
+                                wgpu::VertexStepMode step_mode) {
+  VertexLayout layout{.attributes = attributes, .stride = stride, .step_mode = step_mode};
+
+  // attributes without an offset follow the one before them
+  uint64_t next_offset = 0;
+  for (VertexAttribute& attribute : layout.attributes) {
+    if (attribute.offset == VertexAttribute::next_offset) {
+      attribute.offset = next_offset;
+    }
+    next_offset = attribute.offset + vertex_format_size(attribute.format);
+    if (next_offset > stride) {
+      fail("vertex layout", std::format("the attributes reach byte {} of a vertex, but the vertex type has only "
+                                        "{} bytes: do the formats match the members of the type?",
+                                        next_offset, stride));
+    }
   }
-  return totalStride;
+  return layout;
 }
 
-wgpu::TextureView get_current_render_texture_view(wgpu::Surface surface) {
-  wgpu::SurfaceTexture surfaceTexture;
-  surface.GetCurrentTexture(&surfaceTexture);
-  if (surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::SuccessOptimal &&
-      surfaceTexture.status != wgpu::SurfaceGetCurrentTextureStatus::SuccessSuboptimal) {
-    std::cerr << "Error: Pipeline: Could not get current render texture" << std::endl;
-    return nullptr;
+wgpu::BindGroup make_bind_group(const std::shared_ptr<GpuState>& gpu, const wgpu::BindGroupLayout& layout,
+                                std::initializer_list<Binding> bindings, std::string_view label) {
+  std::vector<wgpu::BindGroupEntry> entries;
+  entries.reserve(bindings.size());
+  for (const Binding& binding : bindings) {
+    wgpu::BindGroupEntry entry;
+    entry.binding = binding.binding;
+    entry.buffer = binding.buffer;
+    entry.offset = binding.offset;
+    entry.size = binding.size;
+    entry.sampler = binding.sampler;
+    entry.textureView = binding.texture_view;
+    entries.push_back(entry);
   }
-  wgpu::TextureViewDescriptor viewDescriptor{
-      .label = "lab default texture view",
-      .format = surfaceTexture.texture.GetFormat(),
-      .dimension = wgpu::TextureViewDimension::e2D,
-      .baseMipLevel = 0,
-      .mipLevelCount = 1,
-      .baseArrayLayer = 0,
-      .arrayLayerCount = 1,
-      .aspect = wgpu::TextureAspect::All,
-  };
-  return surfaceTexture.texture.CreateView(&viewDescriptor);
+
+  wgpu::BindGroupDescriptor desc;
+  desc.label = label;
+  desc.layout = layout;
+  desc.entryCount = entries.size();
+  desc.entries = entries.data();
+
+  wgpu::BindGroup group;
+  if (auto error = capture_error(*gpu, [&] { group = gpu->device.CreateBindGroup(&desc); })) {
+    fail(label, std::format("{}\nNote: a binding that the shader declares but does not use is not part of the "
+                            "layout WebGPU derives from the shader.",
+                            *error));
+  }
+  return group;
 }
 
-void Pipeline::finalize_config(wgpu::ShaderModule shaderModule) {
-  if (label.empty()) {
-    label = std::format("Default Pipeline({} on {})", shader.label, webgpu.label);
-  }
+} // namespace detail
 
-  for (size_t i = 0; i < vb_configs.size(); ++i) {
-    vb_layouts.push_back({
-        .stepMode = vb_configs[i].mode,
-        .arrayStride = vertex_attributes_stride(vb_configs[i].vertexAttributes),
-        .attributeCount = vb_configs[i].vertexAttributes.size(),
-        .attributes = vb_configs[i].vertexAttributes.data(),
+Pipeline::Pipeline(Gpu& gpu_object, const Shader& shader, PipelineDesc desc)
+    : gpu{gpu_object.state()}, target_format{desc.target},
+      name{desc.label.empty() ? std::format("pipeline({})", shader.label()) : desc.label} {
+  // vertex buffers: shader locations count up across all slots unless they are given
+  std::vector<std::vector<wgpu::VertexAttribute>> attributes(desc.vertex_buffers.size());
+  std::vector<wgpu::VertexBufferLayout> buffer_layouts;
+  uint32_t next_location = 0;
+  for (size_t slot = 0; slot < desc.vertex_buffers.size(); ++slot) {
+    const VertexLayout& layout = desc.vertex_buffers[slot];
+    for (const VertexAttribute& attribute : layout.attributes) {
+      const uint32_t location =
+          attribute.location == VertexAttribute::next_location ? next_location : attribute.location;
+      next_location = location + 1;
+      attributes[slot].push_back({.format = attribute.format, .offset = attribute.offset, .shaderLocation = location});
+    }
+    buffer_layouts.push_back({
+        .stepMode = layout.step_mode,
+        .arrayStride = layout.stride,
+        .attributeCount = attributes[slot].size(),
+        .attributes = attributes[slot].data(),
     });
+    vertex_slots.push_back({layout.stride, layout.step_mode});
   }
-  config.vertexState.bufferCount = vb_layouts.size();
-  config.vertexState.buffers = vb_layouts.data();
 
-  config.colorTarget.format = webgpu.surface_format;
-  config.colorTarget.blend = &config.blendState;
+  wgpu::ColorTargetState color_target;
+  color_target.format = desc.target.color;
+  color_target.blend = desc.blend ? &*desc.blend : nullptr;
 
-  // todo: make number of color targets configurable
-  config.fragmentState.targetCount = 1;
-  config.fragmentState.targets = &config.colorTarget;
+  wgpu::FragmentState fragment;
+  fragment.module = shader.handle();
+  fragment.targetCount = 1;
+  fragment.targets = &color_target;
+  if (!desc.fragment_entry.empty()) {
+    fragment.entryPoint = std::string_view(desc.fragment_entry);
+  }
 
-  config.vertexState.module = shaderModule;
-  config.fragmentState.module = shaderModule;
+  wgpu::DepthStencilState depth_stencil;
+  depth_stencil.format = desc.target.depth;
+  depth_stencil.depthWriteEnabled = wgpu::OptionalBool::True;
+  depth_stencil.depthCompare = wgpu::CompareFunction::Less;
+
+  wgpu::RenderPipelineDescriptor pipeline_desc;
+  pipeline_desc.label = std::string_view(name);
+  pipeline_desc.vertex.module = shader.handle();
+  pipeline_desc.vertex.bufferCount = buffer_layouts.size();
+  pipeline_desc.vertex.buffers = buffer_layouts.data();
+  if (!desc.vertex_entry.empty()) {
+    pipeline_desc.vertex.entryPoint = std::string_view(desc.vertex_entry);
+  }
+  pipeline_desc.primitive.topology = desc.topology;
+  pipeline_desc.primitive.cullMode = desc.cull;
+  pipeline_desc.fragment = &fragment;
+  if (desc.target.depth != wgpu::TextureFormat::Undefined) {
+    pipeline_desc.depthStencil = &depth_stencil;
+  }
+  if (!desc.layouts.empty()) {
+    wgpu::PipelineLayoutDescriptor layout_desc;
+    layout_desc.bindGroupLayoutCount = desc.layouts.size();
+    layout_desc.bindGroupLayouts = desc.layouts.data();
+    pipeline_desc.layout = gpu->device.CreatePipelineLayout(&layout_desc);
+  }
+  if (desc.customize) {
+    desc.customize(pipeline_desc);
+  }
+
+  if (auto error = detail::capture_error(*gpu, [&] { pipeline = gpu->device.CreateRenderPipeline(&pipeline_desc); })) {
+    detail::fail(name, *error);
+  }
 }
 
-wgpu::RenderPipeline Pipeline::transfer() const {
-  wgpu::PipelineLayout pipelineLayout = nullptr;
+wgpu::BindGroup Pipeline::bind_group(uint32_t group, std::initializer_list<Binding> bindings,
+                                     std::string_view label) const {
+  const std::string group_label = label.empty() ? std::format("{} bind group {}", name, group) : std::string{label};
 
-  if (bindGroupLayouts.size() > 0) {
-    wgpu::PipelineLayoutDescriptor layoutDesc{};
-
-    layoutDesc.bindGroupLayoutCount = bindGroupLayouts.size();
-    layoutDesc.bindGroupLayouts = bindGroupLayouts.data();
-
-    pipelineLayout = webgpu.device.CreatePipelineLayout(&layoutDesc);
+  wgpu::BindGroupLayout layout;
+  if (auto error = detail::capture_error(*gpu, [&] { layout = pipeline.GetBindGroupLayout(group); })) {
+    detail::fail(group_label, *error);
   }
-
-  wgpu::RenderPipelineDescriptor pipelineDesc = {
-      .label = std::string_view(label),
-      .layout = pipelineLayout,
-      .vertex = config.vertexState,
-      .primitive = config.primitiveState,
-      .multisample = config.multisampleState,
-      .fragment = &config.fragmentState,
-  };
-
-  return webgpu.device.CreateRenderPipeline(&pipelineDesc);
+  return detail::make_bind_group(gpu, layout, bindings, group_label);
 }
 
-void Pipeline::reset() {
-  if (wgpu_pipeline) {
-    wgpu_pipeline = nullptr;
-  }
+bool Pipeline::render_frame(Surface& surface, const Draw& draw) const {
+  RenderPass pass(surface);
+  pass.draw(*this, draw);
+  return static_cast<bool>(pass);
 }
 
-Pipeline::~Pipeline() { reset(); }
-
-bool Pipeline::default_render(PipelineHandle self, wgpu::Surface surface, const DrawCallParams& draw_params) {
-  assert(self->wgpu_pipeline != nullptr);
-
-  wgpu::TextureView targetView = get_current_render_texture_view(surface);
-  if (!targetView) {
-    return false; // nothing to render onto this time, e.g. the window is minimized
-  }
-
-  wgpu::CommandEncoderDescriptor encoderDesc = {.label = "lab default command encoder"};
-  wgpu::CommandEncoder encoder = self->webgpu.device.CreateCommandEncoder(&encoderDesc);
-
-  self->render_config.renderPassColorAttachment.view = targetView;
-
-  wgpu::RenderPassDescriptor renderPassDesc = {
-      .label = "lab default render pass",
-      .colorAttachmentCount = 1,
-      .colorAttachments = &self->render_config.renderPassColorAttachment,
-  };
-
-  wgpu::RenderPassEncoder renderPass = encoder.BeginRenderPass(&renderPassDesc);
-  renderPass.SetPipeline(self->wgpu_pipeline);
-
-  for (uint32_t i = 0; i < self->vb_configs.size(); ++i) {
-    renderPass.SetVertexBuffer(i, self->vb_configs[i].buffer, self->vb_configs[i].offset,
-                               self->vb_configs[i].buffer.GetSize());
-  }
-
-  for (uint32_t i = 0; i < self->bindGroups.size(); ++i) {
-    // TODO: think about how to make use of dynamic offset
-    // useful for multiple drawcalls with different uniform data
-    renderPass.SetBindGroup(i, self->bindGroups[i], 0, nullptr);
-  }
-
-  for (uint32_t i = 0; i < self->ib_configs.size(); ++i) {
-    const auto& ibc = self->ib_configs[i];
-    renderPass.SetIndexBuffer(ibc.buffer, ibc.format, ibc.offset, ibc.buffer.GetSize());
-  }
-
-  // TODO: only a temporary fix (avoid too many branches in render code)
-  if (self->ib_configs.size() == 0) {
-    renderPass.Draw(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex,
-                    draw_params.firstInstance);
-  } else {
-    renderPass.DrawIndexed(draw_params.vertexCount, draw_params.instanceCount, draw_params.firstVertex, 0,
-                           draw_params.firstInstance);
-  }
-
-  renderPass.End();
-
-  wgpu::CommandBufferDescriptor cmdBufferDescriptor = {.label = "lab default command buffer"};
-  wgpu::CommandBuffer commands = encoder.Finish(&cmdBufferDescriptor);
-
-  self->webgpu.queue.Submit(1, &commands);
-  surface.Present();
-
-  return true;
-};
+bool Pipeline::render_frame(Surface& surface, uint32_t vertex_count, uint32_t instance_count) const {
+  return render_frame(surface, Draw{.count = vertex_count, .instances = instance_count});
+}
 
 } // namespace lab

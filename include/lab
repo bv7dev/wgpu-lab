@@ -1,53 +1,68 @@
 #ifndef WGPU_LAB_MAIN_H
 #define WGPU_LAB_MAIN_H
 
-#include <lab_public.h>
+// wgpu-lab: rapid prototyping of native WebGPU applications
+//
+// This header includes the whole library. Every lab object gives access to the
+// plain WebGPU object it wraps through `handle()`, so the lab never stands
+// between you and WebGPU.
+
+#include <lab_buffer.h>
+#include <lab_error.h>
+#include <lab_frame.h>
+#include <lab_gpu.h>
+#include <lab_input.h>
+#include <lab_label.h>
+#include <lab_log.h>
+#include <lab_pipeline.h>
+#include <lab_shader.h>
+#include <lab_surface.h>
+#include <lab_texture.h>
+#include <lab_window.h>
+
+#include <chrono>
+#include <thread>
 
 namespace lab {
 
-// -------------------------------------------------------------------------------------------------
-// Functions with side-effects, operating on the global application state --------------------------
-
-// Processes GLFW Events, handles open Windows and closes them
-//  - generally should be called once per main-loop iteration
+// Processes window events and keeps the GPU's callbacks and error reporting going
+//  - call it once per iteration of the main loop
 //  - returns `true` as long as at least one Window is open
+//  - throws lab::Error if a Gpu has reported an error (see GpuOptions::throw_on_error)
 //  - closes all windows after N calls if the environment variable
-//    LAB_EXIT_AFTER_FRAMES=N is set (to run samples unattended)
+//    LAB_EXIT_AFTER_FRAMES=N is set (to run a program unattended)
 // ```cpp
-// while(lab::tick()) {
-//   pipeline.render_frame(surface); // render artworks
+// while (lab::tick()) {
+//   pipeline.render_frame(surface, 3);
 // }
 // ```
 bool tick();
 
-// Automatically called by Window and Webgpu constructors
-//  - returns `true` if init was successfully performed
-//  - only inits once per program invocation
-bool init_lab();
+// Seconds between the two most recent calls of `tick()`
+float delta_seconds();
 
-// -------------------------------------------------------------------------------------------------
-// Utils independent from all other lab-objects ----------------------------------------------------
+// Seconds since the program started, or since the last `restart_timer()`
+// ```cpp
+// uniforms.time = lab::elapsed_seconds();          // float
+// double precise = lab::elapsed_seconds<double>();
+// ```
+namespace detail {
+double elapsed_seconds();
+}
+template<class T = float>
+T elapsed_seconds() {
+  return static_cast<T>(detail::elapsed_seconds());
+}
+void restart_timer();
 
 // Wrapper for visual simplicity around `std::this_thread::sleep_for(duration);`
-// - is very inaccurate and should only be used for playing around in different threads for example
-// - as far as I understand, it lowers a threads priority in a queue and can lead to longer than
-//   expected delays and it probably differs widely on different hardware and OSs
 // ```cpp
 // using namespace std::chrono_literals;
 // lab::sleep(100ms);
 // ```
 template<class Rep, class Period>
-inline void sleep(const std::chrono::duration<Rep, Period>& d) {
-  std::this_thread::sleep_for(d);
-}
-
-void restart_timer();
-std::chrono::steady_clock::time_point get_timer_start();
-
-template<class T = float>
-T elapsed_seconds() {
-  return static_cast<T>(static_cast<double>((std::chrono::steady_clock::now() - get_timer_start()).count()) /
-                        std::chrono::steady_clock::time_point::period::den);
+inline void sleep(const std::chrono::duration<Rep, Period>& duration) {
+  std::this_thread::sleep_for(duration);
 }
 
 } // namespace lab

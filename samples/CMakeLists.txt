@@ -1,20 +1,15 @@
-# libraries that only the samples use ------------------------------------------
-# Both are used header-only, so they are only downloaded: SOURCE_SUBDIR points at a
-# directory without a CMakeLists.txt, which keeps their own build scripts out of ours.
+# glm is the only library the samples use besides the lab ----------------------
+# It is header-only, so it is only downloaded: SOURCE_SUBDIR points at a directory
+# without a CMakeLists.txt, which keeps glm's own build scripts out of ours.
 FetchContent_Declare(glm
   GIT_REPOSITORY https://github.com/g-truc/glm
   GIT_TAG 1.0.1
   GIT_SHALLOW ON
   SOURCE_SUBDIR headers-only)
-FetchContent_Declare(tinygltf
-  GIT_REPOSITORY https://github.com/syoyo/tinygltf
-  GIT_TAG v2.9.3
-  GIT_SHALLOW ON
-  SOURCE_SUBDIR headers-only)
-FetchContent_MakeAvailable(glm tinygltf)
+FetchContent_MakeAvailable(glm)
 
 add_library(lab-sample-libs INTERFACE)
-target_include_directories(lab-sample-libs SYSTEM INTERFACE ${glm_SOURCE_DIR} ${tinygltf_SOURCE_DIR})
+target_include_directories(lab-sample-libs SYSTEM INTERFACE ${glm_SOURCE_DIR})
 
 # one executable per .cpp file in this directory --------------------------------
 # (add your own .cpp here and re-run the CMake configure step)
@@ -28,19 +23,20 @@ foreach(SAMPLE_FILE IN LISTS SAMPLE_FILES)
   lab_target_defaults(${SAMPLE_NAME})
 
   # Every sample doubles as a smoke test: it has to run 60 frames without reporting an error.
-  # These tests open windows, so they carry a label: `ctest -LE samples` skips them.
+  # These tests open windows, so they carry the label "display": `ctest -LE display` skips them.
   if(LAB_BUILD_TESTS)
     add_test(NAME sample.${SAMPLE_NAME} COMMAND ${SAMPLE_NAME} WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
     set_tests_properties(sample.${SAMPLE_NAME} PROPERTIES
-      LABELS samples
+      LABELS display
       ENVIRONMENT LAB_EXIT_AFTER_FRAMES=60
-      FAIL_REGULAR_EXPRESSION "Error:"
+      FAIL_REGULAR_EXPRESSION "lab \\[(warn|error)\\]"
       TIMEOUT 30
       RUN_SERIAL ON)
   endif()
 endforeach()
 
 # copy shader and asset files to the build directory ----------------------------
+# (a sample looks for its files in the working directory first, then next to its executable)
 file(GLOB SHADER_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.wgsl)
 foreach(SHADER_FILE IN LISTS SHADER_FILES)
   get_filename_component(SHADER_FILENAME ${SHADER_FILE} NAME)
