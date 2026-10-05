@@ -64,6 +64,7 @@ if(LAB_DAWN STREQUAL "prebuilt")
   FetchContent_Declare(dawn_prebuilt
     URL "https://github.com/google/dawn/releases/download/${LAB_DAWN_TAG}/Dawn-${LAB_DAWN_SHA}-${lab_dawn_archive}.tar.gz"
     URL_HASH "SHA256=${lab_dawn_hash}"
+    INACTIVITY_TIMEOUT 60 # fail instead of hanging forever if the download stalls
     DOWNLOAD_EXTRACT_TIMESTAMP ON)
   FetchContent_MakeAvailable(dawn_prebuilt)
   # the package config sits in lib/ or lib64/ depending on the archive, and CMake
@@ -91,6 +92,7 @@ elseif(LAB_DAWN STREQUAL "source")
   # of branches and tags, and even a shallow clone fetches the tip of each of them.
   FetchContent_Declare(dawn
     URL "https://github.com/google/dawn/archive/refs/tags/${LAB_DAWN_TAG}.tar.gz"
+    INACTIVITY_TIMEOUT 60
     DOWNLOAD_EXTRACT_TIMESTAMP ON
     EXCLUDE_FROM_ALL
     SYSTEM)
