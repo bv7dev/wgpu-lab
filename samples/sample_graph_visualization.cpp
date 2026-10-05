@@ -85,7 +85,7 @@ int main() {
   lab::Window window("graph visualizer", 900, 600);
   lab::Surface surface(window, webgpu);
 
-  UniformParams uniform_buffer{.ratio{window.ratio(), 1.0}};
+  UniformParams uniform_buffer{.ratio{window.ratio(), 1.0}, .time = 0.0f};
   lab::Buffer<UniformParams> node_uniform_buffer("node uniform buffer", {uniform_buffer},
                                                  wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
@@ -99,7 +99,7 @@ int main() {
     if (event.key == lab::KeyCode::escape) window.close();
   });
 
-  window.set_resize_callback([&uniform_buffer, &node_uniform_buffer, &window, &surface](int w, int h) {
+  window.set_resize_callback([&uniform_buffer, &node_uniform_buffer, &surface](int w, int h) {
     std::cout << "window resized to: " << w << "x" << h << "\n";
     uniform_buffer.ratio.x = static_cast<float>(h) / w;
     node_uniform_buffer.write(uniform_buffer);

@@ -91,7 +91,7 @@ int main() {
   pipeline.add_vertex_buffer(instance_buffer, wgpu::VertexStepMode::Instance);
   pipeline.add_vertex_attrib(wgpu::VertexFormat::Float32x2, 2); // instance_position
 
-  MyUniformData uniforms{.ratio = {window.ratio(), 1.f}, .scale = .2f};
+  MyUniformData uniforms{.ratio = {window.ratio(), 1.f}, .time = 0.f, .scale = .2f};
   lab::Buffer<MyUniformData> uniform_buffer("My uniform buffer", {uniforms},
                                             wgpu::BufferUsage::Uniform | wgpu::BufferUsage::CopyDst, webgpu);
 
