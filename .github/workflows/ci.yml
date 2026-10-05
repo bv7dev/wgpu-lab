@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, cleanroom]
+  pull_request:
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: ubuntu-gcc, os: ubuntu-24.04, cc: gcc-14, cxx: g++-14 }
+          - { name: ubuntu-clang, os: ubuntu-24.04, cc: clang-18, cxx: clang++-18 }
+          - { name: windows-msvc, os: windows-latest }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # GLFW is built from source on the runner, these are its build dependencies
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libwayland-dev libxkbcommon-dev xorg-dev
+
+      - name: Select compiler (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "CC=${{ matrix.cc }}" >> "$GITHUB_ENV"
+          echo "CXX=${{ matrix.cxx }}" >> "$GITHUB_ENV"
+
+      # puts cl.exe on the PATH so that the Ninja generator of the presets finds MSVC
+      - name: Set up MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure
+        run: cmake --preset release
+
+      - name: Build
+        run: cmake --build --preset release
