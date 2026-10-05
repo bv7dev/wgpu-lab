@@ -27,14 +27,31 @@ bool init_lab() {
   return state.lab_init;
 }
 
+// Number of ticks after which all windows are closed, read from the environment
+// variable LAB_EXIT_AFTER_FRAMES. Zero means run until the user closes the windows.
+// It lets every sample run unattended: `LAB_EXIT_AFTER_FRAMES=120 ./sample_texture`
+static long exit_after_frames() {
+  static const long frames = [] {
+    const char* value = std::getenv("LAB_EXIT_AFTER_FRAMES");
+    return value ? std::atol(value) : 0L;
+  }();
+  return frames;
+}
+
 bool tick() {
   glfwPollEvents();
 
   std::vector<WindowHandle> to_close;
   to_close.reserve(state.window_map.size());
 
+  static long tick_count = 0;
+  const bool exit_requested = exit_after_frames() > 0 && ++tick_count > exit_after_frames();
+  if (exit_requested) {
+    tick_count = 0;
+  }
+
   for (auto [hnd, wnd] : state.window_map) {
-    if (glfwWindowShouldClose(hnd)) {
+    if (exit_requested || glfwWindowShouldClose(hnd)) {
       to_close.push_back(wnd);
     }
   }

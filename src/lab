@@ -18,6 +18,8 @@ namespace lab {
 // Processes GLFW Events, handles open Windows and closes them
 //  - generally should be called once per main-loop iteration
 //  - returns `true` as long as at least one Window is open
+//  - closes all windows after N calls if the environment variable
+//    LAB_EXIT_AFTER_FRAMES=N is set (to run samples unattended)
 // ```cpp
 // while(lab::tick()) {
 //   pipeline.render_frame(surface); // render artworks
