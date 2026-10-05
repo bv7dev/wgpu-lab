@@ -1,8 +1,11 @@
 #include <objects/lab_shader.h>
 
+#include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 
 namespace lab {
@@ -12,8 +15,9 @@ Shader::Shader(const std::string& lbl) : label{lbl} {}
 Shader::Shader(const std::string& lbl, const std::string& path) : label{lbl} {
   std::ifstream file(path);
   if (!file.is_open()) {
-    std::cerr << "Error: Shader: Could not open \"" << path << "\"" << std::endl;
-    return;
+    // relative paths depend on where the program is started from, so say where that is
+    throw std::runtime_error(std::format("lab::Shader \"{}\": could not open \"{}\" (working directory: {})", lbl, path,
+                                         std::filesystem::current_path().string()));
   }
   std::stringstream buffer;
   buffer << file.rdbuf();

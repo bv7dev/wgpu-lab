@@ -12,6 +12,7 @@ struct Shader {
 
   Shader(const std::string& label);
 
+  // Reads WGSL source from a file, throws std::runtime_error if it cannot be opened
   Shader(const std::string& label, const std::string& path);
 
   // Warning! User is responsible to `.release()` the returned shader module
