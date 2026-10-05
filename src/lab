@@ -1,13 +1,6 @@
 #ifndef WGPU_LAB_MAIN_H
 #define WGPU_LAB_MAIN_H
 
-#ifndef LAB_USER_DISABLE_CHRONO_LITERALS
-// User may disable `using namespace std::chrono_literals;`
-// by `#define LAB_USER_DISABLE_CHRONO_LITERALS` before `#include <lab>`
-// It allows for timing based eye candy like auto time = 12ms;
-#define LAB_USE_STL_CHRONO_LITERALS
-#endif
-
 #include <extra/lab_public.h>
 
 namespace lab {
@@ -40,10 +33,11 @@ bool init_lab();
 // - as far as I understand, it lowers a threads priority in a queue and can lead to longer than
 //   expected delays and it probably differs widely on different hardware and OSs
 // ```cpp
+// using namespace std::chrono_literals;
 // lab::sleep(100ms);
 // ```
-template<class _Rep, class _Period>
-inline void sleep(const std::chrono::duration<_Rep, _Period>& d) {
+template<class Rep, class Period>
+inline void sleep(const std::chrono::duration<Rep, Period>& d) {
   std::this_thread::sleep_for(d);
 }
 

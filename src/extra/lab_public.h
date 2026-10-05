@@ -18,10 +18,6 @@
 #include <thread>
 #include <unordered_map>
 
-#ifdef LAB_USE_STL_CHRONO_LITERALS
-using namespace std::chrono_literals;
-#endif
-
 // Dawn wgpu C++ header
 #include <webgpu/webgpu_cpp.h>
 
