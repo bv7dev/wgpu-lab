@@ -12,6 +12,9 @@
 
 ### Fixed
 - The depth buffer of a surface lagged a frame behind after the window was resized.
+- On Windows, the shader compiler DLLs that Dawn loads from the directory of the executable
+  are downloaded and copied next to every executable (`lab_copy_runtime_dlls()` does it for
+  executables of other projects).
 
 ## 0.4.0
 
