@@ -173,6 +173,11 @@ commands above from a "Developer PowerShell for VS".
 Alternatively, open the folder in [VS Code](https://code.visualstudio.com/) with the
 recommended extensions and pick the `dev` preset.
 
+Dawn's Direct3D backend loads the DirectX Shader Compiler (`dxcompiler.dll`, `dxil.dll`)
+from the directory of the executable. The build downloads it and copies the DLLs next to
+the samples and tests. A project that uses the lab calls `lab_copy_runtime_dlls(my_app)`
+for its own executables.
+
 ### Web
 
 The same programs run in a browser, through its WebGPU. With

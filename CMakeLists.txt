@@ -46,6 +46,9 @@ if(EMSCRIPTEN)
 else()
   # dawn -------------------------------------------------------------------------
   include(LabDawn)
+  if(WIN32)
+    include(LabWindowsRuntime) # the DLLs Dawn loads at run time
+  endif()
 
   # glfw: an installed 3.4+ is used if there is one, otherwise it is fetched ------
   set(GLFW_BUILD_DOCS OFF)
@@ -76,6 +79,10 @@ function(lab_target_defaults LAB_TARGET)
     # exceptions are off by default on the web, the lab reports mistakes with them
     target_compile_options(${LAB_TARGET} PRIVATE -fexceptions)
     target_link_options(${LAB_TARGET} PRIVATE -fexceptions)
+  endif()
+  get_target_property(LAB_TARGET_TYPE ${LAB_TARGET} TYPE)
+  if(WIN32 AND LAB_TARGET_TYPE STREQUAL "EXECUTABLE")
+    lab_copy_runtime_dlls(${LAB_TARGET})
   endif()
 endfunction()
 
