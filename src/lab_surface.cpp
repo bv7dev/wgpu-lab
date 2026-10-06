@@ -98,7 +98,7 @@ void SurfaceState::present() {
   }
   view = nullptr;
   texture = nullptr;
-  handle.Present();
+  platform::present(handle);
   Runtime::get().presented = true;
 }
 

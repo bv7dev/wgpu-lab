@@ -58,3 +58,16 @@ jobs:
       # tests that open a window are skipped, everything else renders offscreen
       - name: Test
         run: ctest --preset release -LE display
+
+  # the samples as web pages, built like the gallery on GitHub Pages
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 6.0.10
+      - name: Configure
+        run: emcmake cmake --preset web
+      - name: Build
+        run: cmake --build --preset web

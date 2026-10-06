@@ -2,7 +2,7 @@
 
 #include <lab_frame.h>
 
-#include <webgpu/webgpu_cpp_print.h>
+#include <dawn/webgpu_cpp_print.h>
 
 #include <algorithm>
 #include <limits>

@@ -107,10 +107,10 @@ public:
   void read_async(std::function<void(std::span<const T>)> callback, size_t first = 0, size_t count = all) const {
     count = count == all ? element_count - std::min(first, element_count) : count;
     check_range(first, count, "read_async");
-    core.read_async(first * sizeof(T), count * sizeof(T),
-                    [callback = std::move(callback)](const void* data, uint64_t byte_count) {
-                      callback(std::span<const T>{static_cast<const T*>(data), byte_count / sizeof(T)});
-                    });
+    core.read_async(
+        first * sizeof(T), count * sizeof(T), [callback = std::move(callback)](const void* data, uint64_t byte_count) {
+          callback(std::span<const T>{static_cast<const T*>(data), static_cast<size_t>(byte_count / sizeof(T))});
+        });
   }
 
   // number of elements

@@ -1,5 +1,7 @@
 #include "lab_detail.h"
 
+#include "platform/lab_platform.h"
+
 #include <GLFW/glfw3.h>
 
 #include <algorithm>
@@ -144,6 +146,8 @@ Window::Window(std::string_view title, int width, int height, WindowOptions opti
   glfwSetCursorPosCallback(handle, detail::cursor_callback);
   glfwSetScrollCallback(handle, detail::scroll_callback);
   glfwSetFramebufferSizeCallback(handle, detail::framebuffer_size_callback);
+
+  platform::window_created(handle);
 
   runtime.windows.push_back(&state);
   detail::log(LogLevel::debug, "window \"{}\" created", title);

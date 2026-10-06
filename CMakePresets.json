@@ -20,6 +20,12 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
+      "name": "web",
+      "displayName": "Web (configure with: emcmake cmake --preset web)",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
       "name": "dev-asan",
       "displayName": "Debug + AddressSanitizer + UBSan (GCC/Clang)",
       "inherits": "dev",
@@ -32,6 +38,7 @@
   "buildPresets": [
     { "name": "dev", "configurePreset": "dev" },
     { "name": "release", "configurePreset": "release" },
+    { "name": "web", "configurePreset": "web" },
     { "name": "dev-asan", "configurePreset": "dev-asan" }
   ],
   "testPresets": [

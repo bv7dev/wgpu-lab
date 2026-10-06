@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.0
+
+### Added
+- The samples run in the browser: `emcmake cmake --preset web` builds a page per sample
+  and a gallery, which a GitHub Pages workflow publishes. The lab uses Dawn's Emscripten
+  port of the same Dawn release as the native build, and the contrib.glfw3 port for
+  windows. `while (lab::tick())` stays as it is: on the web, `tick()` waits for the
+  browser's next animation frame.
+- `LAB_WINDOW_SYSTEM=x11|wayland` on Linux.
+
+### Fixed
+- The depth buffer of a surface lagged a frame behind after the window was resized.
+
 ## 0.4.0
 
 The API was redesigned. [docs/migrating-from-0.2.md](docs/migrating-from-0.2.md) explains

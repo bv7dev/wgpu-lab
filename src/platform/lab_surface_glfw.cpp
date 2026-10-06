@@ -80,4 +80,10 @@ wgpu::Surface create_surface(const wgpu::Instance& instance, GLFWwindow* window)
 #endif
 }
 
+void window_created(GLFWwindow*) {}
+
+void present(const wgpu::Surface& surface) { surface.Present(); }
+
+void end_of_tick() {}
+
 } // namespace lab::platform

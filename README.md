@@ -172,6 +172,21 @@ commands above from a "Developer PowerShell for VS".
 Alternatively, open the folder in [VS Code](https://code.visualstudio.com/) with the
 recommended extensions and pick the `dev` preset.
 
+### Web
+
+The same programs run in a browser, through its WebGPU. With
+[Emscripten](https://emscripten.org/) installed (`emcc` on the PATH):
+
+```sh
+emcmake cmake --preset web
+cmake --build --preset web
+cd build/web/site && python -m http.server 8000   # then open http://localhost:8000/
+```
+
+`build/web/site/` holds one page per sample and an index page, which is what the
+GitHub Pages workflow publishes. The `while (lab::tick())` loop stays as it is: on the
+web, `tick()` hands control back to the browser until the next frame.
+
 ### Mac (help wanted)
 
 ### Choosing where Dawn comes from
@@ -182,7 +197,8 @@ recommended extensions and pick the `dev` preset.
 | `source` | fetches and builds Dawn itself (takes a while, needs Python for Dawn's build scripts) |
 | `system` | uses a Dawn you installed yourself, found through `find_package(Dawn)` |
 
-The pinned Dawn version is set at the top of `cmake/LabDawn.cmake`.
+The pinned Dawn version is set at the top of `cmake/LabDawn.cmake`. The web build uses
+Dawn's Emscripten port of the same release (`cmake/emdawnwebgpu.remoteport.py`).
 
 ### Dependencies
 The library only depends on [WebGPU Dawn](https://dawn.googlesource.com/dawn) and
@@ -200,7 +216,7 @@ are built, which is only the case when wgpu-lab is the top-level project.
 - [x] write tests
 - [x] add depth buffers, samplers and a 3D sample
 - [x] add compute pipeline support
-- [ ] add emscripten support for WebAssembly
+- [x] add emscripten support for WebAssembly
 - [ ] unify and finalize lab API
 - [ ] write documentation
 - [ ] release stable 1.0 version

@@ -1,6 +1,6 @@
 #include "lab_detail.h"
 
-#include <webgpu/webgpu_cpp_print.h>
+#include <dawn/webgpu_cpp_print.h>
 
 #include <algorithm>
 #include <sstream>

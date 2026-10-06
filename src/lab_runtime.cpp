@@ -1,5 +1,7 @@
 #include "lab_detail.h"
 
+#include "platform/lab_platform.h"
+
 #include <lab>
 
 #include <GLFW/glfw3.h>
@@ -156,6 +158,9 @@ bool tick() {
   }
 
   if (runtime.glfw_ready) {
+#if defined(__EMSCRIPTEN__)
+    glfwPollEvents(); // the browser paces the loop, see platform::end_of_tick()
+#else
     if (runtime.presented || runtime.windows.empty()) {
       glfwPollEvents();
     } else {
@@ -164,6 +169,7 @@ bool tick() {
       // instead of spinning at full speed.
       glfwWaitEventsTimeout(0.01);
     }
+#endif
   }
   runtime.presented = false;
 
@@ -187,6 +193,7 @@ bool tick() {
   runtime.delta_seconds = std::chrono::duration<float>(now - runtime.last_tick).count();
   runtime.last_tick = now;
 
+  platform::end_of_tick();
   return !runtime.windows.empty();
 }
 

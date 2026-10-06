@@ -18,6 +18,13 @@ object lifetimes:
 cmake --preset dev-asan && cmake --build --preset dev-asan && ctest --preset dev-asan
 ```
 
+The web build needs [Emscripten](https://emscripten.org/) on the PATH:
+
+```sh
+emcmake cmake --preset web && cmake --build --preset web
+cd build/web/site && python -m http.server 8000   # http://localhost:8000/
+```
+
 To see what the samples render without watching them, let them save a frame each:
 
 ```sh

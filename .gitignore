@@ -1,3 +1,4 @@
 build*/
 .cache/
+__pycache__/
 CMakeUserPresets.json
