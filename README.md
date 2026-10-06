@@ -20,7 +20,8 @@ and the API is likely to undergo significant changes.
   <img src="docs/images/12_offscreen.png" height="150" alt="a triangle rendered with few pixels and magnified">
 </p>
 
-All of these are [samples](#samples) of a hundred lines or so.
+All of these are [samples](#samples) of a hundred lines or so, and they run in the browser
+as well: **[live samples](https://bv7dev.github.io/wgpu-lab/)**.
 
 
 ## Simple Usage Sample
