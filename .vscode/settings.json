@@ -1,5 +1,5 @@
 {
-  "cmake.generator": "Ninja",
+  "cmake.useCMakePresets": "always",
   "cmake.configureOnOpen": false,
   "files.associations": {
     "lab": "cpp"

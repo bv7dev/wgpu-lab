@@ -1,0 +1,43 @@
+# Builds the samples for the web and publishes them as a gallery on GitHub Pages.
+# Needs Pages enabled for the repository with "GitHub Actions" as the source.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 6.0.10
+      - name: Configure
+        run: emcmake cmake --preset web
+      - name: Build
+        run: cmake --build --preset web
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

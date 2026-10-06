@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>wgpu-lab samples</title>
+  <style>
+    body { margin: 0; padding: 32px 16px; background: #141416; color: #ddd; font: 15px/1.5 system-ui, sans-serif; }
+    main { max-width: 960px; margin: 0 auto; }
+    h1 { font-weight: 600; margin: 0 0 4px; }
+    p { color: #aaa; margin: 0 0 24px; }
+    a { color: #8ab4ff; }
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .gallery a { display: block; background: #1e1e22; border-radius: 8px; overflow: hidden; text-decoration: none; color: #ddd; }
+    .gallery a:hover { background: #2a2a30; }
+    .gallery img, .gallery .blank { display: block; width: 100%; aspect-ratio: 16 / 10; object-fit: cover; background: #0c0c0e; }
+    .gallery span { display: block; padding: 8px 12px; font-family: ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>wgpu-lab samples</h1>
+    <p>The <a href="https://github.com/bv7dev/wgpu-lab">wgpu-lab</a> samples, running in the browser through WebGPU.
+       The same C++ source renders natively on the desktop.</p>
+    <div class="gallery">
+@LAB_GALLERY_ITEMS@    </div>
+  </main>
+</body>
+</html>

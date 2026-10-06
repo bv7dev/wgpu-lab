@@ -1,0 +1,81 @@
+#ifndef WGPU_LAB_MAIN_H
+#define WGPU_LAB_MAIN_H
+
+// wgpu-lab: rapid prototyping of native WebGPU applications
+//
+// This header includes the whole library. Every lab object gives access to the
+// plain WebGPU object it wraps through `handle()`, so the lab never stands
+// between you and WebGPU.
+
+#include <lab_buffer.h>
+#include <lab_compute.h>
+#include <lab_error.h>
+#include <lab_frame.h>
+#include <lab_gpu.h>
+#include <lab_input.h>
+#include <lab_label.h>
+#include <lab_log.h>
+#include <lab_pipeline.h>
+#include <lab_shader.h>
+#include <lab_surface.h>
+#include <lab_texture.h>
+#include <lab_window.h>
+
+#include <chrono>
+#include <filesystem>
+#include <thread>
+
+namespace lab {
+
+// Processes window events and keeps the GPU's callbacks and error reporting going
+//  - call it once per iteration of the main loop
+//  - returns `true` as long as at least one Window is open
+//  - throws lab::Error if a Gpu has reported an error (see GpuOptions::throw_on_error)
+//  - closes all windows after N calls if the environment variable
+//    LAB_EXIT_AFTER_FRAMES=N is set (to run a program unattended)
+// ```cpp
+// while (lab::tick()) {
+//   pipeline.render_frame(surface, 3);
+// }
+// ```
+bool tick();
+
+// Seconds between the two most recent calls of `tick()`
+float delta_seconds();
+
+// Seconds since the program started, or since the last `restart_timer()`
+// ```cpp
+// uniforms.time = lab::elapsed_seconds();          // float
+// double precise = lab::elapsed_seconds<double>();
+// ```
+namespace detail {
+double elapsed_seconds();
+}
+template<class T = float>
+T elapsed_seconds() {
+  return static_cast<T>(detail::elapsed_seconds());
+}
+void restart_timer();
+
+// Finds a file that belongs to the program, like an image or a model
+//  - a relative path is looked up from the working directory first, then from the
+//    directory of the executable, so it does not matter where a program is started from
+//  - throws lab::Error if the file is in neither place
+// ```cpp
+// auto path = lab::find_file("assets/house.glb");
+// ```
+std::filesystem::path find_file(const std::filesystem::path& file);
+
+// Wrapper for visual simplicity around `std::this_thread::sleep_for(duration);`
+// ```cpp
+// using namespace std::chrono_literals;
+// lab::sleep(100ms);
+// ```
+template<class Rep, class Period>
+inline void sleep(const std::chrono::duration<Rep, Period>& duration) {
+  std::this_thread::sleep_for(duration);
+}
+
+} // namespace lab
+
+#endif // WGPU_LAB_MAIN_H

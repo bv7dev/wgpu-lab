@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>wgpu-lab</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #141416; color: #ddd; font: 14px/1.4 system-ui, sans-serif; overflow: hidden; }
+    canvas { display: block; outline: none; }
+    #status { position: fixed; left: 0; right: 0; bottom: 0; padding: 8px 12px; background: rgba(20, 20, 22, 0.85); white-space: pre-wrap; display: none; }
+    #status.shown { display: block; }
+    #back { position: fixed; top: 8px; left: 10px; color: #aaa; text-decoration: none; opacity: 0.7; }
+    #back:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+  <a id="back" href="index.html">&larr; all samples</a>
+  <canvas id="canvas" tabindex="-1"></canvas>
+  <pre id="status"></pre>
+  <script>
+    const status = document.getElementById('status');
+    function show(text) { status.textContent += text + '\n'; status.classList.add('shown'); }
+    var Module = {
+      canvas: document.getElementById('canvas'),
+      print: show,
+      printErr: show,
+      onAbort: (what) => show('aborted: ' + what),
+    };
+    if (!navigator.gpu) {
+      show('This browser has no WebGPU. Chrome, Edge, Firefox and Safari have it in their current versions.');
+    }
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>
