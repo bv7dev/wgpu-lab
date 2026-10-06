@@ -193,6 +193,11 @@ cd build/web/site && python -m http.server 8000   # then open http://localhost:8
 GitHub Pages workflow publishes. The `while (lab::tick())` loop stays as it is: on the
 web, `tick()` hands control back to the browser until the next frame.
 
+Browsers on Linux mostly ship WebGPU switched off, and a sample then reports that it found
+no graphics adapter. In Chrome, Chromium and Edge, enable `chrome://flags/#enable-unsafe-webgpu`
+(and `chrome://flags/#enable-vulkan` if the canvas stays empty); in Firefox, set
+`dom.webgpu.enabled` in `about:config`. Restart the browser afterwards.
+
 ### Mac (help wanted)
 
 ### Choosing where Dawn comes from

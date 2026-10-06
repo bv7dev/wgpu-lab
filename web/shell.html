@@ -20,14 +20,30 @@
   <script>
     const status = document.getElementById('status');
     function show(text) { status.textContent += text + '\n'; status.classList.add('shown'); }
+    // everything goes to the console, only problems are put on the page
+    function report(text) {
+      console.log(text);
+      if (!/^lab \[(info|debug)\]/.test(text)) show(text);
+    }
     var Module = {
       canvas: document.getElementById('canvas'),
-      print: show,
-      printErr: show,
+      print: report,
+      printErr: report,
       onAbort: (what) => show('aborted: ' + what),
     };
+    // Some browsers have navigator.gpu but hand out no adapter until WebGPU is switched on.
+    const how_to_enable =
+      'How to switch it on:\n' +
+      '  Chrome, Chromium, Edge on Linux: open chrome://flags/#enable-unsafe-webgpu, set it to Enabled, restart the browser\n' +
+      '  Firefox on Linux: open about:config, set dom.webgpu.enabled to true, restart the browser';
     if (!navigator.gpu) {
-      show('This browser has no WebGPU. Chrome, Edge, Firefox and Safari have it in their current versions.');
+      show('This browser has no WebGPU, or it is switched off.\n' + how_to_enable);
+    } else {
+      navigator.gpu.requestAdapter().then(function(adapter) {
+        if (!adapter) {
+          show('This browser has WebGPU, but offers no graphics adapter to this page.\n' + how_to_enable);
+        }
+      });
     }
   </script>
   {{{ SCRIPT }}}

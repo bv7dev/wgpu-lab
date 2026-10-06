@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- Web pages: when the browser offers no WebGPU adapter, the page says how to switch
+  WebGPU on. Informational log lines go to the browser console instead of the page.
+
 ## 0.5.0
 
 ### Added
