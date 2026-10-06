@@ -397,10 +397,12 @@ TEST_CASE("Texture: save_png writes a PNG file") {
   std::filesystem::remove(path);
   target.save_png(path);
 
-  std::ifstream file(path, std::ios::binary);
-  REQUIRE(file);
   char signature[8] = {};
-  file.read(signature, sizeof(signature));
+  {
+    std::ifstream file(path, std::ios::binary);
+    REQUIRE(file);
+    file.read(signature, sizeof(signature));
+  } // closed before the file is removed, Windows does not delete open files
   CHECK(std::string_view(signature, 8) == "\x89PNG\r\n\x1a\n");
   // stored without compression: a bit more than 4 bytes per pixel
   CHECK(std::filesystem::file_size(path) > target_size * target_size * 4);
